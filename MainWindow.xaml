@@ -5,8 +5,149 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImageEditor"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="#303030"
+        WindowState="Maximized"
+        Title="MonoFrame" d:DesignHeight="332.804" d:DesignWidth="490.957">
+
+    <Window.Resources>
+        <!-- Main colors -->
+        <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="#303030"/>
+        <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#444444"/>
+        <SolidColorBrush x:Key="TextForegroundBrush" Color="White"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+        </Style>
+
+        <Style TargetType="StatusBar">
+            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+        </Style>
+
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <Border DockPanel.Dock="Top"
+        Background="{StaticResource PrimaryBackgroundBrush}"
+        Height="30"
+        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+        BorderBrush="#555555"
+        BorderThickness="0,0,0,1">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Title -->
+                <TextBlock Text="MonoFrame"
+						   VerticalAlignment="Center"
+						   Margin="10,0"/>
+
+                <!-- Control Buttons -->
+                <StackPanel Grid.Column="1"
+							Orientation="Horizontal">
+
+                    <!-- Minimize -->
+                    <Button Content="—"
+							Width="30"
+							Height="25"
+							Click="MinimizeButton_Click"
+							Margin="0"/>
+
+                    <!-- Maximize / Restore -->
+                    <Button Content="▢"
+							Width="30"
+							Height="25"
+							Click="MaximizeRestoreButton_Click"
+							Margin="0"/>
+
+                    <!-- Close -->
+                    <Button Content="X"
+							Width="30"
+							Height="25"
+							Click="CloseButton_Click"
+							Margin="0"/>
+
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Menu -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Click="OpenImage_Click"/>
+                <MenuItem Header="_Save" Click="SaveImage_Click"/>
+                <MenuItem Header="_Close" Click="OpenImage_Click"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="Exit_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" Click="Undo_Click"/>
+                <MenuItem Header="_Redo" Click="Redo_Click"/>
+            </MenuItem>
+
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Click="About_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Main Content -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Image Border -->
+            <Border Grid.Row="0" 
+					Margin="10" 
+					BorderThickness="0" 
+					CornerRadius="5" 
+					Background="Transparent">
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Transparent">
+
+                    <Image x:Name="ImageDisplay"
+						   Stretch="None"
+						   RenderTransformOrigin="0.5,0.5"
+						   MouseLeftButtonDown="Image_MouseDown"
+						   MouseMove="Image_MouseMove"
+						   MouseLeftButtonUp="Image_MouseUp">
+
+                        <Image.RenderTransform>
+                            <TranslateTransform x:Name="ImageTranslate"/>
+                        </Image.RenderTransform>
+                    </Image>
+
+                </ScrollViewer>
+            </Border>
+
+            <!-- StatusBar -->
+            <StatusBar Grid.Row="1" Margin="0" Padding="5">
+                <StatusBarItem>
+                    <TextBlock x:Name="StatusText" Text="No image loaded"/>
+                </StatusBarItem>
+            </StatusBar>
+        </Grid>
+    </DockPanel>
 </Window>
