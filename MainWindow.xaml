@@ -40,12 +40,82 @@
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
         <Style TargetType="MenuItem">
-            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Border"
+                        Background="{TemplateBinding Background}">
+
+                            <Grid>
+                                <ContentPresenter
+                            ContentSource="Header"
+                            Margin="6,2"
+                            VerticalAlignment="Center"
+                            RecognizesAccessKey="True"
+                                    />
+
+                                <Popup x:Name="Popup"
+                               IsOpen="{TemplateBinding IsSubmenuOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade">
+
+                                    <Border Background="{StaticResource PrimaryBackgroundBrush}"
+                                    BorderBrush="#555"
+                                    BorderThickness="1">
+                                        <ItemsPresenter/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- TOP LEVEL → DOWN -->
+                            <Trigger Property="Role" Value="TopLevelHeader">
+                                <Setter TargetName="Popup"
+                                Property="Placement"
+                                Value="Bottom"/>
+                            </Trigger>
+
+                            <!-- SUB MENU → RIGHT -->
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Popup"
+                                Property="Placement"
+                                Value="Right"/>
+                            </Trigger>
+
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border"
+                                Property="Background"
+                                Value="#505050"/>
+                            </Trigger>
+
+                            <!-- Pressed -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border"
+                                Property="Background"
+                                Value="#606060"/>
+                            </Trigger>
+
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+        
     </Window.Resources>
 
     <DockPanel>
@@ -83,7 +153,6 @@
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Command="{Binding OpenImageCommand}"/>
                 <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
-                <Separator/>
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 
