@@ -56,6 +56,20 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private double _zoom = 1.0;
+        public double Zoom
+        {
+            get => _zoom;
+            set
+            {
+                if (value < 0.1) value = 0.1;
+                if (value > 5) value = 5;
+
+                _zoom = value;
+                OnPropertyChanged(nameof(Zoom));
+            }
+        }
+
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
@@ -68,6 +82,8 @@ namespace ImageEditor.ViewModels
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
         public ICommand CloseCommand { get; }
+
+        public ICommand MouseWheelCommand { get; }
 
         // ================= CONSTRUCTOR =================
         public MainViewModel()
@@ -84,6 +100,27 @@ namespace ImageEditor.ViewModels
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
             CloseCommand = new RelayCommand(_ => CloseWindow());
+
+            MouseWheelCommand = new RelayCommand(parameter =>
+            {
+                var args = parameter as MouseWheelEventArgs;
+                if (args == null) return;
+
+                var element = args.Source as FrameworkElement;
+                if (element == null) return;
+
+                var mousePos = args.GetPosition(element);
+                double zoomFactor = args.Delta > 0 ? 1.1 : 0.9;
+                double oldZoom = Zoom;
+                double newZoom = oldZoom * zoomFactor;
+
+                if (newZoom < 0.1 || newZoom > 5) return;
+
+                ImageOffsetX = mousePos.X - (mousePos.X - ImageOffsetX) * (newZoom / oldZoom);
+                ImageOffsetY = mousePos.Y - (mousePos.Y - ImageOffsetY) * (newZoom / oldZoom);
+
+                Zoom = newZoom;
+            });
         }
 
         // ================= METHODS =================
@@ -141,7 +178,7 @@ namespace ImageEditor.ViewModels
 
         public void StartDrag(Point startPoint)
         {
-            _dragStart = startPoint; // приватне поле Point _dragStart;
+            _dragStart = startPoint;
         }
 
         public void DragTo(Point currentPoint)
@@ -151,8 +188,8 @@ namespace ImageEditor.ViewModels
             double deltaX = currentPoint.X - _dragStart.Value.X;
             double deltaY = currentPoint.Y - _dragStart.Value.Y;
 
-            ImageOffsetX += deltaX;
-            ImageOffsetY += deltaY;
+            ImageOffsetX += deltaX / Zoom;
+            ImageOffsetY += deltaY / Zoom;
 
             _dragStart = currentPoint;
         }

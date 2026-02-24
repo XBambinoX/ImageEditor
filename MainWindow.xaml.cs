@@ -49,5 +49,11 @@ namespace ImageEditor
                 (sender as UIElement).ReleaseMouseCapture();
             }
         }
+
+        private void Image_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+                vm.MouseWheelCommand.Execute(e);
+        }
     }
 }

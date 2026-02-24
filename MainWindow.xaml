@@ -175,14 +175,17 @@
 
             <!-- IMAGE AREA -->
             <Border Grid.Row="0" Margin="10" CornerRadius="5" Background="Transparent">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Image Source="{Binding Image}" Stretch="None" RenderTransformOrigin="0.5,0.5"
+                <ScrollViewer x:Name="ImageScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Image Source="{Binding Image}" Stretch="None"
                            MouseLeftButtonDown="Image_MouseLeftButtonDown"
                            MouseMove="Image_MouseMove"
-                           MouseLeftButtonUp="Image_MouseLeftButtonUp">
-                        
-                        <Image.RenderTransform>
-                            <TranslateTransform X="{Binding ImageOffsetX}" Y="{Binding ImageOffsetY}"/>
+                           MouseLeftButtonUp="Image_MouseLeftButtonUp"
+						   MouseWheel="Image_MouseWheel">
+						<Image.RenderTransform>
+							<TransformGroup>
+								<ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
+								<TranslateTransform X="{Binding ImageOffsetX}" Y="{Binding ImageOffsetY}"/>
+							</TransformGroup>
                         </Image.RenderTransform>
                         
                     </Image>
