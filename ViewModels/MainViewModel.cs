@@ -87,6 +87,7 @@ namespace ImageEditor.ViewModels
         //tools
         public ICommand Rotate90Clockwise { get; }
         public ICommand Rotate90CounterClockwise { get; }
+        public ICommand Rotate180 { get; }
         public ICommand FlipHorizontal { get; }
         public ICommand FlipVertical { get; }
 
@@ -110,6 +111,7 @@ namespace ImageEditor.ViewModels
 
             Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
             Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false));
+            Rotate180 = new RelayCommand(_ => RotateImage(180, true));
             FlipHorizontal = new RelayCommand(_ => FlipImage(true));
             FlipVertical = new RelayCommand(_ => FlipImage(false));
 

@@ -216,6 +216,8 @@
 			<MenuItem Header="_Tools">
 				<MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
 				<MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
+				<MenuItem Header="Rotate 180" Command="{Binding Rotate180}"/>
+				<Separator Margin="-40,0"/>
 				<MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
 				<MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
 			</MenuItem>
@@ -251,12 +253,43 @@
                 </ScrollViewer>
             </Border>
 
-            <!-- STATUSBAR -->
-            <StatusBar Grid.Row="1" Padding="5">
-                <StatusBarItem>
-                    <TextBlock Text="{Binding StatusText}"/>
-                </StatusBarItem>
-            </StatusBar>
+			<!-- Statusbar -->
+			<StatusBar Grid.Row="1" Padding="5">
+				<StatusBar.ItemsPanel>
+					<ItemsPanelTemplate>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+						</Grid>
+					</ItemsPanelTemplate>
+				</StatusBar.ItemsPanel>
+
+				<!-- Left part -->
+				<StatusBarItem Grid.Column="0">
+					<TextBlock Text="{Binding StatusText}"/>
+				</StatusBarItem>
+
+				<!-- Zoom -->
+				<StatusBarItem Grid.Column="1">
+					<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+						<TextBlock Text="Scale:"/>
+						<TextBlock Text="{Binding Zoom, StringFormat={}{0:P0}}"
+								   Margin="0,0,8,0"
+								   VerticalAlignment="Center"/>
+
+						<Slider Width="140"
+								Minimum="0.1"
+								Maximum="5"
+								SmallChange="0.1"
+								LargeChange="0.25"
+								Value="{Binding Zoom, Mode=TwoWay}"
+								VerticalAlignment="Center"/>
+					</StackPanel>
+				</StatusBarItem>
+			</StatusBar>
         </Grid>
 
     </DockPanel>
