@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Collections.Generic;
 
 namespace ImageEditor.ViewModels
 {
@@ -21,6 +22,9 @@ namespace ImageEditor.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        private readonly Stack<BitmapSource> _undoStack = new Stack<BitmapSource>();
+        private readonly Stack<BitmapSource> _redoStack = new Stack<BitmapSource>();
 
         // ================= STATUS =================
         private string _statusText = "No image loaded";
@@ -100,8 +104,8 @@ namespace ImageEditor.ViewModels
 
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
 
-            UndoCommand = new RelayCommand(_ => Undo(), _ => false);
-            RedoCommand = new RelayCommand(_ => Redo(), _ => false);
+            UndoCommand = new RelayCommand(_ => Undo());
+            RedoCommand = new RelayCommand(_ => Redo());
             AboutCommand = new RelayCommand(_ => About());
 
             Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
@@ -167,6 +171,8 @@ namespace ImageEditor.ViewModels
                 return;
             }
 
+            SaveState();
+
             if (angle != 90 && angle != 180 && angle != 270)
                 throw new ArgumentException("Angle must be 90, 180 or 270");
 
@@ -184,6 +190,9 @@ namespace ImageEditor.ViewModels
                                 MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+
+            SaveState();
+
             var transform = new ScaleTransform(horizontal ? -1 : 1, horizontal ? 1 : -1);
             Image = new TransformedBitmap(Image, transform);
         }
@@ -258,14 +267,36 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private void SaveState()
+        {
+            if (Image != null)
+            {
+                _undoStack.Push(CloneBitmap(Image));
+                _redoStack.Clear();
+            }
+        }
+
+        private BitmapSource CloneBitmap(BitmapSource source)
+        {
+            return new WriteableBitmap(source);
+        }
+
         private void Undo()
         {
-            MessageBox.Show("Undo not implemented yet");
+            if (_undoStack.Count > 0)
+            {
+                _redoStack.Push(CloneBitmap(Image));
+                Image = _undoStack.Pop();
+            }
         }
 
         private void Redo()
         {
-            MessageBox.Show("Redo not implemented yet");
+            if (_redoStack.Count > 0)
+            {
+                _undoStack.Push(CloneBitmap(Image));
+                Image = _redoStack.Pop();
+            }
         }
 
         private void About()

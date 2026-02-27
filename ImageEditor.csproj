@@ -97,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+	<Resource Include="Assets\MonoFrame.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

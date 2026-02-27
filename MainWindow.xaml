@@ -9,7 +9,8 @@
         AllowsTransparency="False"
         Background="#303030"
         WindowState="Maximized"
-        Title="MonoFrame">
+        Title="MonoFrame"
+		Icon="Assets/MonoFrame.ico">
 
     <!-- ViewModel -->
     <Window.DataContext>
@@ -163,12 +164,34 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Title -->
-                <TextBlock Text="MonoFrame"
-                           VerticalAlignment="Center"
-                           Margin="10,0"/>
+				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
 
-                <!-- Control Buttons -->
+					<!-- ICON -->
+					<Viewbox Width="18" Height="18" Margin="0,0,8,0">
+						<Canvas Width="100" Height="100">
+							<Rectangle Width="100" Height="100"
+									   Stroke="#AAAAAA"
+									   StrokeThickness="8"
+									   RadiusX="10" RadiusY="10"
+									   Fill="#303030"/>
+
+							<Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85"
+									 Fill="White"/>
+
+							<Ellipse Width="18" Height="18"
+									 Fill="White"
+									 Canvas.Left="65"
+									 Canvas.Top="20"/>
+						</Canvas>
+					</Viewbox>
+
+					<!-- TITLE -->
+					<TextBlock Text="MonoFrame"
+							   VerticalAlignment="Center"
+							   FontSize="16"/>
+				</StackPanel>
+
+				<!-- Control Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="—" Width="30" Height="25" Command="{Binding MinimizeCommand}"/>
                     <Button Content="▢" Width="30" Height="25" Command="{Binding MaximizeRestoreCommand}"/>
