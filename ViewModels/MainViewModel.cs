@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
@@ -10,8 +11,8 @@ namespace ImageEditor.ViewModels
     public class MainViewModel : BaseViewModel
     {
         // ================= IMAGE =================
-        private BitmapImage _image;
-        public BitmapImage Image
+        private BitmapSource _image;
+        public BitmapSource Image
         {
             get => _image;
             set
@@ -79,6 +80,9 @@ namespace ImageEditor.ViewModels
         public ICommand RedoCommand { get; }
         public ICommand AboutCommand { get; }
 
+        public ICommand Rotate90Clockwise { get; }
+        public ICommand Rotate90CounterClockwise { get; }
+
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
         public ICommand CloseCommand { get; }
@@ -96,6 +100,9 @@ namespace ImageEditor.ViewModels
             UndoCommand = new RelayCommand(_ => Undo(), _ => false);
             RedoCommand = new RelayCommand(_ => Redo(), _ => false);
             AboutCommand = new RelayCommand(_ => About());
+
+            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
+            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false));
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -124,6 +131,40 @@ namespace ImageEditor.ViewModels
         }
 
         // ================= METHODS =================
+
+        private BitmapImage BitmapFromSource(BitmapSource source)
+        {
+            using (var stream = new System.IO.MemoryStream())
+            {
+                BitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(source));
+                encoder.Save(stream);
+
+                stream.Position = 0;
+
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.StreamSource = stream;
+                img.EndInit();
+                img.Freeze();
+
+                return img;
+            }
+        }
+
+        private void RotateImage(int angle, bool clockwise)
+        {
+            if (Image == null) return;
+
+            if (angle != 90 && angle != 180 && angle != 270)
+                throw new ArgumentException("Angle must be 90, 180 or 270");
+
+            int finalAngle = clockwise ? angle : -angle;
+
+            var transform = new RotateTransform(finalAngle);
+            Image = new TransformedBitmap(Image, transform);
+        }
 
         private void OpenImage()
         {
@@ -188,8 +229,8 @@ namespace ImageEditor.ViewModels
             double deltaX = currentPoint.X - _dragStart.Value.X;
             double deltaY = currentPoint.Y - _dragStart.Value.Y;
 
-            ImageOffsetX += deltaX / Zoom;
-            ImageOffsetY += deltaY / Zoom;
+            ImageOffsetX += deltaX;
+            ImageOffsetY += deltaY;
 
             _dragStart = currentPoint;
         }

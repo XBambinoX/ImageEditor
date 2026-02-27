@@ -161,9 +161,14 @@
                 <MenuItem Header="_Redo" Command="{Binding RedoCommand}"/>
             </MenuItem>
 
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About" Command="{Binding AboutCommand}"/>
-            </MenuItem>
+			<MenuItem Header="_Tools">
+				<MenuItem Header="Rotate 90 clockwise" Command="{Binding Rotate90Clockwise}"/>
+				<MenuItem Header="Rotate 90 counterclockwise" Command="{Binding Rotate90CounterClockwise}"/>
+			</MenuItem>
+
+			<MenuItem Header="_Help">
+				<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
+			</MenuItem>
         </Menu>
 
         <!-- MAIN CONTENT -->
