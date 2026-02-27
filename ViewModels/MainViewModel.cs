@@ -183,7 +183,7 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
-        private void ApplyGaussianBlur(int radius = 30)
+        private void ApplyGaussianBlur(int radius = 6)
         {
             if (Image == null)
             {
@@ -194,91 +194,25 @@ namespace ImageEditor.ViewModels
 
             SaveState();
 
-            int width = Image.PixelWidth;
-            int height = Image.PixelHeight;
-            int stride = width * 4;
+            int w = Image.PixelWidth;
+            int h = Image.PixelHeight;
+            int stride = w * 4;
 
-            byte[] src = new byte[height * stride];
+            byte[] src = new byte[h * stride];
             Image.CopyPixels(src, stride, 0);
 
-            float sigma = radius / 3f;
-            float[] kernel = GaussianBlurHelper.CreateGaussianKernelFast(radius, sigma);
-
-            byte[] temp = new byte[src.Length];
+            byte[] tmp = new byte[src.Length];
             byte[] dst = new byte[src.Length];
 
-            Parallel.For(0, height, y =>
-            {
-                int row = y * stride;
+            // Gaussian ≈ 3 box blurs
+            GaussianBlurHelper.BoxBlur(src, tmp, w, h, radius);
+            GaussianBlurHelper.BoxBlur(tmp, dst, w, h, radius);
+            GaussianBlurHelper.BoxBlur(dst, tmp, w, h, radius);
 
-                for (int x = 0; x < width; x++)
-                {
-                    float b = 0, g = 0, r = 0, a = 0;
-
-                    int xmin = x - radius;
-                    if (xmin < 0) xmin = 0;
-
-                    int xmax = x + radius;
-                    if (xmax >= width) xmax = width - 1;
-
-                    int ki = xmin - (x - radius);
-
-                    for (int px = xmin; px <= xmax; px++, ki++)
-                    {
-                        int idx = row + px * 4;
-                        float w = kernel[ki];
-
-                        b += src[idx] * w;
-                        g += src[idx + 1] * w;
-                        r += src[idx + 2] * w;
-                        a += src[idx + 3] * w;
-                    }
-
-                    int dstIdx = row + x * 4;
-                    temp[dstIdx] = (byte)b;
-                    temp[dstIdx + 1] = (byte)g;
-                    temp[dstIdx + 2] = (byte)r;
-                    temp[dstIdx + 3] = (byte)a;
-                }
-            });
-
-            Parallel.For(0, width, x =>
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    float b = 0, g = 0, r = 0, a = 0;
-
-                    int ymin = y - radius;
-                    if (ymin < 0) ymin = 0;
-
-                    int ymax = y + radius;
-                    if (ymax >= height) ymax = height - 1;
-
-                    int ki = ymin - (y - radius);
-
-                    for (int py = ymin; py <= ymax; py++, ki++)
-                    {
-                        int idx = py * stride + x * 4;
-                        float w = kernel[ki];
-
-                        b += temp[idx] * w;
-                        g += temp[idx + 1] * w;
-                        r += temp[idx + 2] * w;
-                        a += temp[idx + 3] * w;
-                    }
-
-                    int dstIdx = y * stride + x * 4;
-                    dst[dstIdx] = (byte)b;
-                    dst[dstIdx + 1] = (byte)g;
-                    dst[dstIdx + 2] = (byte)r;
-                    dst[dstIdx + 3] = (byte)a;
-                }
-            });
-
-            var wb = new WriteableBitmap(width, height, Image.DpiX, Image.DpiY,
+            var wb = new WriteableBitmap(w, h, Image.DpiX, Image.DpiY,
                 PixelFormats.Bgra32, null);
 
-            wb.WritePixels(new Int32Rect(0, 0, width, height), dst, stride, 0);
+            wb.WritePixels(new Int32Rect(0, 0, w, h), tmp, stride, 0);
             wb.Freeze();
 
             Image = wb;
