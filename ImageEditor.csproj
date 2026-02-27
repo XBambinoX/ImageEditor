@@ -57,6 +57,7 @@
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
+    <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Page Include="MainWindow.xaml">
@@ -97,7 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-	<Resource Include="Assets\MonoFrame.ico" />
+    <Resource Include="Assets\MonoFrame.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,11 +1,13 @@
 ﻿using ImageEditor.Commands;
+using ImageEditor.Services.ImageProcessing;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Collections.Generic;
 
 namespace ImageEditor.ViewModels
 {
@@ -90,6 +92,7 @@ namespace ImageEditor.ViewModels
         public ICommand Rotate180 { get; }
         public ICommand FlipHorizontal { get; }
         public ICommand FlipVertical { get; }
+        public ICommand GaussianBlurCommand { get; }
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -114,6 +117,7 @@ namespace ImageEditor.ViewModels
             Rotate180 = new RelayCommand(_ => RotateImage(180, true));
             FlipHorizontal = new RelayCommand(_ => FlipImage(true));
             FlipVertical = new RelayCommand(_ => FlipImage(false));
+            GaussianBlurCommand = new RelayCommand(_ => ApplyGaussianBlur());
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -143,27 +147,7 @@ namespace ImageEditor.ViewModels
 
         // ================= METHODS =================
 
-        private BitmapImage BitmapFromSource(BitmapSource source)
-        {
-            using (var stream = new System.IO.MemoryStream())
-            {
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(source));
-                encoder.Save(stream);
-
-                stream.Position = 0;
-
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.StreamSource = stream;
-                img.EndInit();
-                img.Freeze();
-
-                return img;
-            }
-        }
-
+        #region TOOLS
         private void RotateImage(int angle, bool clockwise)
         {
             if (Image == null)
@@ -199,6 +183,109 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
+        private void ApplyGaussianBlur(int radius = 30)
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            SaveState();
+
+            int width = Image.PixelWidth;
+            int height = Image.PixelHeight;
+            int stride = width * 4;
+
+            byte[] src = new byte[height * stride];
+            Image.CopyPixels(src, stride, 0);
+
+            float sigma = radius / 3f;
+            float[] kernel = GaussianBlurHelper.CreateGaussianKernelFast(radius, sigma);
+
+            byte[] temp = new byte[src.Length];
+            byte[] dst = new byte[src.Length];
+
+            Parallel.For(0, height, y =>
+            {
+                int row = y * stride;
+
+                for (int x = 0; x < width; x++)
+                {
+                    float b = 0, g = 0, r = 0, a = 0;
+
+                    int xmin = x - radius;
+                    if (xmin < 0) xmin = 0;
+
+                    int xmax = x + radius;
+                    if (xmax >= width) xmax = width - 1;
+
+                    int ki = xmin - (x - radius);
+
+                    for (int px = xmin; px <= xmax; px++, ki++)
+                    {
+                        int idx = row + px * 4;
+                        float w = kernel[ki];
+
+                        b += src[idx] * w;
+                        g += src[idx + 1] * w;
+                        r += src[idx + 2] * w;
+                        a += src[idx + 3] * w;
+                    }
+
+                    int dstIdx = row + x * 4;
+                    temp[dstIdx] = (byte)b;
+                    temp[dstIdx + 1] = (byte)g;
+                    temp[dstIdx + 2] = (byte)r;
+                    temp[dstIdx + 3] = (byte)a;
+                }
+            });
+
+            Parallel.For(0, width, x =>
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    float b = 0, g = 0, r = 0, a = 0;
+
+                    int ymin = y - radius;
+                    if (ymin < 0) ymin = 0;
+
+                    int ymax = y + radius;
+                    if (ymax >= height) ymax = height - 1;
+
+                    int ki = ymin - (y - radius);
+
+                    for (int py = ymin; py <= ymax; py++, ki++)
+                    {
+                        int idx = py * stride + x * 4;
+                        float w = kernel[ki];
+
+                        b += temp[idx] * w;
+                        g += temp[idx + 1] * w;
+                        r += temp[idx + 2] * w;
+                        a += temp[idx + 3] * w;
+                    }
+
+                    int dstIdx = y * stride + x * 4;
+                    dst[dstIdx] = (byte)b;
+                    dst[dstIdx + 1] = (byte)g;
+                    dst[dstIdx + 2] = (byte)r;
+                    dst[dstIdx + 3] = (byte)a;
+                }
+            });
+
+            var wb = new WriteableBitmap(width, height, Image.DpiX, Image.DpiY,
+                PixelFormats.Bgra32, null);
+
+            wb.WritePixels(new Int32Rect(0, 0, width, height), dst, stride, 0);
+            wb.Freeze();
+
+            Image = wb;
+        }
+        #endregion
+
+        #region FILE
         private void OpenImage()
         {
             OpenFileDialog dialog = new OpenFileDialog
@@ -268,6 +355,7 @@ namespace ImageEditor.ViewModels
                 StatusText = $"Saved: {dialog.FileName}";
             }
         }
+        #endregion
 
         private void SaveState()
         {
@@ -283,6 +371,7 @@ namespace ImageEditor.ViewModels
             return new WriteableBitmap(source);
         }
 
+        #region EDIT
         private void Undo()
         {
             if (_undoStack.Count > 0)
@@ -300,6 +389,7 @@ namespace ImageEditor.ViewModels
                 Image = _redoStack.Pop();
             }
         }
+        #endregion
 
         private void About()
         {
