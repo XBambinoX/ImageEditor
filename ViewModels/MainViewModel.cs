@@ -80,8 +80,11 @@ namespace ImageEditor.ViewModels
         public ICommand RedoCommand { get; }
         public ICommand AboutCommand { get; }
 
+        //tools
         public ICommand Rotate90Clockwise { get; }
         public ICommand Rotate90CounterClockwise { get; }
+        public ICommand FlipHorizontal { get; }
+        public ICommand FlipVertical { get; }
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -103,6 +106,8 @@ namespace ImageEditor.ViewModels
 
             Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
             Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false));
+            FlipHorizontal = new RelayCommand(_ => FlipImage(true));
+            FlipVertical = new RelayCommand(_ => FlipImage(false));
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -155,7 +160,12 @@ namespace ImageEditor.ViewModels
 
         private void RotateImage(int angle, bool clockwise)
         {
-            if (Image == null) return;
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             if (angle != 90 && angle != 180 && angle != 270)
                 throw new ArgumentException("Angle must be 90, 180 or 270");
@@ -163,6 +173,18 @@ namespace ImageEditor.ViewModels
             int finalAngle = clockwise ? angle : -angle;
 
             var transform = new RotateTransform(finalAngle);
+            Image = new TransformedBitmap(Image, transform);
+        }
+
+        private void FlipImage(bool horizontal)
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var transform = new ScaleTransform(horizontal ? -1 : 1, horizontal ? 1 : -1);
             Image = new TransformedBitmap(Image, transform);
         }
 
@@ -193,8 +215,47 @@ namespace ImageEditor.ViewModels
 
         private void SaveImage()
         {
-            MessageBox.Show("Save not implemented yet", "Info",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            SaveFileDialog dialog = new SaveFileDialog
+            {
+                Title = "Save Image",
+                Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
+                DefaultExt = ".png"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                BitmapEncoder encoder;
+
+                string extension = System.IO.Path.GetExtension(dialog.FileName).ToLower();
+
+                switch (extension)
+                {
+                    case ".jpg":
+                    case ".jpeg":
+                        encoder = new JpegBitmapEncoder();
+                        break;
+
+                    default:
+                        encoder = new PngBitmapEncoder();
+                        break;
+                }
+
+                encoder.Frames.Add(BitmapFrame.Create(Image));
+
+                using (var stream = System.IO.File.Create(dialog.FileName))
+                {
+                    encoder.Save(stream);
+                }
+
+                StatusText = $"Saved: {dialog.FileName}";
+            }
         }
 
         private void Undo()

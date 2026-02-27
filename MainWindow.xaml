@@ -191,8 +191,10 @@
             </MenuItem>
 
 			<MenuItem Header="_Tools">
-				<MenuItem Header="Rotate 90 clockwise" Command="{Binding Rotate90Clockwise}"/>
-				<MenuItem Header="Rotate 90 counterclockwise" Command="{Binding Rotate90CounterClockwise}"/>
+				<MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
+				<MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
+				<MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
+				<MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">
