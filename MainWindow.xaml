@@ -3,13 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ImageEditor"
+        xmlns:vm="clr-namespace:ImageEditor.ViewModels"
         mc:Ignorable="d"
         WindowStyle="None"
         AllowsTransparency="False"
         Background="#303030"
         WindowState="Maximized"
-        Title="MonoFrame" d:DesignHeight="332.804" d:DesignWidth="490.957">
+        Title="MonoFrame"
+		Icon="Assets/MonoFrame.ico">
+
+    <!-- ViewModel -->
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
 
     <Window.Resources>
         <!-- Main colors -->
@@ -17,39 +23,140 @@
         <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#444444"/>
         <SolidColorBrush x:Key="TextForegroundBrush" Color="White"/>
 
+		<Style x:Key="CloseButtonStyle" TargetType="Button">
+			<Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
+			<Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="FontSize" Value="16"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<Border x:Name="Border" Background="{TemplateBinding Background}">
+							<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="Border" Property="Background" Value="#E81123"/>
+							</Trigger>
+							<Trigger Property="IsPressed" Value="True">
+								<Setter TargetName="Border" Property="Background" Value="#C41B1B"/>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}" />
+			<Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="StatusBar">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+			<Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="MenuItem">
-            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
+			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Border"
+                        Background="{TemplateBinding Background}">
+
+                            <Grid>
+                                <ContentPresenter
+                            ContentSource="Header"
+                            Margin="6,2"
+                            VerticalAlignment="Center"
+                            RecognizesAccessKey="True"
+                                    />
+
+                                <Popup x:Name="Popup"
+                               IsOpen="{TemplateBinding IsSubmenuOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade">
+
+                                    <Border Background="{StaticResource PrimaryBackgroundBrush}"
+                                    BorderBrush="#555"
+                                    BorderThickness="1">
+                                        <ItemsPresenter/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- TOP LEVEL → DOWN -->
+                            <Trigger Property="Role" Value="TopLevelHeader">
+                                <Setter TargetName="Popup"
+                                Property="Placement"
+                                Value="Bottom"/>
+                            </Trigger>
+
+                            <!-- SUB MENU → RIGHT -->
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Popup"
+                                Property="Placement"
+                                Value="Right"/>
+                            </Trigger>
+
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border"
+                                Property="Background"
+                                Value="#505050"/>
+                            </Trigger>
+
+                            <!-- Pressed -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border"
+                                Property="Background"
+                                Value="#606060"/>
+                            </Trigger>
+
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+        
     </Window.Resources>
 
     <DockPanel>
 
+        <!-- TITLEBAR -->
         <Border DockPanel.Dock="Top"
-        Background="{StaticResource PrimaryBackgroundBrush}"
-        Height="30"
-        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
-        BorderBrush="#555555"
-        BorderThickness="0,0,0,1">
+                Background="{StaticResource PrimaryBackgroundBrush}"
+                Height="30"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                BorderBrush="#555555"
+                BorderThickness="0,0,0,1">
 
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -57,97 +164,100 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Title -->
-                <TextBlock Text="MonoFrame"
-						   VerticalAlignment="Center"
-						   Margin="10,0"/>
+				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
 
-                <!-- Control Buttons -->
-                <StackPanel Grid.Column="1"
-							Orientation="Horizontal">
+					<!-- ICON -->
+					<Viewbox Width="18" Height="18" Margin="0,0,8,0">
+						<Canvas Width="100" Height="100">
+							<Rectangle Width="100" Height="100"
+									   Stroke="#AAAAAA"
+									   StrokeThickness="8"
+									   RadiusX="10" RadiusY="10"
+									   Fill="#303030"/>
 
-                    <!-- Minimize -->
-                    <Button Content="—"
-							Width="30"
-							Height="25"
-							Click="MinimizeButton_Click"
-							Margin="0"/>
+							<Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85"
+									 Fill="White"/>
 
-                    <!-- Maximize / Restore -->
-                    <Button Content="▢"
-							Width="30"
-							Height="25"
-							Click="MaximizeRestoreButton_Click"
-							Margin="0"/>
+							<Ellipse Width="18" Height="18"
+									 Fill="White"
+									 Canvas.Left="65"
+									 Canvas.Top="20"/>
+						</Canvas>
+					</Viewbox>
 
-                    <!-- Close -->
-                    <Button Content="X"
-							Width="30"
-							Height="25"
-							Click="CloseButton_Click"
-							Margin="0"/>
+					<!-- TITLE -->
+					<TextBlock Text="MonoFrame"
+							   VerticalAlignment="Center"
+							   FontSize="16"/>
+				</StackPanel>
 
+				<!-- Control Buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="—" Width="30" Height="25" Command="{Binding MinimizeCommand}"/>
+                    <Button Content="▢" Width="30" Height="25" Command="{Binding MaximizeRestoreCommand}"/>
+                    <Button Content="X" Width="30" Height="25" Command="{Binding CloseCommand}" Style="{StaticResource CloseButtonStyle}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Menu -->
+        <!-- MENU -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_Open" Click="OpenImage_Click"/>
-                <MenuItem Header="_Save" Click="SaveImage_Click"/>
-                <MenuItem Header="_Close" Click="OpenImage_Click"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Click="Exit_Click"/>
+                <MenuItem Header="_Open" Command="{Binding OpenImageCommand}"/>
+                <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 
             <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo" Click="Undo_Click"/>
-                <MenuItem Header="_Redo" Click="Redo_Click"/>
+                <MenuItem Header="_Undo" Command="{Binding UndoCommand}"/>
+                <MenuItem Header="_Redo" Command="{Binding RedoCommand}"/>
             </MenuItem>
 
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About" Click="About_Click"/>
-            </MenuItem>
+			<MenuItem Header="_Tools">
+				<MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
+				<MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
+				<MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
+				<MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
+			</MenuItem>
+
+			<MenuItem Header="_Help">
+				<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
+			</MenuItem>
         </Menu>
 
-        <!-- Main Content -->
+        <!-- MAIN CONTENT -->
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Image Border -->
-            <Border Grid.Row="0" 
-					Margin="10" 
-					BorderThickness="0" 
-					CornerRadius="5" 
-					Background="Transparent">
-
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Transparent">
-
-                    <Image x:Name="ImageDisplay"
-						   Stretch="None"
-						   RenderTransformOrigin="0.5,0.5"
-						   MouseLeftButtonDown="Image_MouseDown"
-						   MouseMove="Image_MouseMove"
-						   MouseLeftButtonUp="Image_MouseUp">
-
-                        <Image.RenderTransform>
-                            <TranslateTransform x:Name="ImageTranslate"/>
+            <!-- IMAGE AREA -->
+            <Border Grid.Row="0" Margin="10" CornerRadius="5" Background="Transparent">
+                <ScrollViewer x:Name="ImageScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Image Source="{Binding Image}" Stretch="None"
+                           MouseLeftButtonDown="Image_MouseLeftButtonDown"
+                           MouseMove="Image_MouseMove"
+                           MouseLeftButtonUp="Image_MouseLeftButtonUp"
+						   MouseWheel="Image_MouseWheel">
+						<Image.RenderTransform>
+							<TransformGroup>
+								<ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
+								<TranslateTransform X="{Binding ImageOffsetX}" Y="{Binding ImageOffsetY}"/>
+							</TransformGroup>
                         </Image.RenderTransform>
+                        
                     </Image>
-
                 </ScrollViewer>
             </Border>
 
-            <!-- StatusBar -->
-            <StatusBar Grid.Row="1" Margin="0" Padding="5">
+            <!-- STATUSBAR -->
+            <StatusBar Grid.Row="1" Padding="5">
                 <StatusBarItem>
-                    <TextBlock x:Name="StatusText" Text="No image loaded"/>
+                    <TextBlock Text="{Binding StatusText}"/>
                 </StatusBarItem>
             </StatusBar>
         </Grid>
+
     </DockPanel>
 </Window>
