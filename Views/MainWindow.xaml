@@ -1,4 +1,4 @@
-﻿<Window x:Class="ImageEditor.MainWindow"
+﻿<Window x:Class="ImageEditor.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -10,7 +10,7 @@
         Background="#303030"
         WindowState="Maximized"
         Title="MonoFrame"
-		Icon="Assets/MonoFrame.ico">
+		Icon="/Assets/MonoFrame.ico">
 
     <!-- ViewModel -->
     <Window.DataContext>
