@@ -8,50 +8,7 @@ namespace ImageEditor.Services.ImageProcessing
 {
     internal static class GaussianBlurHelper
     {
-        /*
-        public static WriteableBitmap ApplyGaussianBlur(WriteableBitmap source, int radius)
-        {
-            if (source == null)
-                return null;
-
-            int w = source.PixelWidth;
-            int h = source.PixelHeight;
-            int stride = w * 4;
-
-            byte[] src = new byte[h * stride];
-            source.CopyPixels(src, stride, 0);
-
-            byte[] tmp = new byte[src.Length];
-            byte[] dst = new byte[src.Length];
-
-            // Gaussian ≈ 3 box blurs
-            BoxBlur(src, tmp, w, h, radius);
-            BoxBlur(tmp, dst, w, h, radius);
-            BoxBlur(dst, tmp, w, h, radius);
-
-            var result = new WriteableBitmap(
-                w, h,
-                source.DpiX, source.DpiY,
-                PixelFormats.Bgra32,
-                null);
-
-            result.WritePixels(
-                new Int32Rect(0, 0, w, h),
-                tmp,
-                stride,
-                0);
-
-            result.Freeze();
-
-            return result;
-        }*/
-
-        public static WriteableBitmap ApplyGaussianBlurFromBytes(
-            byte[] src,
-            int w,
-            int h,
-            int stride,
-            int radius)
+        public static byte[] ApplyGaussianBlurBytes(byte[] src, int w,int h,int stride, int radius)
         {
             byte[] tmp = new byte[src.Length];
             byte[] dst = new byte[src.Length];
@@ -60,20 +17,9 @@ namespace ImageEditor.Services.ImageProcessing
             BoxBlur(tmp, dst, w, h, radius);
             BoxBlur(dst, tmp, w, h, radius);
 
-            var result = new WriteableBitmap(
-                w, h,
-                96, 96,
-                PixelFormats.Bgra32,
-                null);
-
-            result.WritePixels(
-                new Int32Rect(0, 0, w, h),
-                tmp,
-                stride,
-                0);
-
-            return result;
+            return tmp;
         }
+
         private static void BoxBlur(byte[] src, byte[] dst, int w, int h, int r)
         {
             int stride = w * 4;

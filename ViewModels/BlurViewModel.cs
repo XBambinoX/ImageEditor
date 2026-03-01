@@ -1,9 +1,11 @@
 ﻿using ImageEditor.Commands;
 using ImageEditor.Services.ImageProcessing;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
@@ -11,6 +13,7 @@ namespace ImageEditor.ViewModels
     public class BlurViewModel : BaseViewModel
     {
         private readonly WriteableBitmap _original;
+        private CancellationTokenSource _cts;
 
         private WriteableBitmap _preview;
         private int _radius = 1;
@@ -74,27 +77,52 @@ namespace ImageEditor.ViewModels
 
         private async void UpdatePreview()
         {
-            var radius = Radius;
+            _cts?.Cancel();
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
 
-            int w = _original.PixelWidth;
-            int h = _original.PixelHeight;
-            int stride = w * 4;
-
-            byte[] src = new byte[h * stride];
-            _original.CopyPixels(src, stride, 0);
-
-            await Task.Run(() =>
+            try
             {
-                var blurred = GaussianBlurHelper
-                    .ApplyGaussianBlurFromBytes(src, w, h, stride, radius);
+                await Task.Delay(150, token);
 
-                blurred.Freeze();
+                int radius = Radius;
 
-                Application.Current.Dispatcher.Invoke(() =>
+                int w = _original.PixelWidth;
+                int h = _original.PixelHeight;
+                int stride = w * 4;
+
+                byte[] src = new byte[h * stride];
+                _original.CopyPixels(src, stride, 0);
+
+                byte[] resultBytes = await Task.Run(() =>
                 {
-                    PreviewImage = blurred;
-                });
-            });
+                    if (token.IsCancellationRequested)
+                        return null;
+
+                    return GaussianBlurHelper.ApplyGaussianBlurBytes(src, w, h, stride, radius);
+                }, token);
+
+                if (token.IsCancellationRequested || resultBytes == null)
+                    return;
+
+                var wb = new WriteableBitmap(
+                    w, h,
+                    _original.DpiX,
+                    _original.DpiY,
+                    PixelFormats.Bgra32,
+                    null);
+
+                wb.WritePixels(
+                    new Int32Rect(0, 0, w, h),
+                    resultBytes,
+                    stride,
+                    0);
+
+                PreviewImage = wb;
+            }
+            catch (TaskCanceledException)
+            {
+            }
         }
 
         private int Clamp(int value, int min, int max)
