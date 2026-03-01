@@ -183,42 +183,6 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
-        /*
-        private void ApplyGaussianBlur(int radius = 6)
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            SaveState();
-
-            int w = Image.PixelWidth;
-            int h = Image.PixelHeight;
-            int stride = w * 4;
-
-            byte[] src = new byte[h * stride];
-            Image.CopyPixels(src, stride, 0);
-
-            byte[] tmp = new byte[src.Length];
-            byte[] dst = new byte[src.Length];
-
-            // Gaussian ≈ 3 box blurs
-            GaussianBlurHelper.BoxBlur(src, tmp, w, h, radius);
-            GaussianBlurHelper.BoxBlur(tmp, dst, w, h, radius);
-            GaussianBlurHelper.BoxBlur(dst, tmp, w, h, radius);
-
-            var wb = new WriteableBitmap(w, h, Image.DpiX, Image.DpiY,
-                PixelFormats.Bgra32, null);
-
-            wb.WritePixels(new Int32Rect(0, 0, w, h), tmp, stride, 0);
-            wb.Freeze();
-
-            Image = wb;
-        }*/
-
         private void OpenBlurWindow()
         {
             if (Image == null)
@@ -241,7 +205,8 @@ namespace ImageEditor.ViewModels
             {
                 if (result)
                 {
-                    Image = vm.PreviewImage;
+                    SaveState();
+                    Image = vm.ResultImage;
                 }
 
                 window.Close();
