@@ -1,9 +1,9 @@
 ﻿using ImageEditor.Commands;
 using ImageEditor.Services.ImageProcessing;
+using ImageEditor.Views;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -117,7 +117,7 @@ namespace ImageEditor.ViewModels
             Rotate180 = new RelayCommand(_ => RotateImage(180, true));
             FlipHorizontal = new RelayCommand(_ => FlipImage(true));
             FlipVertical = new RelayCommand(_ => FlipImage(false));
-            GaussianBlurCommand = new RelayCommand(_ => ApplyGaussianBlur());
+            GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow());
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -183,6 +183,7 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
+        /*
         private void ApplyGaussianBlur(int radius = 6)
         {
             if (Image == null)
@@ -216,6 +217,37 @@ namespace ImageEditor.ViewModels
             wb.Freeze();
 
             Image = wb;
+        }*/
+
+        private void OpenBlurWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new BlurViewModel(writeable);
+
+            var window = new BlurWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    Image = vm.PreviewImage;
+                }
+
+                window.Close();
+            };
+
+            window.ShowDialog();
         }
         #endregion
 
