@@ -57,20 +57,37 @@
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
+    <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
+    <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
+    <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
+    <Compile Include="ViewModels\BlurViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
-    <Page Include="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
+    <Compile Include="ViewModels\SharpenViewModel.cs" />
+    <Compile Include="Views\SharpenWindow.xaml.cs">
+      <DependentUpon>SharpenWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\BlurWindow.xaml.cs">
+      <DependentUpon>BlurWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
+    <Page Include="Views\SharpenWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\BlurWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -97,7 +114,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-	<Resource Include="Assets\MonoFrame.ico" />
+    <Resource Include="Assets\MonoFrame.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

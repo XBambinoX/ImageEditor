@@ -1,11 +1,13 @@
 ﻿using ImageEditor.Commands;
+using ImageEditor.Views;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Collections.Generic;
+using ImageEditor.Services.ImageStatus;
 
 namespace ImageEditor.ViewModels
 {
@@ -26,6 +28,16 @@ namespace ImageEditor.ViewModels
         private readonly Stack<BitmapSource> _undoStack = new Stack<BitmapSource>();
         private readonly Stack<BitmapSource> _redoStack = new Stack<BitmapSource>();
 
+        private string _currentFilePath;
+        public string CurrentFilePath
+        {
+            get => _currentFilePath;
+            set
+            {
+                _currentFilePath = value;
+                OnPropertyChanged();
+            }
+        }
         // ================= STATUS =================
         private string _statusText = "No image loaded";
         public string StatusText
@@ -78,6 +90,7 @@ namespace ImageEditor.ViewModels
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
+        public ICommand CloseImageCommand { get; }
         public ICommand ExitCommand { get; }
 
         public ICommand UndoCommand { get; }
@@ -87,8 +100,11 @@ namespace ImageEditor.ViewModels
         //tools
         public ICommand Rotate90Clockwise { get; }
         public ICommand Rotate90CounterClockwise { get; }
+        public ICommand Rotate180 { get; }
         public ICommand FlipHorizontal { get; }
         public ICommand FlipVertical { get; }
+        public ICommand GaussianBlurCommand { get; }
+        public ICommand SharpenCommand { get; }
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -99,7 +115,9 @@ namespace ImageEditor.ViewModels
         // ================= CONSTRUCTOR =================
         public MainViewModel()
         {
+            // File commands
             OpenImageCommand = new RelayCommand(_ => OpenImage());
+            CloseImageCommand = new RelayCommand(_ => CloseImage(), _ => Image != null);
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => Image != null);
 
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
@@ -110,8 +128,11 @@ namespace ImageEditor.ViewModels
 
             Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
             Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false));
+            Rotate180 = new RelayCommand(_ => RotateImage(180, true));
             FlipHorizontal = new RelayCommand(_ => FlipImage(true));
             FlipVertical = new RelayCommand(_ => FlipImage(false));
+            GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow());
+            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow());
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -141,27 +162,7 @@ namespace ImageEditor.ViewModels
 
         // ================= METHODS =================
 
-        private BitmapImage BitmapFromSource(BitmapSource source)
-        {
-            using (var stream = new System.IO.MemoryStream())
-            {
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(source));
-                encoder.Save(stream);
-
-                stream.Position = 0;
-
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.StreamSource = stream;
-                img.EndInit();
-                img.Freeze();
-
-                return img;
-            }
-        }
-
+        #region TOOLS
         private void RotateImage(int angle, bool clockwise)
         {
             if (Image == null)
@@ -197,6 +198,72 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
+        private void OpenBlurWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new BlurViewModel(writeable);
+
+            var window = new BlurWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+
+                window.Close();
+            };
+
+            window.ShowDialog();
+        }
+
+        private void OpenSharpenWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new SharpenViewModel(writeable);
+
+            var window = new SharpenWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+
+                window.Close();
+            };
+
+            window.ShowDialog();
+        }
+        #endregion
+
+        #region FILE
         private void OpenImage()
         {
             OpenFileDialog dialog = new OpenFileDialog
@@ -218,8 +285,25 @@ namespace ImageEditor.ViewModels
                 ImageOffsetX = 0;
                 ImageOffsetY = 0;
 
-                StatusText = $"Loaded: {dialog.FileName}";
+                CurrentFilePath = dialog.FileName;
+                StatusText = $"Loaded: {CurrentFilePath}";
             }
+        }
+
+        private void CloseImage()
+        {
+            if (Image == null)
+                return;
+
+            Image = null;
+
+            _undoStack.Clear();
+            _redoStack.Clear();
+
+            Zoom = 1.0;
+            _imageOffsetX = 0;
+            _imageOffsetY = 0;
+            StatusText = "No image loaded";
         }
 
         private void SaveImage()
@@ -228,6 +312,13 @@ namespace ImageEditor.ViewModels
             {
                 MessageBox.Show("No image loaded", "Info",
                     MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(_currentFilePath))
+            {
+                SaveImageHelper.SaveToFile(_currentFilePath,_image);
+                StatusText = $"Saved: {_currentFilePath}";
                 return;
             }
 
@@ -240,32 +331,12 @@ namespace ImageEditor.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
-                BitmapEncoder encoder;
-
-                string extension = System.IO.Path.GetExtension(dialog.FileName).ToLower();
-
-                switch (extension)
-                {
-                    case ".jpg":
-                    case ".jpeg":
-                        encoder = new JpegBitmapEncoder();
-                        break;
-
-                    default:
-                        encoder = new PngBitmapEncoder();
-                        break;
-                }
-
-                encoder.Frames.Add(BitmapFrame.Create(Image));
-
-                using (var stream = System.IO.File.Create(dialog.FileName))
-                {
-                    encoder.Save(stream);
-                }
-
-                StatusText = $"Saved: {dialog.FileName}";
+                _currentFilePath = dialog.FileName;
+                SaveImageHelper.SaveToFile(_currentFilePath, _image);
+                StatusText = $"Saved: {_currentFilePath}";
             }
         }
+        #endregion
 
         private void SaveState()
         {
@@ -281,6 +352,7 @@ namespace ImageEditor.ViewModels
             return new WriteableBitmap(source);
         }
 
+        #region EDIT
         private void Undo()
         {
             if (_undoStack.Count > 0)
@@ -298,6 +370,7 @@ namespace ImageEditor.ViewModels
                 Image = _redoStack.Pop();
             }
         }
+        #endregion
 
         private void About()
         {

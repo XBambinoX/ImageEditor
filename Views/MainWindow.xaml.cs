@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Input;
 
-namespace ImageEditor
+namespace ImageEditor.Views
 {
     public partial class MainWindow : Window
     {
