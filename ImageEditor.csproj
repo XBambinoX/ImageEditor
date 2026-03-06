@@ -58,6 +58,7 @@
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
     <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
+    <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\BlurViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />

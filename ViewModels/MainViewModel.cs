@@ -1,5 +1,4 @@
 ﻿using ImageEditor.Commands;
-using ImageEditor.Services.ImageProcessing;
 using ImageEditor.Views;
 using Microsoft.Win32;
 using System;
@@ -8,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ImageEditor.Services.ImageStatus;
 
 namespace ImageEditor.ViewModels
 {
@@ -28,6 +28,16 @@ namespace ImageEditor.ViewModels
         private readonly Stack<BitmapSource> _undoStack = new Stack<BitmapSource>();
         private readonly Stack<BitmapSource> _redoStack = new Stack<BitmapSource>();
 
+        private string _currentFilePath;
+        public string CurrentFilePath
+        {
+            get => _currentFilePath;
+            set
+            {
+                _currentFilePath = value;
+                OnPropertyChanged();
+            }
+        }
         // ================= STATUS =================
         private string _statusText = "No image loaded";
         public string StatusText
@@ -80,6 +90,7 @@ namespace ImageEditor.ViewModels
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
+        public ICommand CloseImageCommand { get; }
         public ICommand ExitCommand { get; }
 
         public ICommand UndoCommand { get; }
@@ -103,7 +114,9 @@ namespace ImageEditor.ViewModels
         // ================= CONSTRUCTOR =================
         public MainViewModel()
         {
+            // File commands
             OpenImageCommand = new RelayCommand(_ => OpenImage());
+            CloseImageCommand = new RelayCommand(_ => CloseImage(), _ => Image != null);
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => Image != null);
 
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
@@ -238,8 +251,25 @@ namespace ImageEditor.ViewModels
                 ImageOffsetX = 0;
                 ImageOffsetY = 0;
 
-                StatusText = $"Loaded: {dialog.FileName}";
+                CurrentFilePath = dialog.FileName;
+                StatusText = $"Loaded: {CurrentFilePath}";
             }
+        }
+
+        private void CloseImage()
+        {
+            if (Image == null)
+                return;
+
+            Image = null;
+
+            _undoStack.Clear();
+            _redoStack.Clear();
+
+            Zoom = 1.0;
+            _imageOffsetX = 0;
+            _imageOffsetY = 0;
+            StatusText = "No image loaded";
         }
 
         private void SaveImage()
@@ -248,6 +278,13 @@ namespace ImageEditor.ViewModels
             {
                 MessageBox.Show("No image loaded", "Info",
                     MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(_currentFilePath))
+            {
+                SaveImageHelper.SaveToFile(_currentFilePath,_image);
+                StatusText = $"Saved: {_currentFilePath}";
                 return;
             }
 
@@ -260,30 +297,9 @@ namespace ImageEditor.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
-                BitmapEncoder encoder;
-
-                string extension = System.IO.Path.GetExtension(dialog.FileName).ToLower();
-
-                switch (extension)
-                {
-                    case ".jpg":
-                    case ".jpeg":
-                        encoder = new JpegBitmapEncoder();
-                        break;
-
-                    default:
-                        encoder = new PngBitmapEncoder();
-                        break;
-                }
-
-                encoder.Frames.Add(BitmapFrame.Create(Image));
-
-                using (var stream = System.IO.File.Create(dialog.FileName))
-                {
-                    encoder.Save(stream);
-                }
-
-                StatusText = $"Saved: {dialog.FileName}";
+                _currentFilePath = dialog.FileName;
+                SaveImageHelper.SaveToFile(_currentFilePath, _image);
+                StatusText = $"Saved: {_currentFilePath}";
             }
         }
         #endregion
