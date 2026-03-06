@@ -41,55 +41,69 @@
                 Orientation="Horizontal"
                 VerticalAlignment="Center"
                 Margin="0,0,0,8">
+                
                 <TextBlock Text="Strength:"
                    Foreground="White"
                    VerticalAlignment="Center"
                    Width="70"
                    Margin="0,0,10,0"/>
+                
                 <Button Content="-"
                 Width="30" Height="25"
                 Margin="0,0,5,0"
                 Command="{Binding DecreaseStrengthCommand}"/>
+                
                 <Slider Width="300"
                 Minimum="{Binding MinStrength}"
                 Maximum="{Binding MaxStrength}"
                 Value="{Binding Strength, Mode=TwoWay}"
                 TickFrequency="1"
-                IsSnapToTickEnabled="True"/>
+                IsSnapToTickEnabled="True"
+                PreviewMouseWheel="Strength_MouseWheel"/>
+                
                 <Button Content="+"
                 Width="30" Height="25"
                 Margin="5,0,10,0"
                 Command="{Binding IncreaseStrengthCommand}"/>
+                
                 <TextBox Width="60" Height="25"
                  Text="{Binding Strength, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  HorizontalContentAlignment="Center"/>
+                
             </StackPanel>
 
             <StackPanel Grid.Row="1" Grid.Column="0"
                 Orientation="Horizontal"
                 VerticalAlignment="Center">
+                
                 <TextBlock Text="Radius:"
                    Foreground="White"
                    VerticalAlignment="Center"
                    Width="70"
                    Margin="0,0,10,0"/>
+                
                 <Button Content="-"
                 Width="30" Height="25"
                 Margin="0,0,5,0"
                 Command="{Binding DecreaseRadiusCommand}"/>
+                
                 <Slider Width="300"
                 Minimum="{Binding MinRadius}"
                 Maximum="{Binding MaxRadius}"
                 Value="{Binding Radius, Mode=TwoWay}"
                 TickFrequency="1"
-                IsSnapToTickEnabled="True"/>
+                IsSnapToTickEnabled="True"
+                PreviewMouseWheel="Radius_MouseWheel"/>
+                
                 <Button Content="+"
                 Width="30" Height="25"
                 Margin="5,0,10,0"
                 Command="{Binding IncreaseRadiusCommand}"/>
+                
                 <TextBox Width="60" Height="25"
                  Text="{Binding Radius, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  HorizontalContentAlignment="Center"/>
+                
             </StackPanel>
 
             <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
