@@ -104,6 +104,7 @@ namespace ImageEditor.ViewModels
         public ICommand FlipHorizontal { get; }
         public ICommand FlipVertical { get; }
         public ICommand GaussianBlurCommand { get; }
+        public ICommand SharpenCommand { get; }
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -131,6 +132,7 @@ namespace ImageEditor.ViewModels
             FlipHorizontal = new RelayCommand(_ => FlipImage(true));
             FlipVertical = new RelayCommand(_ => FlipImage(false));
             GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow());
+            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow());
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -209,6 +211,38 @@ namespace ImageEditor.ViewModels
             var vm = new BlurViewModel(writeable);
 
             var window = new BlurWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+
+                window.Close();
+            };
+
+            window.ShowDialog();
+        }
+
+        private void OpenSharpenWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new SharpenViewModel(writeable);
+
+            var window = new SharpenWindow
             {
                 DataContext = vm,
                 Owner = Application.Current.MainWindow

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:vm="clr-namespace:ImageEditor.ViewModels" 
-        WindowStyle="None" AllowsTransparency="False" 
+        AllowsTransparency="False" 
         Title="Gaussian Blur" 
         Height="600" 
         Width="900" 
