@@ -104,6 +104,7 @@ namespace ImageEditor.ViewModels
         public ICommand FlipHorizontal { get; }
         public ICommand FlipVertical { get; }
         public ICommand GaussianBlurCommand { get; }
+        public ICommand SharpenCommand { get; }
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -131,6 +132,7 @@ namespace ImageEditor.ViewModels
             FlipHorizontal = new RelayCommand(_ => FlipImage(true));
             FlipVertical = new RelayCommand(_ => FlipImage(false));
             GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow());
+            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow());
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -223,6 +225,23 @@ namespace ImageEditor.ViewModels
                 }
 
                 window.Close();
+            };
+
+            window.ShowDialog();
+        }
+
+        private void OpenSharpenWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var window = new SharpenWindow
+            {
+                Owner = Application.Current.MainWindow
             };
 
             window.ShowDialog();
