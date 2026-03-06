@@ -239,9 +239,24 @@ namespace ImageEditor.ViewModels
                 return;
             }
 
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new SharpenViewModel(writeable);
+
             var window = new SharpenWindow
             {
+                DataContext = vm,
                 Owner = Application.Current.MainWindow
+            };
+
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+
+                window.Close();
             };
 
             window.ShowDialog();
