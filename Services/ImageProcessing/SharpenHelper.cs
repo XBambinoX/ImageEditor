@@ -8,9 +8,8 @@ namespace ImageEditor.Services.ImageProcessing
     {
         public static WriteableBitmap ApplySharpen(
             byte[] src, int w, int h, int stride,
-            double dpiX, double dpiY, int strength)
+            double dpiX, double dpiY, int strength, int radius)
         {
-            const int radius = 10;
             byte[] blur = GaussianBlurHelper.ApplyGaussianBlurBytes(src, w, h, stride, radius);
             byte[] dst = new byte[src.Length];
             float amount = strength / 100f;

@@ -19,6 +19,10 @@ namespace ImageEditor.ViewModels
         public int MinStrength => 0;
         public int MaxStrength => 100;
 
+        private int _radius = 1;
+        public int MinRadius => 1;
+        public int MaxRadius => 100;
+
         public WriteableBitmap PreviewImage
         {
             get => _preview;
@@ -44,12 +48,28 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        public int Radius
+        {
+            get => _radius;
+            set
+            {
+                int clamped = Clamp(value, MinRadius, MaxRadius);
+                if (_radius == clamped) return;
+                _radius = clamped;
+                OnPropertyChanged();
+                UpdatePreview();
+            }
+        }
+
         public WriteableBitmap ResultImage { get; private set; }
 
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseStrengthCommand { get; }
         public ICommand DecreaseStrengthCommand { get; }
+
+        public ICommand IncreaseRadiusCommand { get; }
+        public ICommand DecreaseRadiusCommand { get; }
 
         public Action<bool> CloseAction;
 
@@ -71,6 +91,9 @@ namespace ImageEditor.ViewModels
 
             IncreaseStrengthCommand = new RelayCommand(_ => Strength++);
             DecreaseStrengthCommand = new RelayCommand(_ => Strength--);
+
+            IncreaseRadiusCommand = new RelayCommand(_ => Radius++);
+            DecreaseRadiusCommand = new RelayCommand(_ => Radius--);
         }
 
         private async void UpdatePreview()
@@ -83,6 +106,7 @@ namespace ImageEditor.ViewModels
             {
                 await Task.Delay(120, token);
                 int strength = Strength;
+                int radius = Radius;
 
                 int w = _original.PixelWidth;
                 int h = _original.PixelHeight;
@@ -95,7 +119,7 @@ namespace ImageEditor.ViewModels
                 var result = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-                    return SharpenHelper.ApplySharpen(pixels, w, h, stride, dpiX, dpiY, strength);
+                    return SharpenHelper.ApplySharpen(pixels, w, h, stride, dpiX, dpiY, strength, radius);
                 }, token);
 
                 if (token.IsCancellationRequested || result == null) return;
