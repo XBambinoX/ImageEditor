@@ -1,4 +1,4 @@
-﻿using ImageEditor.Services.Math;
+﻿using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -11,34 +11,39 @@ namespace ImageEditor.Services.ImageProcessing
         {
             byte[] gray = GrayscaleHelper.ApplyGrayscaleBytes(src);
             byte[] dst = new byte[src.Length];
-
-            int[] kX = { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
-            int[] kY = { -1, -2, -1, 0, 0, 0, 1, 2, 1 };
-
-            for (int y = 0; y < h; y++)
+            Parallel.For(0, h, y =>
             {
+                int rowOffset = y * stride;
+
                 for (int x = 0; x < w; x++)
                 {
-                    int gx = 0, gy = 0;
+                    int yPrev = y == 0 ? 0 : y - 1;
+                    int yNext = y == h - 1 ? h - 1 : y + 1;
 
-                    for (int ky = -1; ky <= 1; ky++)
-                    {
-                        for (int kx = -1; kx <= 1; kx++)
-                        {
-                            int px = Tools.Clamp(x + kx, 0, w - 1);
-                            int py = Tools.Clamp(y + ky, 0, h - 1);
-                            int idx = py * stride + px * 4;
-                            int k = (ky + 1) * 3 + (kx + 1);
+                    int xPrev = x == 0 ? 0 : x - 1;
+                    int xNext = x == w - 1 ? w - 1 : x + 1;
 
-                            gx += gray[idx] * kX[k];
-                            gy += gray[idx] * kY[k];
-                        }
-                    }
+                    int offTop = yPrev * stride;
+                    int offMid = y * stride;
+                    int offBot = yNext * stride;
 
-                    int magnitude = (int)System.Math.Sqrt(gx * gx + gy * gy);
-                    magnitude = Tools.Clamp(magnitude, 0, 255);
+                    int tl = gray[offTop + xPrev * 4];
+                    int tc = gray[offTop + x * 4];
+                    int tr = gray[offTop + xNext * 4];
+                    int ml = gray[offMid + xPrev * 4];
+                    int mr = gray[offMid + xNext * 4];
+                    int bl = gray[offBot + xPrev * 4];
+                    int bc = gray[offBot + x * 4];
+                    int br = gray[offBot + xNext * 4];
 
-                    int i = y * stride + x * 4;
+                    int gx = (tr + 2 * mr + br) - (tl + 2 * ml + bl);
+
+                    int gy = (bl + 2 * bc + br) - (tl + 2 * tc + tr);
+
+                    int magnitude = System.Math.Abs(gx) + System.Math.Abs(gy);
+                    if (magnitude > 255) magnitude = 255;
+
+                    int i = rowOffset + x * 4;
 
                     if (magnitude < threshold)
                     {
@@ -48,7 +53,7 @@ namespace ImageEditor.Services.ImageProcessing
                     }
                     else if (colorize)
                     {
-                        double angle = System.Math.Atan2(gy, gx) + System.Math.PI; // 0..2pi
+                        double angle = System.Math.Atan2(gy, gx) + System.Math.PI;
                         HsvToRgb(angle / (2 * System.Math.PI) * 360, 1.0, magnitude / 255.0,
                             out byte cr, out byte cg, out byte cb);
                         dst[i] = cb;
@@ -65,7 +70,7 @@ namespace ImageEditor.Services.ImageProcessing
 
                     dst[i + 3] = src[i + 3];
                 }
-            }
+            });
 
             var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgra32, null);
             result.WritePixels(new Int32Rect(0, 0, w, h), dst, stride, 0);
@@ -85,29 +90,12 @@ namespace ImageEditor.Services.ImageProcessing
             double dr, dg, db;
             switch (hi)
             {
-                case 0:
-                    dr = v; dg = t; db = p;
-                    break;
-
-                case 1:
-                    dr = q; dg = v; db = p;
-                    break;
-
-                case 2:
-                    dr = p; dg = v; db = t;
-                    break;
-
-                case 3:
-                    dr = p; dg = q; db = v;
-                    break;
-
-                case 4:
-                    dr = t; dg = p; db = v;
-                    break;
-
-                default:
-                    dr = v; dg = p; db = q;
-                    break;
+                case 0: dr = v; dg = t; db = p; break;
+                case 1: dr = q; dg = v; db = p; break;
+                case 2: dr = p; dg = v; db = t; break;
+                case 3: dr = p; dg = q; db = v; break;
+                case 4: dr = t; dg = p; db = v; break;
+                default: dr = v; dg = p; db = q; break;
             }
 
             r = (byte)(dr * 255);
