@@ -230,6 +230,7 @@
                 <MenuItem Header="Sharpen" Command="{Binding SharpenCommand}"/>
                 <MenuItem Header="Brightness" Command="{Binding BrightnessCommand}"/>
                 <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
+                <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">

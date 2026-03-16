@@ -107,6 +107,7 @@ namespace ImageEditor.ViewModels
         public ICommand SharpenCommand { get; }
         public ICommand BrightnessCommand { get; }
         public ICommand GrayscaleCommand { get; }
+        public ICommand SobelCommand { get; }
 
 
         public ICommand MinimizeCommand { get; }
@@ -137,7 +138,9 @@ namespace ImageEditor.ViewModels
             GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow(), _ => Image != null);
             SharpenCommand = new RelayCommand(_ => OpenSharpenWindow(), _ => Image != null);
             BrightnessCommand = new RelayCommand(_ => OpenBrightnessWindow(), _ => Image != null);
-            GrayscaleCommand = new RelayCommand(_ => OpenGrayscaleWindow(), _ => Image != null); 
+            GrayscaleCommand = new RelayCommand(_ => OpenGrayscaleWindow(), _ => Image != null);
+            SobelCommand = new RelayCommand(_ => OpenSobelWindow(), _ => Image != null);
+
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -311,6 +314,33 @@ namespace ImageEditor.ViewModels
                 Owner = Application.Current.MainWindow
             };
 
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+                window.Close();
+            };
+            window.ShowDialog();
+        }
+
+        private void OpenSobelWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new SobelViewModel(writeable);
+            var window = new SobelWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
             vm.CloseAction = result =>
             {
                 if (result)

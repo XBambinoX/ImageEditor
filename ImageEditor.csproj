@@ -61,6 +61,7 @@
     <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
     <Compile Include="Services\ImageProcessing\GrayscaleHelper.cs" />
     <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
+    <Compile Include="Services\ImageProcessing\SobelHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
     <Compile Include="Services\Math\Tools.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
@@ -69,8 +70,12 @@
     <Compile Include="ViewModels\GrayscaleViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\SharpenViewModel.cs" />
+    <Compile Include="ViewModels\SobelViewModel.cs" />
     <Compile Include="Views\BrightnessWindow.xaml.cs">
       <DependentUpon>BrightnessWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SobelWindow.xaml.cs">
+      <DependentUpon>SobelWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\GrayscaleWindow.xaml.cs">
       <DependentUpon>GrayscaleWindow.xaml</DependentUpon>
@@ -89,6 +94,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\BrightnessWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SobelWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
