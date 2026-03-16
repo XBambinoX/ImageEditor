@@ -233,6 +233,7 @@
                 <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
                 <MenuItem Header="Invert" Command="{Binding InvertCommand}"/>
                 <MenuItem Header="Pixelate" Command="{Binding PixelateCommand}"/>
+                <MenuItem Header="Gamma Correction" Command="{Binding GammaCommand}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">

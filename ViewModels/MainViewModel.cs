@@ -111,6 +111,7 @@ namespace ImageEditor.ViewModels
         public ICommand SobelCommand { get; }
         public ICommand InvertCommand { get; }
         public ICommand PixelateCommand { get; }
+        public ICommand GammaCommand { get; }
 
 
         public ICommand MinimizeCommand { get; }
@@ -158,11 +159,14 @@ namespace ImageEditor.ViewModels
             BrightnessCommand = new RelayCommand(_ => OpenFilterWindow<BrightnessWindow>(img => new BrightnessViewModel(img)), _ => Image != null);
             GrayscaleCommand = new RelayCommand(_ => OpenFilterWindow<GrayscaleWindow>(img => new GrayscaleViewModel(img)), _ => Image != null);
             SobelCommand = new RelayCommand(_ => OpenFilterWindow<SobelWindow>(img => new SobelViewModel(img)), _ => Image != null);
+
             InvertCommand = new RelayCommand(_ => {
                     SaveState();
                     Image = InvertHelper.ApplyInvert(Image);
                 }, _ => Image != null);
+
             PixelateCommand = new RelayCommand(_ => OpenFilterWindow<PixelateWindow>(img => new PixelateViewModel(img)), _ => Image != null);
+            GammaCommand = new RelayCommand(_ => OpenFilterWindow<GammaWindow>(img => new GammaViewModel(img)), _ => Image != null);
 
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
