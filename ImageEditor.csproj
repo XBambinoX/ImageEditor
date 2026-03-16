@@ -57,13 +57,19 @@
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
+    <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />
     <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
     <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
+    <Compile Include="Services\Math\Tools.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\BlurViewModel.cs" />
+    <Compile Include="ViewModels\BrightnessViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\SharpenViewModel.cs" />
+    <Compile Include="Views\BrightnessWindow.xaml.cs">
+      <DependentUpon>BrightnessWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SharpenWindow.xaml.cs">
       <DependentUpon>SharpenWindow.xaml</DependentUpon>
     </Compile>
@@ -77,6 +83,10 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\BrightnessWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\SharpenWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

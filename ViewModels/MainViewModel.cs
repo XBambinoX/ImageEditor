@@ -105,6 +105,7 @@ namespace ImageEditor.ViewModels
         public ICommand FlipVertical { get; }
         public ICommand GaussianBlurCommand { get; }
         public ICommand SharpenCommand { get; }
+        public ICommand BrightnessCommand { get; }
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -126,13 +127,14 @@ namespace ImageEditor.ViewModels
             RedoCommand = new RelayCommand(_ => Redo());
             AboutCommand = new RelayCommand(_ => About());
 
-            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
-            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false));
-            Rotate180 = new RelayCommand(_ => RotateImage(180, true));
-            FlipHorizontal = new RelayCommand(_ => FlipImage(true));
-            FlipVertical = new RelayCommand(_ => FlipImage(false));
-            GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow());
-            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow());
+            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true), _ => Image != null);
+            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false), _ => Image != null);
+            Rotate180 = new RelayCommand(_ => RotateImage(180, true), _ => Image != null);
+            FlipHorizontal = new RelayCommand(_ => FlipImage(true), _ => Image != null);
+            FlipVertical = new RelayCommand(_ => FlipImage(false), _ => Image != null);
+            GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow(), _ => Image != null);
+            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow(), _ => Image != null);
+            BrightnessCommand = new RelayCommand(_ => OpenBrightnessWindow(), _ => Image != null);
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -261,6 +263,34 @@ namespace ImageEditor.ViewModels
 
             window.ShowDialog();
         }
+
+        private void OpenBrightnessWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new BrightnessViewModel(writeable);
+            var window = new BrightnessWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+                window.Close();
+            };
+            window.ShowDialog();
+        }
+
         #endregion
 
         #region FILE
