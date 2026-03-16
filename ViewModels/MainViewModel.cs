@@ -135,11 +135,11 @@ namespace ImageEditor.ViewModels
             Rotate180 = new RelayCommand(_ => RotateImage(180, true), _ => Image != null);
             FlipHorizontal = new RelayCommand(_ => FlipImage(true), _ => Image != null);
             FlipVertical = new RelayCommand(_ => FlipImage(false), _ => Image != null);
-            GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow(), _ => Image != null);
-            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow(), _ => Image != null);
-            BrightnessCommand = new RelayCommand(_ => OpenBrightnessWindow(), _ => Image != null);
-            GrayscaleCommand = new RelayCommand(_ => OpenGrayscaleWindow(), _ => Image != null);
-            SobelCommand = new RelayCommand(_ => OpenSobelWindow(), _ => Image != null);
+            GaussianBlurCommand = new RelayCommand(_ => OpenFilterWindow<BlurWindow>(img => new BlurViewModel(img)), _ => Image != null);
+            SharpenCommand = new RelayCommand(_ => OpenFilterWindow<SharpenWindow>(img => new SharpenViewModel(img)), _ => Image != null);
+            BrightnessCommand = new RelayCommand(_ => OpenFilterWindow<BrightnessWindow>(img => new BrightnessViewModel(img)), _ => Image != null);
+            GrayscaleCommand = new RelayCommand(_ => OpenFilterWindow<GrayscaleWindow>(img => new GrayscaleViewModel(img)), _ => Image != null);
+            SobelCommand = new RelayCommand(_ => OpenFilterWindow<SobelWindow>(img => new SobelViewModel(img)), _ => Image != null);
 
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
@@ -206,7 +206,9 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
-        private void OpenBlurWindow()
+        private void OpenFilterWindow<TWindow>(
+            Func<WriteableBitmap, dynamic> viewModelFactory)
+            where TWindow : Window, new()
         {
             if (Image == null)
             {
@@ -216,15 +218,15 @@ namespace ImageEditor.ViewModels
             }
 
             var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new BlurViewModel(writeable);
+            var vm = viewModelFactory(writeable);
 
-            var window = new BlurWindow
+            var window = new TWindow
             {
                 DataContext = vm,
                 Owner = Application.Current.MainWindow
             };
 
-            vm.CloseAction = result =>
+            vm.CloseAction = new Action<bool>(result =>
             {
                 if (result)
                 {
@@ -233,123 +235,8 @@ namespace ImageEditor.ViewModels
                 }
 
                 window.Close();
-            };
+            });
 
-            window.ShowDialog();
-        }
-
-        private void OpenSharpenWindow()
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new SharpenViewModel(writeable);
-
-            var window = new SharpenWindow
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-
-            vm.CloseAction = result =>
-            {
-                if (result)
-                {
-                    SaveState();
-                    Image = vm.ResultImage;
-                }
-
-                window.Close();
-            };
-
-            window.ShowDialog();
-        }
-
-        private void OpenBrightnessWindow()
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new BrightnessViewModel(writeable);
-            var window = new BrightnessWindow
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-            vm.CloseAction = result =>
-            {
-                if (result)
-                {
-                    SaveState();
-                    Image = vm.ResultImage;
-                }
-                window.Close();
-            };
-            window.ShowDialog();
-        }
-
-        private void OpenGrayscaleWindow()
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new GrayscaleViewModel(writeable);
-            var window = new GrayscaleWindow
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-
-            vm.CloseAction = result =>
-            {
-                if (result)
-                {
-                    SaveState();
-                    Image = vm.ResultImage;
-                }
-                window.Close();
-            };
-            window.ShowDialog();
-        }
-
-        private void OpenSobelWindow()
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new SobelViewModel(writeable);
-            var window = new SobelWindow
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-            vm.CloseAction = result =>
-            {
-                if (result)
-                {
-                    SaveState();
-                    Image = vm.ResultImage;
-                }
-                window.Close();
-            };
             window.ShowDialog();
         }
 
