@@ -231,6 +231,7 @@
                 <MenuItem Header="Brightness" Command="{Binding BrightnessCommand}"/>
                 <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
                 <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
+                <MenuItem Header="Invert" Command="{Binding InvertCommand}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">

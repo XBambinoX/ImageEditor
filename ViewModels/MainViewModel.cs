@@ -1,4 +1,5 @@
 ﻿using ImageEditor.Commands;
+using ImageEditor.Services.ImageStatus;
 using ImageEditor.Views;
 using Microsoft.Win32;
 using System;
@@ -7,7 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ImageEditor.Services.ImageStatus;
+using ImageEditor.Services.ImageProcessing;
 
 namespace ImageEditor.ViewModels
 {
@@ -108,6 +109,7 @@ namespace ImageEditor.ViewModels
         public ICommand BrightnessCommand { get; }
         public ICommand GrayscaleCommand { get; }
         public ICommand SobelCommand { get; }
+        public ICommand InvertCommand { get; }
 
 
         public ICommand MinimizeCommand { get; }
@@ -119,6 +121,19 @@ namespace ImageEditor.ViewModels
         // ================= CONSTRUCTOR =================
         public MainViewModel()
         {
+            // Create a blank white image
+            var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgra32, null);
+
+            int stride = 800 * 4;
+            byte[] pixels = new byte[stride * 600];
+
+            for (int i = 0; i < pixels.Length; i++)
+                pixels[i] = 255;
+
+            wb.WritePixels(new Int32Rect(0, 0, 800, 600), pixels, stride, 0);
+            _image = wb;
+            wb = null;
+
             // File commands
             OpenImageCommand = new RelayCommand(_ => OpenImage());
             CloseImageCommand = new RelayCommand(_ => CloseImage(), _ => Image != null);
@@ -133,13 +148,19 @@ namespace ImageEditor.ViewModels
             Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true), _ => Image != null);
             Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false), _ => Image != null);
             Rotate180 = new RelayCommand(_ => RotateImage(180, true), _ => Image != null);
+
             FlipHorizontal = new RelayCommand(_ => FlipImage(true), _ => Image != null);
             FlipVertical = new RelayCommand(_ => FlipImage(false), _ => Image != null);
+
             GaussianBlurCommand = new RelayCommand(_ => OpenFilterWindow<BlurWindow>(img => new BlurViewModel(img)), _ => Image != null);
             SharpenCommand = new RelayCommand(_ => OpenFilterWindow<SharpenWindow>(img => new SharpenViewModel(img)), _ => Image != null);
             BrightnessCommand = new RelayCommand(_ => OpenFilterWindow<BrightnessWindow>(img => new BrightnessViewModel(img)), _ => Image != null);
             GrayscaleCommand = new RelayCommand(_ => OpenFilterWindow<GrayscaleWindow>(img => new GrayscaleViewModel(img)), _ => Image != null);
             SobelCommand = new RelayCommand(_ => OpenFilterWindow<SobelWindow>(img => new SobelViewModel(img)), _ => Image != null);
+            InvertCommand = new RelayCommand(_ => {
+                    SaveState();
+                    Image = InvertHelper.ApplyInvert(Image);
+                }, _ => Image != null);
 
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
