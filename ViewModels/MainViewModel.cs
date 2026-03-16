@@ -106,6 +106,8 @@ namespace ImageEditor.ViewModels
         public ICommand GaussianBlurCommand { get; }
         public ICommand SharpenCommand { get; }
         public ICommand BrightnessCommand { get; }
+        public ICommand GrayscaleCommand { get; }
+
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -135,6 +137,7 @@ namespace ImageEditor.ViewModels
             GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow(), _ => Image != null);
             SharpenCommand = new RelayCommand(_ => OpenSharpenWindow(), _ => Image != null);
             BrightnessCommand = new RelayCommand(_ => OpenBrightnessWindow(), _ => Image != null);
+            GrayscaleCommand = new RelayCommand(_ => OpenGrayscaleWindow(), _ => Image != null); 
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -279,6 +282,35 @@ namespace ImageEditor.ViewModels
                 DataContext = vm,
                 Owner = Application.Current.MainWindow
             };
+            vm.CloseAction = result =>
+            {
+                if (result)
+                {
+                    SaveState();
+                    Image = vm.ResultImage;
+                }
+                window.Close();
+            };
+            window.ShowDialog();
+        }
+
+        private void OpenGrayscaleWindow()
+        {
+            if (Image == null)
+            {
+                MessageBox.Show("No image loaded", "Info",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var vm = new GrayscaleViewModel(writeable);
+            var window = new GrayscaleWindow
+            {
+                DataContext = vm,
+                Owner = Application.Current.MainWindow
+            };
+
             vm.CloseAction = result =>
             {
                 if (result)

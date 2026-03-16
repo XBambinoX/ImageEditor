@@ -229,6 +229,7 @@
 				<MenuItem Header="Blur" Command="{Binding GaussianBlurCommand}"/>
                 <MenuItem Header="Sharpen" Command="{Binding SharpenCommand}"/>
                 <MenuItem Header="Brightness" Command="{Binding BrightnessCommand}"/>
+                <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">
