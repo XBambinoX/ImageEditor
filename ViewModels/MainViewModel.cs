@@ -110,6 +110,7 @@ namespace ImageEditor.ViewModels
         public ICommand GrayscaleCommand { get; }
         public ICommand SobelCommand { get; }
         public ICommand InvertCommand { get; }
+        public ICommand PixelateCommand { get; }
 
 
         public ICommand MinimizeCommand { get; }
@@ -161,6 +162,7 @@ namespace ImageEditor.ViewModels
                     SaveState();
                     Image = InvertHelper.ApplyInvert(Image);
                 }, _ => Image != null);
+            PixelateCommand = new RelayCommand(_ => OpenFilterWindow<PixelateWindow>(img => new PixelateViewModel(img)), _ => Image != null);
 
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());

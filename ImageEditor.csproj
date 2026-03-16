@@ -61,6 +61,7 @@
     <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
     <Compile Include="Services\ImageProcessing\GrayscaleHelper.cs" />
     <Compile Include="Services\ImageProcessing\InvertHelper.cs" />
+    <Compile Include="Services\ImageProcessing\PixelateHelper.cs" />
     <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
     <Compile Include="Services\ImageProcessing\SobelHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
@@ -70,10 +71,14 @@
     <Compile Include="ViewModels\BrightnessViewModel.cs" />
     <Compile Include="ViewModels\GrayscaleViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\PixelateViewModel.cs" />
     <Compile Include="ViewModels\SharpenViewModel.cs" />
     <Compile Include="ViewModels\SobelViewModel.cs" />
     <Compile Include="Views\BrightnessWindow.xaml.cs">
       <DependentUpon>BrightnessWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\PixelateWindow.xaml.cs">
+      <DependentUpon>PixelateWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\SobelWindow.xaml.cs">
       <DependentUpon>SobelWindow.xaml</DependentUpon>
@@ -95,6 +100,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\BrightnessWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\PixelateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

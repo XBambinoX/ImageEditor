@@ -232,6 +232,7 @@
                 <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
                 <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
                 <MenuItem Header="Invert" Command="{Binding InvertCommand}"/>
+                <MenuItem Header="Pixelate" Command="{Binding PixelateCommand}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">
