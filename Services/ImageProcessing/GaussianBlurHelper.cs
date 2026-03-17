@@ -1,8 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Threading.Tasks;
+using ImageEditor.Services.Math;
 
 namespace ImageEditor.Services.ImageProcessing
 {
@@ -35,7 +32,7 @@ namespace ImageEditor.Services.ImageProcessing
 
                 for (int i = -r; i <= r; i++)
                 {
-                    int x = Clamp(i, 0, w - 1);
+                    int x = Tools.Clamp(i, 0, w - 1);
                     int idx = row + x * 4;
                     b += src[idx];
                     g += src[idx + 1];
@@ -51,8 +48,8 @@ namespace ImageEditor.Services.ImageProcessing
                     tmp[idx + 2] = (byte)(rC / window);
                     tmp[idx + 3] = src[idx + 3];
 
-                    int x1 = Clamp(x - r, 0, w - 1);
-                    int x2 = Clamp(x + r + 1, 0, w - 1);
+                    int x1 = Tools.Clamp(x - r, 0, w - 1);
+                    int x2 = Tools.Clamp(x + r + 1, 0, w - 1);
 
                     int i1 = row + x1 * 4;
                     int i2 = row + x2 * 4;
@@ -69,7 +66,7 @@ namespace ImageEditor.Services.ImageProcessing
 
                 for (int i = -r; i <= r; i++)
                 {
-                    int y = Clamp(i, 0, h - 1);
+                    int y = Tools.Clamp(i, 0, h - 1);
                     int idx = y * stride + x * 4;
                     b += tmp[idx];
                     g += tmp[idx + 1];
@@ -85,8 +82,8 @@ namespace ImageEditor.Services.ImageProcessing
                     dst[idx + 2] = (byte)(rC / window);
                     dst[idx + 3] = tmp[idx + 3];
 
-                    int y1 = Clamp(y - r, 0, h - 1);
-                    int y2 = Clamp(y + r + 1, 0, h - 1);
+                    int y1 = Tools.Clamp(y - r, 0, h - 1);
+                    int y2 = Tools.Clamp(y + r + 1, 0, h - 1);
 
                     int i1 = y1 * stride + x * 4;
                     int i2 = y2 * stride + x * 4;
@@ -96,13 +93,6 @@ namespace ImageEditor.Services.ImageProcessing
                     rC += tmp[i2 + 2] - tmp[i1 + 2];
                 }
             });
-        }
-
-        private static int Clamp(int value, int min, int max)
-        {
-            if (value < min) return min;
-            if (value > max) return max;
-            return value;
         }
     }
 }

@@ -206,6 +206,11 @@
                 <MenuItem Header="_Open" Command="{Binding OpenImageCommand}"/>
                 <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
                 <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
+
+                <Separator Margin="-40,0"/>
+                <MenuItem Header="Image _Info" Command="{Binding ImageInfoCommand}"/>
+                <Separator Margin="-40,0"/>
+                
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 

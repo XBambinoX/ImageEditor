@@ -1,4 +1,7 @@
 ﻿using ImageEditor.Commands;
+using ImageEditor.Models;
+using ImageEditor.Services;
+using ImageEditor.Services.ImageProcessing;
 using ImageEditor.Services.ImageStatus;
 using ImageEditor.Views;
 using Microsoft.Win32;
@@ -8,7 +11,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ImageEditor.Services.ImageProcessing;
 
 namespace ImageEditor.ViewModels
 {
@@ -88,10 +90,20 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private bool _isSidebarVisible = true;
+        public bool IsSidebarVisible
+        {
+            get => _isSidebarVisible;
+            set { _isSidebarVisible = value; OnPropertyChanged(); }
+        }
+
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
         public ICommand CloseImageCommand { get; }
+
+        public ICommand ImageInfoCommand { get; }
+
         public ICommand ExitCommand { get; }
 
         public ICommand UndoCommand { get; }
@@ -140,6 +152,14 @@ namespace ImageEditor.ViewModels
             OpenImageCommand = new RelayCommand(_ => OpenImage());
             CloseImageCommand = new RelayCommand(_ => CloseImage(), _ => Image != null);
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => Image != null);
+
+            ImageInfoCommand = new RelayCommand(_ =>
+            {
+                var info = ImageInfoService.GetInfo(Image, CurrentFilePath);
+                var window = new ImageInfoWindow(info);
+                window.Owner = Application.Current.MainWindow;
+                window.ShowDialog();
+            }, _ => Image != null);
 
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
 

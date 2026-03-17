@@ -57,6 +57,8 @@
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
+    <Compile Include="Models\ImageInfoModel.cs" />
+    <Compile Include="Services\ImageInfoService.cs" />
     <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />
     <Compile Include="Services\ImageProcessing\GammaHelper.cs" />
     <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
@@ -78,6 +80,9 @@
     <Compile Include="ViewModels\SobelViewModel.cs" />
     <Compile Include="Views\BrightnessWindow.xaml.cs">
       <DependentUpon>BrightnessWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ImageInfoWindow.xaml.cs">
+      <DependentUpon>ImageInfoWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PixelateWindow.xaml.cs">
       <DependentUpon>PixelateWindow.xaml</DependentUpon>
@@ -107,6 +112,10 @@
     <Page Include="Views\BrightnessWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ImageInfoWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\PixelateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using ImageEditor.Services.Math;
 
 namespace ImageEditor.ViewModels
 {
@@ -38,7 +39,7 @@ namespace ImageEditor.ViewModels
             get => _strength;
             set
             {
-                int clamped = Clamp(value, MinStrength, MaxStrength);
+                int clamped = Tools.Clamp(value, MinStrength, MaxStrength);
 
                 if (_strength == clamped) return;
 
@@ -53,7 +54,7 @@ namespace ImageEditor.ViewModels
             get => _radius;
             set
             {
-                int clamped = Clamp(value, MinRadius, MaxRadius);
+                int clamped = Tools.Clamp(value, MinRadius, MaxRadius);
                 if (_radius == clamped) return;
                 _radius = clamped;
                 OnPropertyChanged();
@@ -126,13 +127,6 @@ namespace ImageEditor.ViewModels
                 PreviewImage = result;
             }
             catch (TaskCanceledException) { }
-        }
-
-        private int Clamp(int value, int min, int max)
-        {
-            if (value < min) return min;
-            if (value > max) return max;
-            return value;
         }
     }
 }
