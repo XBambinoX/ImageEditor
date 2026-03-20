@@ -3,10 +3,13 @@ using ImageEditor.Models;
 using ImageEditor.Services;
 using ImageEditor.Services.ImageProcessing;
 using ImageEditor.Services.ImageStatus;
+using ImageEditor.Services.Math;
 using ImageEditor.Views;
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -16,64 +19,38 @@ namespace ImageEditor.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
-        // ================= IMAGE =================
-        private BitmapSource _image;
-        public BitmapSource Image
+        // ================= TABS =================
+        private ObservableCollection<ImageTab> _tabs = new ObservableCollection<ImageTab>();
+        public ObservableCollection<ImageTab> Tabs
         {
-            get => _image;
+            get => _tabs;
+            set { _tabs = value; OnPropertyChanged(); }
+        }
+
+        private ImageTab _selectedTab;
+        public ImageTab SelectedTab
+        {
+            get => _selectedTab;
             set
             {
-                _image = value;
+                _selectedTab = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(HasImage));
+                StatusText = _selectedTab != null
+                    ? $"Loaded: {_selectedTab.FilePath ?? _selectedTab.Title}"
+                    : "No image loaded";
             }
         }
 
-        private readonly Stack<BitmapSource> _undoStack = new Stack<BitmapSource>();
-        private readonly Stack<BitmapSource> _redoStack = new Stack<BitmapSource>();
+        public BitmapSource CurrentImage => SelectedTab?.Image;
+        public bool HasImage => SelectedTab?.Image != null;
 
-        private string _currentFilePath;
-        public string CurrentFilePath
-        {
-            get => _currentFilePath;
-            set
-            {
-                _currentFilePath = value;
-                OnPropertyChanged();
-            }
-        }
         // ================= STATUS =================
         private string _statusText = "No image loaded";
         public string StatusText
         {
             get => _statusText;
-            set
-            {
-                _statusText = value;
-                OnPropertyChanged();
-            }
-        }
-
-        // ================= IMAGE TRANSFORM =================
-        private double _imageOffsetX;
-        public double ImageOffsetX
-        {
-            get => _imageOffsetX;
-            set
-            {
-                _imageOffsetX = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private double _imageOffsetY;
-        public double ImageOffsetY
-        {
-            get => _imageOffsetY;
-            set
-            {
-                _imageOffsetY = value;
-                OnPropertyChanged();
-            }
+            set { _statusText = value; OnPropertyChanged(); }
         }
 
         private double _zoom = 1.0;
@@ -82,35 +59,36 @@ namespace ImageEditor.ViewModels
             get => _zoom;
             set
             {
-                if (value < 0.1) value = 0.1;
-                if (value > 5) value = 5;
-
-                _zoom = value;
-                OnPropertyChanged(nameof(Zoom));
+                _zoom = Tools.Clamp(value, 0.1, 5.0);
+                OnPropertyChanged();
             }
         }
 
-        private bool _isSidebarVisible = true;
-        public bool IsSidebarVisible
+        private double _imageOffsetX;
+        public double ImageOffsetX
         {
-            get => _isSidebarVisible;
-            set { _isSidebarVisible = value; OnPropertyChanged(); }
+            get => _imageOffsetX;
+            set { _imageOffsetX = value; OnPropertyChanged(); }
+        }
+
+        private double _imageOffsetY;
+        public double ImageOffsetY
+        {
+            get => _imageOffsetY;
+            set { _imageOffsetY = value; OnPropertyChanged(); }
         }
 
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
         public ICommand CloseImageCommand { get; }
-
+        public ICommand CloseTabCommand { get; }
         public ICommand ImageInfoCommand { get; }
-
         public ICommand ExitCommand { get; }
-
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
         public ICommand AboutCommand { get; }
 
-        //tools
         public ICommand Rotate90Clockwise { get; }
         public ICommand Rotate90CounterClockwise { get; }
         public ICommand Rotate180 { get; }
@@ -125,88 +103,98 @@ namespace ImageEditor.ViewModels
         public ICommand PixelateCommand { get; }
         public ICommand GammaCommand { get; }
 
-
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
         public ICommand CloseCommand { get; }
-
         public ICommand MouseWheelCommand { get; }
 
         // ================= CONSTRUCTOR =================
         public MainViewModel()
         {
-            // Create a blank white image
+            #region White Tab Initialization
             var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgra32, null);
 
             int stride = 800 * 4;
-            byte[] pixels = new byte[stride * 600];
-
-            for (int i = 0; i < pixels.Length; i++)
-                pixels[i] = 255;
+            byte[] pixels = Enumerable.Repeat((byte)255, 600 * stride).ToArray();
 
             wb.WritePixels(new Int32Rect(0, 0, 800, 600), pixels, stride, 0);
-            _image = wb;
-            wb = null;
 
-            // File commands
+            var whiteTab = new ImageTab
+            {
+                Image = wb,
+                Title = "White",
+                FilePath = "No image loaded"
+            };
+
+            Tabs.Add(whiteTab);
+            SelectedTab = whiteTab;
+            wb = null;
+            #endregion
+
+
             OpenImageCommand = new RelayCommand(_ => OpenImage());
-            CloseImageCommand = new RelayCommand(_ => CloseImage(), _ => Image != null);
-            SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => Image != null);
+            CloseImageCommand = new RelayCommand(_ => CloseTab(SelectedTab), _ => HasImage);
+            CloseTabCommand = new RelayCommand(tab => CloseTab(tab as ImageTab));
+            SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => HasImage);
 
             ImageInfoCommand = new RelayCommand(_ =>
             {
-                var info = ImageInfoService.GetInfo(Image, CurrentFilePath);
-                var window = new ImageInfoWindow(info);
-                window.Owner = Application.Current.MainWindow;
+                var info = ImageInfoService.GetInfo(SelectedTab.Image, SelectedTab.FilePath);
+                var window = new ImageInfoWindow(info) { Owner = Application.Current.MainWindow };
                 window.ShowDialog();
-            }, _ => Image != null);
+            }, _ => HasImage);
 
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
-
-            UndoCommand = new RelayCommand(_ => Undo());
-            RedoCommand = new RelayCommand(_ => Redo());
+            UndoCommand = new RelayCommand(_ => Undo(), _ => SelectedTab?.UndoStack.Count > 0);
+            RedoCommand = new RelayCommand(_ => Redo(), _ => SelectedTab?.RedoStack.Count > 0);
             AboutCommand = new RelayCommand(_ => About());
 
-            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true), _ => Image != null);
-            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false), _ => Image != null);
-            Rotate180 = new RelayCommand(_ => RotateImage(180, true), _ => Image != null);
+            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90, true), _ => HasImage);
+            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false), _ => HasImage);
+            Rotate180 = new RelayCommand(_ => RotateImage(180, true), _ => HasImage);
+            FlipHorizontal = new RelayCommand(_ => FlipImage(true), _ => HasImage);
+            FlipVertical = new RelayCommand(_ => FlipImage(false), _ => HasImage);
 
-            FlipHorizontal = new RelayCommand(_ => FlipImage(true), _ => Image != null);
-            FlipVertical = new RelayCommand(_ => FlipImage(false), _ => Image != null);
+            GaussianBlurCommand = new RelayCommand(_ => OpenFilterWindow<BlurWindow>(img => new BlurViewModel(img)), _ => HasImage);
+            SharpenCommand = new RelayCommand(_ => OpenFilterWindow<SharpenWindow>(img => new SharpenViewModel(img)), _ => HasImage);
+            BrightnessCommand = new RelayCommand(_ => OpenFilterWindow<BrightnessWindow>(img => new BrightnessViewModel(img)), _ => HasImage);
+            GrayscaleCommand = new RelayCommand(_ => OpenFilterWindow<GrayscaleWindow>(img => new GrayscaleViewModel(img)), _ => HasImage);
+            SobelCommand = new RelayCommand(_ => OpenFilterWindow<SobelWindow>(img => new SobelViewModel(img)), _ => HasImage);
+            PixelateCommand = new RelayCommand(_ => OpenFilterWindow<PixelateWindow>(img => new PixelateViewModel(img)), _ => HasImage);
+            GammaCommand = new RelayCommand(_ => OpenFilterWindow<GammaWindow>(img => new GammaViewModel(img)), _ => HasImage);
 
-            GaussianBlurCommand = new RelayCommand(_ => OpenFilterWindow<BlurWindow>(img => new BlurViewModel(img)), _ => Image != null);
-            SharpenCommand = new RelayCommand(_ => OpenFilterWindow<SharpenWindow>(img => new SharpenViewModel(img)), _ => Image != null);
-            BrightnessCommand = new RelayCommand(_ => OpenFilterWindow<BrightnessWindow>(img => new BrightnessViewModel(img)), _ => Image != null);
-            GrayscaleCommand = new RelayCommand(_ => OpenFilterWindow<GrayscaleWindow>(img => new GrayscaleViewModel(img)), _ => Image != null);
-            SobelCommand = new RelayCommand(_ => OpenFilterWindow<SobelWindow>(img => new SobelViewModel(img)), _ => Image != null);
+            InvertCommand = new RelayCommand(_ =>
+            {
+                SaveState();
+                SelectedTab.Image = InvertHelper.ApplyInvert(SelectedTab.Image);
+                SelectedTab.IsModified = true;
+                OnPropertyChanged(nameof(CurrentImage));
+            }, _ => HasImage);
 
-            InvertCommand = new RelayCommand(_ => {
-                    SaveState();
-                    Image = InvertHelper.ApplyInvert(Image);
-                }, _ => Image != null);
-
-            PixelateCommand = new RelayCommand(_ => OpenFilterWindow<PixelateWindow>(img => new PixelateViewModel(img)), _ => Image != null);
-            GammaCommand = new RelayCommand(_ => OpenFilterWindow<GammaWindow>(img => new GammaViewModel(img)), _ => Image != null);
-
-
-            MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
-            MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
-            CloseCommand = new RelayCommand(_ => CloseWindow());
+            MinimizeCommand = new RelayCommand(_ => Application.Current.MainWindow.WindowState = WindowState.Minimized);
+            MaximizeRestoreCommand = new RelayCommand(_ =>
+            {
+                var w = Application.Current.MainWindow;
+                w.WindowState = w.WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+            });
+            CloseCommand = new RelayCommand(_ => Application.Current.MainWindow.Close());
 
             MouseWheelCommand = new RelayCommand(parameter =>
             {
                 var args = parameter as MouseWheelEventArgs;
-                if (args == null) return;
+                if (args == null)
+                    return;
 
                 var element = args.Source as FrameworkElement;
-                if (element == null) return;
+                if (element == null)
+                    return;
 
                 var mousePos = args.GetPosition(element);
-                double zoomFactor = args.Delta > 0 ? 1.1 : 0.9;
+                double factor = args.Delta > 0 ? 1.1 : 0.9;
                 double oldZoom = Zoom;
-                double newZoom = oldZoom * zoomFactor;
-
-                if (newZoom < 0.1 || newZoom > 5) return;
+                double newZoom = Tools.Clamp(oldZoom * factor, 0.1, 5.0);
 
                 ImageOffsetX = mousePos.X - (mousePos.X - ImageOffsetX) * (newZoom / oldZoom);
                 ImageOffsetY = mousePos.Y - (mousePos.Y - ImageOffsetY) * (newZoom / oldZoom);
@@ -215,56 +203,125 @@ namespace ImageEditor.ViewModels
             });
         }
 
-        // ================= METHODS =================
-
-        #region TOOLS
-        private void RotateImage(int angle, bool clockwise)
+        // ================= TABS =================
+        private void OpenImage()
         {
-            if (Image == null)
+            var dialog = new OpenFileDialog
             {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
+                Title = "Open Image",
+                Filter = "Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
+                Multiselect = true
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            foreach (var file in dialog.FileNames)
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(file);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+
+                var tab = new ImageTab
+                {
+                    Image = new WriteableBitmap(bitmap),
+                    Title = Path.GetFileName(file),
+                    FilePath = file
+                };
+
+                Tabs.Add(tab);
+                SelectedTab = tab;
+            }
+
+            ResetView();
+        }
+
+        private void CloseTab(ImageTab tab)
+        {
+            if (tab == null) return;
+
+            if (tab.IsModified)
+            {
+                var result = MessageBox.Show(
+                    $"Save changes to {tab.Title}?",
+                    "Unsaved changes",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Cancel) return;
+                if (result == MessageBoxResult.Yes) SaveImage();
+            }
+
+            int index = Tabs.IndexOf(tab);
+            Tabs.Remove(tab);
+
+            if (Tabs.Count > 0)
+                SelectedTab = Tabs[Tools.Clamp(index, 0, Tabs.Count - 1)];
+            else
+            {
+                SelectedTab = null;
+                StatusText = "No image loaded";
+                ResetView();
+            }
+        }
+
+        private void SaveImage()
+        {
+            if (SelectedTab == null) return;
+
+            if (!string.IsNullOrEmpty(SelectedTab.FilePath))
+            {
+                SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
+                SelectedTab.IsModified = false;
+                StatusText = $"Saved: {SelectedTab.FilePath}";
                 return;
             }
 
+            var dialog = new SaveFileDialog
+            {
+                Title = "Save Image",
+                Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
+                DefaultExt = ".png"
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            SelectedTab.FilePath = dialog.FileName;
+            SelectedTab.Title = Path.GetFileName(dialog.FileName);
+            SelectedTab.IsModified = false;
+
+            SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
+            StatusText = $"Saved: {SelectedTab.FilePath}";
+        }
+
+        // ================= TOOLS =================
+        private void RotateImage(int angle, bool clockwise)
+        {
             SaveState();
-
-            if (angle != 90 && angle != 180 && angle != 270)
-                throw new ArgumentException("Angle must be 90, 180 or 270");
-
             int finalAngle = clockwise ? angle : -angle;
-
             var transform = new RotateTransform(finalAngle);
-            Image = new TransformedBitmap(Image, transform);
+            SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
+            SelectedTab.IsModified = true;
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
         private void FlipImage(bool horizontal)
         {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
             SaveState();
-
             var transform = new ScaleTransform(horizontal ? -1 : 1, horizontal ? 1 : -1);
-            Image = new TransformedBitmap(Image, transform);
+            SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
+            SelectedTab.IsModified = true;
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
-        private void OpenFilterWindow<TWindow>(
-            Func<WriteableBitmap, dynamic> viewModelFactory)
+        private void OpenFilterWindow<TWindow>(Func<WriteableBitmap, dynamic> viewModelFactory)
             where TWindow : Window, new()
         {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (SelectedTab == null) return;
 
-            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
+            var writeable = SelectedTab.Image as WriteableBitmap
+                            ?? new WriteableBitmap(SelectedTab.Image);
             var vm = viewModelFactory(writeable);
 
             var window = new TWindow
@@ -278,125 +335,49 @@ namespace ImageEditor.ViewModels
                 if (result)
                 {
                     SaveState();
-                    Image = vm.ResultImage;
+                    SelectedTab.Image = vm.ResultImage;
+                    SelectedTab.IsModified = true;
+                    OnPropertyChanged(nameof(CurrentImage));
                 }
-
                 window.Close();
             });
 
             window.ShowDialog();
         }
 
-        #endregion
-
-        #region FILE
-        private void OpenImage()
-        {
-            OpenFileDialog dialog = new OpenFileDialog
-            {
-                Title = "Open Image",
-                Filter = "Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                BitmapImage bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri(dialog.FileName);
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-
-                Image = bitmap;
-
-                ImageOffsetX = 0;
-                ImageOffsetY = 0;
-
-                CurrentFilePath = dialog.FileName;
-                StatusText = $"Loaded: {CurrentFilePath}";
-            }
-        }
-
-        private void CloseImage()
-        {
-            if (Image == null)
-                return;
-
-            Image = null;
-
-            _undoStack.Clear();
-            _redoStack.Clear();
-
-            Zoom = 1.0;
-            _imageOffsetX = 0;
-            _imageOffsetY = 0;
-            StatusText = "No image loaded";
-        }
-
-        private void SaveImage()
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(_currentFilePath))
-            {
-                SaveImageHelper.SaveToFile(_currentFilePath,_image);
-                StatusText = $"Saved: {_currentFilePath}";
-                return;
-            }
-
-            SaveFileDialog dialog = new SaveFileDialog
-            {
-                Title = "Save Image",
-                Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
-                DefaultExt = ".png"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                _currentFilePath = dialog.FileName;
-                SaveImageHelper.SaveToFile(_currentFilePath, _image);
-                StatusText = $"Saved: {_currentFilePath}";
-            }
-        }
-        #endregion
-
+        // ================= UNDO / REDO =================
         private void SaveState()
         {
-            if (Image != null)
-            {
-                _undoStack.Push(CloneBitmap(Image));
-                _redoStack.Clear();
-            }
+            if (SelectedTab?.Image == null) return;
+            SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
+            SelectedTab.RedoStack.Clear();
         }
 
-        private BitmapSource CloneBitmap(BitmapSource source)
-        {
-            return new WriteableBitmap(source);
-        }
-
-        #region EDIT
         private void Undo()
         {
-            if (_undoStack.Count > 0)
-            {
-                _redoStack.Push(CloneBitmap(Image));
-                Image = _undoStack.Pop();
-            }
+            if (SelectedTab?.UndoStack.Count == 0) return;
+            SelectedTab.RedoStack.Push(new WriteableBitmap(SelectedTab.Image));
+            SelectedTab.Image = SelectedTab.UndoStack.Pop();
+            SelectedTab.IsModified = SelectedTab.UndoStack.Count > 0;
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
         private void Redo()
         {
-            if (_redoStack.Count > 0)
-            {
-                _undoStack.Push(CloneBitmap(Image));
-                Image = _redoStack.Pop();
-            }
+            if (SelectedTab?.RedoStack.Count == 0) return;
+            SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
+            SelectedTab.Image = SelectedTab.RedoStack.Pop();
+            SelectedTab.IsModified = true;
+            OnPropertyChanged(nameof(CurrentImage));
         }
-        #endregion
+
+        // ================= HELPERS =================
+        private void ResetView()
+        {
+            Zoom = 1.0;
+            ImageOffsetX = 0;
+            ImageOffsetY = 0;
+        }
 
         private void About()
         {
@@ -407,52 +388,28 @@ namespace ImageEditor.ViewModels
                 MessageBoxImage.Information);
         }
 
+        // ================= DRAG =================
+        private Point? _dragStart;
 
-        public void StartDrag(Point startPoint)
-        {
-            _dragStart = startPoint;
-        }
+        public void StartDrag(Point p) => _dragStart = p;
+        public void EndDrag() => _dragStart = null;
 
-        public void DragTo(Point currentPoint)
+        public void DragTo(Point current)
         {
             if (_dragStart == null) return;
-
-            double deltaX = currentPoint.X - _dragStart.Value.X;
-            double deltaY = currentPoint.Y - _dragStart.Value.Y;
-
-            ImageOffsetX += deltaX;
-            ImageOffsetY += deltaY;
-
-            _dragStart = currentPoint;
+            ImageOffsetX += current.X - _dragStart.Value.X;
+            ImageOffsetY += current.Y - _dragStart.Value.Y;
+            _dragStart = current;
         }
 
-        public void EndDrag()
-        {
-            _dragStart = null;
-        }
-
-        private Point? _dragStart = null;
-
-        // ================= WINDOW CONTROL =================
-
-        private void MinimizeWindow()
-        {
-            Application.Current.MainWindow.WindowState = WindowState.Minimized;
-        }
-
+        // ================= WINDOW =================
+        private void MinimizeWindow() => Application.Current.MainWindow.WindowState = WindowState.Minimized;
+        private void CloseWindow() => Application.Current.MainWindow.Close();
         private void MaximizeRestoreWindow()
         {
-            var window = Application.Current.MainWindow;
-
-            window.WindowState =
-                window.WindowState == WindowState.Maximized
-                ? WindowState.Normal
-                : WindowState.Maximized;
-        }
-
-        private void CloseWindow()
-        {
-            Application.Current.MainWindow.Close();
+            var w = Application.Current.MainWindow;
+            w.WindowState = w.WindowState == WindowState.Maximized
+                ? WindowState.Normal : WindowState.Maximized;
         }
     }
 }

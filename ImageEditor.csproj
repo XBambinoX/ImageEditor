@@ -58,6 +58,7 @@
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
     <Compile Include="Models\ImageInfoModel.cs" />
+    <Compile Include="Models\ImageTab.cs" />
     <Compile Include="Services\ImageInfoService.cs" />
     <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />
     <Compile Include="Services\ImageProcessing\GammaHelper.cs" />

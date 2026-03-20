@@ -71,6 +71,43 @@
             <Setter Property="BorderThickness" Value="0"/>
 			<Setter Property="FontSize" Value="16"/>
         </Style>
+        
+        <!-- TabControl -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <!-- TabItem -->
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#3C3C3C"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border"
+                        Background="{TemplateBinding Background}"
+                        Padding="{TemplateBinding Padding}"
+                        Margin="0,0,2,0">
+                            <ContentPresenter ContentSource="Header"
+                                      VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#505050"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style TargetType="MenuItem">
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
@@ -246,7 +283,7 @@
 			</MenuItem>
         </Menu>
 
-        <!-- MAIN CONTENT -->
+        <!-- MAIN CONTENT -->  
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -254,25 +291,60 @@
             </Grid.RowDefinitions>
 
             <!-- IMAGE AREA -->
-            <Border Grid.Row="0" Margin="10" CornerRadius="5" Background="Transparent">
-                <ScrollViewer x:Name="ImageScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Image Source="{Binding Image}" Stretch="None"
-                           MouseLeftButtonDown="Image_MouseLeftButtonDown"
-                           MouseMove="Image_MouseMove"
-                           MouseLeftButtonUp="Image_MouseLeftButtonUp"
-						   MouseWheel="Image_MouseWheel">
-						<Image.RenderTransform>
-							<TransformGroup>
-								<ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
-								<TranslateTransform X="{Binding ImageOffsetX}" Y="{Binding ImageOffsetY}"/>
-							</TransformGroup>
-                        </Image.RenderTransform>
-                        
-                    </Image>
-                </ScrollViewer>
-            </Border>
+            <TabControl Grid.Row="0"
+                ItemsSource="{Binding Tabs}"
+                SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
+                Background="#2D2D30"
+                BorderThickness="0">
 
-			<!-- Statusbar -->
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding DisplayTitle}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                            <Button Content="✕"
+                        Width="16" Height="16"
+                        FontSize="10"
+                        Command="{Binding DataContext.CloseTabCommand,
+                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                        CommandParameter="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+                            <Image Source="{Binding Image}"
+                   Stretch="None"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor"
+                   RenderOptions.EdgeMode="Aliased"
+                   MouseLeftButtonDown="Image_MouseLeftButtonDown"
+                   MouseMove="Image_MouseMove"
+                   MouseLeftButtonUp="Image_MouseLeftButtonUp"
+                   MouseWheel="Image_MouseWheel">
+                                <Image.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="{Binding DataContext.Zoom,
+                                         RelativeSource={RelativeSource AncestorType=Window}}"
+                                        ScaleY="{Binding DataContext.Zoom,
+                                         RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                        <TranslateTransform X="{Binding DataContext.ImageOffsetX,
+                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Y="{Binding DataContext.ImageOffsetY,
+                                             RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </TransformGroup>
+                                </Image.RenderTransform>
+                            </Image>
+                        </ScrollViewer>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+
+            </TabControl>
+
+            <!-- Statusbar -->
 			<StatusBar Grid.Row="1" Padding="5">
 				<StatusBar.ItemsPanel>
 					<ItemsPanelTemplate>
