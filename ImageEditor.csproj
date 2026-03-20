@@ -57,13 +57,45 @@
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
+    <Compile Include="Models\ImageInfoModel.cs" />
+    <Compile Include="Services\ImageInfoService.cs" />
+    <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />
+    <Compile Include="Services\ImageProcessing\GammaHelper.cs" />
     <Compile Include="Services\ImageProcessing\GaussianBlurHelper.cs" />
+    <Compile Include="Services\ImageProcessing\GrayscaleHelper.cs" />
+    <Compile Include="Services\ImageProcessing\InvertHelper.cs" />
+    <Compile Include="Services\ImageProcessing\PixelateHelper.cs" />
     <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
+    <Compile Include="Services\ImageProcessing\SobelHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
+    <Compile Include="Services\Math\Tools.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\BlurViewModel.cs" />
+    <Compile Include="ViewModels\BrightnessViewModel.cs" />
+    <Compile Include="ViewModels\GammaViewModel.cs" />
+    <Compile Include="ViewModels\GrayscaleViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\PixelateViewModel.cs" />
     <Compile Include="ViewModels\SharpenViewModel.cs" />
+    <Compile Include="ViewModels\SobelViewModel.cs" />
+    <Compile Include="Views\BrightnessWindow.xaml.cs">
+      <DependentUpon>BrightnessWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ImageInfoWindow.xaml.cs">
+      <DependentUpon>ImageInfoWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\PixelateWindow.xaml.cs">
+      <DependentUpon>PixelateWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\GammaWindow.xaml.cs">
+      <DependentUpon>GammaWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SobelWindow.xaml.cs">
+      <DependentUpon>SobelWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\GrayscaleWindow.xaml.cs">
+      <DependentUpon>GrayscaleWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SharpenWindow.xaml.cs">
       <DependentUpon>SharpenWindow.xaml</DependentUpon>
     </Compile>
@@ -77,6 +109,30 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\BrightnessWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ImageInfoWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\PixelateWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\GammaWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SobelWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\GrayscaleWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\SharpenWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

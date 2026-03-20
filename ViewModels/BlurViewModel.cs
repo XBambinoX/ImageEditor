@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ImageEditor.Services.Math;
 
 namespace ImageEditor.ViewModels
 {
@@ -36,7 +37,7 @@ namespace ImageEditor.ViewModels
             get => _radius;
             set
             {
-                int clamped = Clamp(value, MinRadius, MaxRadius);
+                int clamped = Tools.Clamp(value, MinRadius, MaxRadius);
 
                 if (_radius == clamped) return;
 
@@ -123,13 +124,6 @@ namespace ImageEditor.ViewModels
             catch (TaskCanceledException)
             {
             }
-        }
-
-        private int Clamp(int value, int min, int max)
-        {
-            if (value < min) return min;
-            if (value > max) return max;
-            return value;
         }
     }
 }

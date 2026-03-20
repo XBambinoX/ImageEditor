@@ -1,0 +1,152 @@
+﻿<Window x:Class="ImageEditor.Views.ImageInfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Image Info"
+        Height="520"
+        Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#2D2D30"
+        Icon="/Assets/MonoFrame.ico">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- FILE -->
+                <TextBlock Text="FILE"
+                           Foreground="#888888"
+                           Margin="0,0,0,6"/>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Name" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding FileName}" Foreground="#CCCCCC" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Extension" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Extension}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="File Size" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding FileSize}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Created" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Created}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Modified" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Modified}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Separator Background="#3F3F46" Margin="0,10,0,10"/>
+
+                <!-- IMAGE -->
+                <TextBlock Text="IMAGE"
+                           Foreground="#888888"
+                           Margin="0,0,0,6"/>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Dimensions" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Dimensions}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="DPI" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Dpi}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Format" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Format}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Bit Depth" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding BitDepth}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Memory" Foreground="#888888"/>
+                    <TextBlock Grid.Column="1" Text="{Binding MemorySize}" Foreground="#CCCCCC"/>
+                </Grid>
+
+                <Separator Background="#3F3F46" Margin="0,10,0,10"/>
+
+                <!-- PATH -->
+                <TextBlock Text="PATH"
+                           Foreground="#888888"
+                           Margin="0,0,0,6"/>
+
+                <TextBlock Text="{Binding FilePath}"
+                           Foreground="#CCCCCC"
+                           TextWrapping="Wrap"/>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- CLOSE -->
+        <Button Grid.Row="1"
+                Content="Close"
+                Width="110"
+                Height="28"
+                Margin="0,12,0,0"
+                HorizontalAlignment="Right"
+                Click="CloseButton_Click"/>
+    </Grid>
+</Window>

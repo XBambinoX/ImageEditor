@@ -1,5 +1,4 @@
 ﻿using ImageEditor.Commands;
-using ImageEditor.Services.ImageProcessing;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,72 +8,59 @@ using ImageEditor.Services.Math;
 
 namespace ImageEditor.ViewModels
 {
-    public class SharpenViewModel : BaseViewModel
+    public class BrightnessViewModel : BaseViewModel
     {
         private readonly WriteableBitmap _original;
         private CancellationTokenSource _cts;
-
         private WriteableBitmap _preview;
-        private int _strength = 1;
-
-        public int MinStrength => 0;
-        public int MaxStrength => 100;
-
-        private int _radius = 1;
-        public int MinRadius => 1;
-        public int MaxRadius => 100;
 
         public WriteableBitmap PreviewImage
         {
             get => _preview;
+            set { _preview = value; OnPropertyChanged(); }
+        }
+
+        private int _brightness = 0;
+        public int Brightness
+        {
+            get => _brightness;
             set
             {
-                _preview = value;
+                _brightness = value;
                 OnPropertyChanged();
+                UpdatePreview();    
             }
         }
 
-        public int Strength
+        private int _contrast = 0;
+        public int Contrast
         {
-            get => _strength;
+            get => _contrast;
             set
             {
-                int clamped = Tools.Clamp(value, MinStrength, MaxStrength);
-
-                if (_strength == clamped) return;
-
-                _strength = clamped;
+                _contrast = value;
                 OnPropertyChanged();
                 UpdatePreview();
             }
         }
 
-        public int Radius
-        {
-            get => _radius;
-            set
-            {
-                int clamped = Tools.Clamp(value, MinRadius, MaxRadius);
-                if (_radius == clamped) return;
-                _radius = clamped;
-                OnPropertyChanged();
-                UpdatePreview();
-            }
-        }
+        public int MinBrightness => -100;
+        public int MaxBrightness => 100;
+        public int MinContrast => -100;
+        public int MaxContrast => 100;
 
         public WriteableBitmap ResultImage { get; private set; }
 
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
-        public ICommand IncreaseStrengthCommand { get; }
-        public ICommand DecreaseStrengthCommand { get; }
-
-        public ICommand IncreaseRadiusCommand { get; }
-        public ICommand DecreaseRadiusCommand { get; }
+        public ICommand IncreaseBrightnessCommand { get; }
+        public ICommand DecreaseBrightnessCommand { get; }
+        public ICommand IncreaseContrastCommand { get; }
+        public ICommand DecreaseContrastCommand { get; }
 
         public Action<bool> CloseAction;
 
-        public SharpenViewModel(WriteableBitmap source)
+        public BrightnessViewModel(WriteableBitmap source)
         {
             _original = source ?? throw new ArgumentNullException(nameof(source));
             PreviewImage = source;
@@ -90,11 +76,10 @@ namespace ImageEditor.ViewModels
                 CloseAction?.Invoke(false);
             });
 
-            IncreaseStrengthCommand = new RelayCommand(_ => Strength++);
-            DecreaseStrengthCommand = new RelayCommand(_ => Strength--);
-
-            IncreaseRadiusCommand = new RelayCommand(_ => Radius++);
-            DecreaseRadiusCommand = new RelayCommand(_ => Radius--);
+            IncreaseBrightnessCommand = new RelayCommand(_ => Brightness = Tools.Clamp(Brightness + 1, MinBrightness, MaxBrightness));
+            DecreaseBrightnessCommand = new RelayCommand(_ => Brightness = Tools.Clamp(Brightness - 1, MinBrightness, MaxBrightness));
+            IncreaseContrastCommand = new RelayCommand(_ => Contrast = Tools.Clamp(Contrast + 1, MinContrast, MaxContrast));
+            DecreaseContrastCommand = new RelayCommand(_ => Contrast = Tools.Clamp(Contrast - 1, MinContrast, MaxContrast));
         }
 
         private async void UpdatePreview()
@@ -106,24 +91,29 @@ namespace ImageEditor.ViewModels
             try
             {
                 await Task.Delay(120, token);
-                int strength = Strength;
-                int radius = Radius;
 
+                int brightness = _brightness;
+                int contrast = _contrast;
                 int w = _original.PixelWidth;
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
                 int stride = w * 4;
+
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);
 
                 var result = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-                    return SharpenHelper.ApplySharpen(pixels, w, h, stride, dpiX, dpiY, strength, radius);
+
+                    byte[] tmp = BrightnessHelper.ApplyBrightnessBytes(pixels, w, h, stride, brightness);
+                    return BrightnessHelper.ApplyContrastBytes(tmp, w, h, stride, dpiX, dpiY, contrast);
+
                 }, token);
 
                 if (token.IsCancellationRequested || result == null) return;
+
                 PreviewImage = result;
             }
             catch (TaskCanceledException) { }

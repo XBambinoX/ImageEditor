@@ -1,4 +1,8 @@
 ﻿using ImageEditor.Commands;
+using ImageEditor.Models;
+using ImageEditor.Services;
+using ImageEditor.Services.ImageProcessing;
+using ImageEditor.Services.ImageStatus;
 using ImageEditor.Views;
 using Microsoft.Win32;
 using System;
@@ -7,7 +11,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ImageEditor.Services.ImageStatus;
 
 namespace ImageEditor.ViewModels
 {
@@ -87,10 +90,20 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private bool _isSidebarVisible = true;
+        public bool IsSidebarVisible
+        {
+            get => _isSidebarVisible;
+            set { _isSidebarVisible = value; OnPropertyChanged(); }
+        }
+
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
         public ICommand CloseImageCommand { get; }
+
+        public ICommand ImageInfoCommand { get; }
+
         public ICommand ExitCommand { get; }
 
         public ICommand UndoCommand { get; }
@@ -105,6 +118,13 @@ namespace ImageEditor.ViewModels
         public ICommand FlipVertical { get; }
         public ICommand GaussianBlurCommand { get; }
         public ICommand SharpenCommand { get; }
+        public ICommand BrightnessCommand { get; }
+        public ICommand GrayscaleCommand { get; }
+        public ICommand SobelCommand { get; }
+        public ICommand InvertCommand { get; }
+        public ICommand PixelateCommand { get; }
+        public ICommand GammaCommand { get; }
+
 
         public ICommand MinimizeCommand { get; }
         public ICommand MaximizeRestoreCommand { get; }
@@ -115,10 +135,31 @@ namespace ImageEditor.ViewModels
         // ================= CONSTRUCTOR =================
         public MainViewModel()
         {
+            // Create a blank white image
+            var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgra32, null);
+
+            int stride = 800 * 4;
+            byte[] pixels = new byte[stride * 600];
+
+            for (int i = 0; i < pixels.Length; i++)
+                pixels[i] = 255;
+
+            wb.WritePixels(new Int32Rect(0, 0, 800, 600), pixels, stride, 0);
+            _image = wb;
+            wb = null;
+
             // File commands
             OpenImageCommand = new RelayCommand(_ => OpenImage());
             CloseImageCommand = new RelayCommand(_ => CloseImage(), _ => Image != null);
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => Image != null);
+
+            ImageInfoCommand = new RelayCommand(_ =>
+            {
+                var info = ImageInfoService.GetInfo(Image, CurrentFilePath);
+                var window = new ImageInfoWindow(info);
+                window.Owner = Application.Current.MainWindow;
+                window.ShowDialog();
+            }, _ => Image != null);
 
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
 
@@ -126,13 +167,27 @@ namespace ImageEditor.ViewModels
             RedoCommand = new RelayCommand(_ => Redo());
             AboutCommand = new RelayCommand(_ => About());
 
-            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true));
-            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false));
-            Rotate180 = new RelayCommand(_ => RotateImage(180, true));
-            FlipHorizontal = new RelayCommand(_ => FlipImage(true));
-            FlipVertical = new RelayCommand(_ => FlipImage(false));
-            GaussianBlurCommand = new RelayCommand(_ => OpenBlurWindow());
-            SharpenCommand = new RelayCommand(_ => OpenSharpenWindow());
+            Rotate90Clockwise = new RelayCommand(_ => RotateImage(90,true), _ => Image != null);
+            Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false), _ => Image != null);
+            Rotate180 = new RelayCommand(_ => RotateImage(180, true), _ => Image != null);
+
+            FlipHorizontal = new RelayCommand(_ => FlipImage(true), _ => Image != null);
+            FlipVertical = new RelayCommand(_ => FlipImage(false), _ => Image != null);
+
+            GaussianBlurCommand = new RelayCommand(_ => OpenFilterWindow<BlurWindow>(img => new BlurViewModel(img)), _ => Image != null);
+            SharpenCommand = new RelayCommand(_ => OpenFilterWindow<SharpenWindow>(img => new SharpenViewModel(img)), _ => Image != null);
+            BrightnessCommand = new RelayCommand(_ => OpenFilterWindow<BrightnessWindow>(img => new BrightnessViewModel(img)), _ => Image != null);
+            GrayscaleCommand = new RelayCommand(_ => OpenFilterWindow<GrayscaleWindow>(img => new GrayscaleViewModel(img)), _ => Image != null);
+            SobelCommand = new RelayCommand(_ => OpenFilterWindow<SobelWindow>(img => new SobelViewModel(img)), _ => Image != null);
+
+            InvertCommand = new RelayCommand(_ => {
+                    SaveState();
+                    Image = InvertHelper.ApplyInvert(Image);
+                }, _ => Image != null);
+
+            PixelateCommand = new RelayCommand(_ => OpenFilterWindow<PixelateWindow>(img => new PixelateViewModel(img)), _ => Image != null);
+            GammaCommand = new RelayCommand(_ => OpenFilterWindow<GammaWindow>(img => new GammaViewModel(img)), _ => Image != null);
+
 
             MinimizeCommand = new RelayCommand(_ => MinimizeWindow());
             MaximizeRestoreCommand = new RelayCommand(_ => MaximizeRestoreWindow());
@@ -198,7 +253,9 @@ namespace ImageEditor.ViewModels
             Image = new TransformedBitmap(Image, transform);
         }
 
-        private void OpenBlurWindow()
+        private void OpenFilterWindow<TWindow>(
+            Func<WriteableBitmap, dynamic> viewModelFactory)
+            where TWindow : Window, new()
         {
             if (Image == null)
             {
@@ -208,15 +265,15 @@ namespace ImageEditor.ViewModels
             }
 
             var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new BlurViewModel(writeable);
+            var vm = viewModelFactory(writeable);
 
-            var window = new BlurWindow
+            var window = new TWindow
             {
                 DataContext = vm,
                 Owner = Application.Current.MainWindow
             };
 
-            vm.CloseAction = result =>
+            vm.CloseAction = new Action<bool>(result =>
             {
                 if (result)
                 {
@@ -225,42 +282,11 @@ namespace ImageEditor.ViewModels
                 }
 
                 window.Close();
-            };
+            });
 
             window.ShowDialog();
         }
 
-        private void OpenSharpenWindow()
-        {
-            if (Image == null)
-            {
-                MessageBox.Show("No image loaded", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
-
-            var writeable = Image as WriteableBitmap ?? new WriteableBitmap(Image);
-            var vm = new SharpenViewModel(writeable);
-
-            var window = new SharpenWindow
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-
-            vm.CloseAction = result =>
-            {
-                if (result)
-                {
-                    SaveState();
-                    Image = vm.ResultImage;
-                }
-
-                window.Close();
-            };
-
-            window.ShowDialog();
-        }
         #endregion
 
         #region FILE

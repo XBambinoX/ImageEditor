@@ -206,6 +206,11 @@
                 <MenuItem Header="_Open" Command="{Binding OpenImageCommand}"/>
                 <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
                 <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
+
+                <Separator Margin="-40,0"/>
+                <MenuItem Header="Image _Info" Command="{Binding ImageInfoCommand}"/>
+                <Separator Margin="-40,0"/>
+                
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 
@@ -228,6 +233,12 @@
 				
 				<MenuItem Header="Blur" Command="{Binding GaussianBlurCommand}"/>
                 <MenuItem Header="Sharpen" Command="{Binding SharpenCommand}"/>
+                <MenuItem Header="Brightness" Command="{Binding BrightnessCommand}"/>
+                <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
+                <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
+                <MenuItem Header="Invert" Command="{Binding InvertCommand}"/>
+                <MenuItem Header="Pixelate" Command="{Binding PixelateCommand}"/>
+                <MenuItem Header="Gamma Correction" Command="{Binding GammaCommand}"/>
 			</MenuItem>
 
 			<MenuItem Header="_Help">

@@ -1,80 +1,63 @@
 ﻿using ImageEditor.Commands;
 using ImageEditor.Services.ImageProcessing;
+using ImageEditor.Services.Math;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using ImageEditor.Services.Math;
 
 namespace ImageEditor.ViewModels
 {
-    public class SharpenViewModel : BaseViewModel
+    public class SobelViewModel : BaseViewModel
     {
         private readonly WriteableBitmap _original;
         private CancellationTokenSource _cts;
-
         private WriteableBitmap _preview;
-        private int _strength = 1;
-
-        public int MinStrength => 0;
-        public int MaxStrength => 100;
-
-        private int _radius = 1;
-        public int MinRadius => 1;
-        public int MaxRadius => 100;
 
         public WriteableBitmap PreviewImage
         {
             get => _preview;
-            set
-            {
-                _preview = value;
-                OnPropertyChanged();
-            }
+            set { _preview = value; OnPropertyChanged(); }
         }
 
-        public int Strength
+        private int _threshold = 30;
+        public int Threshold
         {
-            get => _strength;
+            get => _threshold;
             set
             {
-                int clamped = Tools.Clamp(value, MinStrength, MaxStrength);
-
-                if (_strength == clamped) return;
-
-                _strength = clamped;
+                _threshold = Tools.Clamp(value, 0, 255);
                 OnPropertyChanged();
                 UpdatePreview();
             }
         }
 
-        public int Radius
+        private bool _colorize = false;
+        public bool Colorize
         {
-            get => _radius;
+            get => _colorize;
             set
             {
-                int clamped = Tools.Clamp(value, MinRadius, MaxRadius);
-                if (_radius == clamped) return;
-                _radius = clamped;
+                _colorize = value;
                 OnPropertyChanged();
                 UpdatePreview();
             }
         }
+
+        public int MinThreshold => 0;
+        public int MaxThreshold => 255;
 
         public WriteableBitmap ResultImage { get; private set; }
 
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
-        public ICommand IncreaseStrengthCommand { get; }
-        public ICommand DecreaseStrengthCommand { get; }
-
-        public ICommand IncreaseRadiusCommand { get; }
-        public ICommand DecreaseRadiusCommand { get; }
+        public ICommand IncreaseThresholdCommand { get; }
+        public ICommand DecreaseThresholdCommand { get; }
 
         public Action<bool> CloseAction;
 
-        public SharpenViewModel(WriteableBitmap source)
+        public SobelViewModel(WriteableBitmap source)
         {
             _original = source ?? throw new ArgumentNullException(nameof(source));
             PreviewImage = source;
@@ -90,11 +73,10 @@ namespace ImageEditor.ViewModels
                 CloseAction?.Invoke(false);
             });
 
-            IncreaseStrengthCommand = new RelayCommand(_ => Strength++);
-            DecreaseStrengthCommand = new RelayCommand(_ => Strength--);
+            IncreaseThresholdCommand = new RelayCommand(_ => Threshold++);
+            DecreaseThresholdCommand = new RelayCommand(_ => Threshold--);
 
-            IncreaseRadiusCommand = new RelayCommand(_ => Radius++);
-            DecreaseRadiusCommand = new RelayCommand(_ => Radius--);
+            UpdatePreview();
         }
 
         private async void UpdatePreview()
@@ -106,24 +88,26 @@ namespace ImageEditor.ViewModels
             try
             {
                 await Task.Delay(120, token);
-                int strength = Strength;
-                int radius = Radius;
 
+                int threshold = _threshold;
+                bool colorize = _colorize;
                 int w = _original.PixelWidth;
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
                 int stride = w * 4;
+
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);
 
                 var result = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-                    return SharpenHelper.ApplySharpen(pixels, w, h, stride, dpiX, dpiY, strength, radius);
+                    return SobelHelper.ApplySobel(pixels, w, h, stride, dpiX, dpiY, threshold, colorize);
                 }, token);
 
                 if (token.IsCancellationRequested || result == null) return;
+
                 PreviewImage = result;
             }
             catch (TaskCanceledException) { }
