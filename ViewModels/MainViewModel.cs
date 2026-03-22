@@ -81,6 +81,7 @@ namespace ImageEditor.ViewModels
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
+        public ICommand SaveAsImageCommand { get; }
         public ICommand CloseImageCommand { get; }
         public ICommand CloseTabCommand { get; }
         public ICommand ImageInfoCommand { get; }
@@ -136,6 +137,7 @@ namespace ImageEditor.ViewModels
             CloseImageCommand = new RelayCommand(_ => CloseTab(SelectedTab), _ => HasImage);
             CloseTabCommand = new RelayCommand(tab => CloseTab(tab as ImageTab));
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => HasImage);
+            SaveAsImageCommand = new RelayCommand(_ => SaveImageAs(), _ => HasImage);
 
             ImageInfoCommand = new RelayCommand(_ =>
             {
@@ -283,6 +285,28 @@ namespace ImageEditor.ViewModels
                 Title = "Save Image",
                 Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
                 DefaultExt = ".png"
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            SelectedTab.FilePath = dialog.FileName;
+            SelectedTab.Title = Path.GetFileName(dialog.FileName);
+            SelectedTab.IsModified = false;
+
+            SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
+            StatusText = $"Saved: {SelectedTab.FilePath}";
+        }
+
+        private void SaveImageAs()
+        {
+            if (SelectedTab == null) return;
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Save Image As",
+                Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
+                DefaultExt = ".png",
+                FileName = SelectedTab.Title
             };
 
             if (dialog.ShowDialog() != true) return;
