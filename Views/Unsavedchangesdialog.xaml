@@ -1,0 +1,169 @@
+﻿<Window x:Class="ImageEditor.Views.UnsavedChangesDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="NoResize"
+        Background="#303030"
+        Width="380"
+        Height="160"
+        WindowStartupLocation="CenterOwner"
+        Title="MonoFrame">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="#303030"/>
+        <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#444444"/>
+        <SolidColorBrush x:Key="TextForegroundBrush" Color="White"/>
+
+        <!-- Base button style -->
+        <Style x:Key="DialogButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Width" Value="90"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#555555"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#606060"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Yes button — accent -->
+        <Style x:Key="YesButtonStyle" TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
+            <Setter Property="Background" Value="#3A7BD5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#4A8BE5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2A6BC5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="#555555" BorderThickness="1">
+        <DockPanel>
+
+            <!-- Titlebar -->
+            <Border DockPanel.Dock="Top"
+                    Background="#303030"
+                    Height="30"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    BorderBrush="#555555"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Unsaved changes"
+                               VerticalAlignment="Center"
+                               Margin="10,0"
+                               FontSize="13"
+                               FontFamily="Segoe UI"
+                               Foreground="#CCCCCC"/>
+
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Width="30" Height="30"
+                            FontSize="13"
+                            FontFamily="Segoe UI"
+                            Background="#303030"
+                            Foreground="#CCCCCC"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="Cancel_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Border" Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <Grid Margin="20,16,20,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Message -->
+                <TextBlock Grid.Row="0"
+                           FontFamily="Segoe UI"
+                           FontSize="13"
+                           Foreground="#DDDDDD"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center">
+                    <Run Text="Save changes to "/>
+                    <Run x:Name="FileNameRun" FontWeight="SemiBold" Foreground="White"/>
+                    <Run Text="?"/>
+                </TextBlock>
+
+                <!-- Buttons -->
+                <StackPanel Grid.Row="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Margin="0,12,0,0">
+
+                    <Button Content="Yes"
+                            Style="{StaticResource YesButtonStyle}"
+                            Margin="0,0,8,0"
+                            Click="Yes_Click"/>
+
+                    <Button Content="No"
+                            Style="{StaticResource DialogButtonStyle}"
+                            Margin="0,0,8,0"
+                            Click="No_Click"/>
+
+                    <Button Content="Cancel"
+                            Style="{StaticResource DialogButtonStyle}"
+                            Click="Cancel_Click"/>
+
+                </StackPanel>
+            </Grid>
+
+        </DockPanel>
+    </Border>
+</Window>

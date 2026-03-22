@@ -91,6 +91,9 @@
     <Compile Include="Views\GammaWindow.xaml.cs">
       <DependentUpon>GammaWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Unsavedchangesdialog.xaml.cs">
+      <DependentUpon>Unsavedchangesdialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SobelWindow.xaml.cs">
       <DependentUpon>SobelWindow.xaml</DependentUpon>
     </Compile>
@@ -123,6 +126,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\GammaWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Unsavedchangesdialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

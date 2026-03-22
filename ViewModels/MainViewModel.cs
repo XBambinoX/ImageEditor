@@ -243,14 +243,14 @@ namespace ImageEditor.ViewModels
 
             if (tab.IsModified)
             {
-                var result = MessageBox.Show(
-                    $"Save changes to {tab.Title}?",
-                    "Unsaved changes",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question);
+                var dialog = new UnsavedChangesDialog(tab.Title)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                dialog.ShowDialog();
 
-                if (result == MessageBoxResult.Cancel) return;
-                if (result == MessageBoxResult.Yes) SaveImage();
+                if (dialog.Result == UnsavedChangesResult.Cancel) return;
+                if (dialog.Result == UnsavedChangesResult.Yes) SaveImage();
             }
 
             int index = Tabs.IndexOf(tab);
