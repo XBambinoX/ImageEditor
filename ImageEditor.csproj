@@ -91,6 +91,9 @@
     <Compile Include="Views\GammaWindow.xaml.cs">
       <DependentUpon>GammaWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\NewImageDialog.xaml.cs">
+      <DependentUpon>NewImageDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Unsavedchangesdialog.xaml.cs">
       <DependentUpon>Unsavedchangesdialog.xaml</DependentUpon>
     </Compile>
@@ -126,6 +129,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\GammaWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\NewImageDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

@@ -17,6 +17,13 @@
         <vm:MainViewModel/>
     </Window.DataContext>
 
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewImageCommand}"/>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenImageCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveImageCommand}"/>
+        <KeyBinding Key="I" Modifiers="Ctrl" Command="{Binding ImageInfoCommand}"/>
+    </Window.InputBindings>
+
     <Window.Resources>
         <!-- Main colors -->
         <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="#303030"/>
@@ -244,8 +251,9 @@
                 <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
                 <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
                 <MenuItem Header="Save _As" Command="{Binding SaveAsImageCommand}"/>
-
-                <Separator Margin="-40,0"/>
+                <MenuItem Header="New" Command="{Binding NewImageCommand}"/>
+                
+                    <Separator Margin="-40,0"/>
                 <MenuItem Header="Image _Info" Command="{Binding ImageInfoCommand}"/>
                 <Separator Margin="-40,0"/>
                 

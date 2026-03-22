@@ -85,6 +85,7 @@ namespace ImageEditor.ViewModels
         public ICommand CloseImageCommand { get; }
         public ICommand CloseTabCommand { get; }
         public ICommand ImageInfoCommand { get; }
+        public ICommand NewImageCommand { get; }
         public ICommand ExitCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
@@ -138,6 +139,8 @@ namespace ImageEditor.ViewModels
             CloseTabCommand = new RelayCommand(tab => CloseTab(tab as ImageTab));
             SaveImageCommand = new RelayCommand(_ => SaveImage(), _ => HasImage);
             SaveAsImageCommand = new RelayCommand(_ => SaveImageAs(), _ => HasImage);
+
+            NewImageCommand = new RelayCommand(_ => NewImage());
 
             ImageInfoCommand = new RelayCommand(_ =>
             {
@@ -317,6 +320,30 @@ namespace ImageEditor.ViewModels
 
             SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
             StatusText = $"Saved: {SelectedTab.FilePath}";
+        }
+
+        private void NewImage()
+        {
+            var dialog = new NewImageDialog { Owner = Application.Current.MainWindow };
+            dialog.ShowDialog();
+
+            if (!dialog.Confirmed) return;
+
+            var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgra32, null);
+            int stride = dialog.ImageWidth *4;
+            byte[] pixels = Enumerable.Repeat((byte)255, dialog.ImageHeight * stride).ToArray();
+            wb.WritePixels(new Int32Rect(0, 0, dialog.ImageWidth, dialog.ImageHeight), pixels, stride, 0);
+
+            var tab = new ImageTab
+            {
+                Image = wb,
+                Title = $"New {dialog.ImageWidth}×{dialog.ImageHeight}",
+                FilePath = null
+            };
+
+            Tabs.Add(tab);
+            SelectedTab = tab;
+            ResetView();
         }
 
         // ================= TOOLS =================
