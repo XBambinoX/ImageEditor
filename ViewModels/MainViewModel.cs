@@ -466,15 +466,22 @@ namespace ImageEditor.ViewModels
             if (ActiveTool != ToolType.Brush) return;
             if (SelectedTab?.Image == null) return;
 
-            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+            WriteableBitmap wb;
+            if (SelectedTab.Image is WriteableBitmap existing && !existing.IsFrozen)
+                wb = existing;
+            else
+            {
+                wb = new WriteableBitmap(SelectedTab.Image);
+                SelectedTab.Image = wb;
+                OnPropertyChanged(nameof(CurrentImage));
+            }
+
+            int radius = Math.Max(1, BrushSize / 2);
 
             if (previousPoint.HasValue)
-                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, BrushSize / 2, BrushColor, BrushHardness);
+                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, radius, BrushColor, BrushHardness);
             else
-                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, BrushSize / 2, BrushColor, BrushHardness);
-
-            if (!(SelectedTab.Image is WriteableBitmap))
-                SelectedTab.Image = wb;
+                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, radius, BrushColor, BrushHardness);
 
             SelectedTab.IsModified = true;
         }
@@ -493,7 +500,8 @@ namespace ImageEditor.ViewModels
         public void SaveState()
         {
             if (SelectedTab?.Image == null) return;
-            SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
+            var copy = new WriteableBitmap(SelectedTab.Image);
+            SelectedTab.UndoStack.Push(copy);
             SelectedTab.RedoStack.Clear();
         }
 
