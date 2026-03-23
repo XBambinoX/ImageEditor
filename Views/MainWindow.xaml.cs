@@ -9,7 +9,7 @@ namespace ImageEditor.Views
     public partial class MainWindow : Window
     {
         private Point? _lastBrushPoint;
-        private Point? _dragStart;
+        private bool _isMiddleDragging;
 
         public MainWindow()
         {
@@ -42,17 +42,19 @@ namespace ImageEditor.Views
                 vm.BrushStroke(imgPoint, null);
                 _lastBrushPoint = imgPoint;
                 img?.CaptureMouse();
-                e.Handled = true;
                 return;
             }
-
-            _dragStart = e.GetPosition(sender as FrameworkElement);
-            (sender as FrameworkElement)?.CaptureMouse();
         }
 
         private void Image_MouseMove(object sender, MouseEventArgs e)
-        {
+        {           
             var vm = DataContext as MainViewModel;
+
+            if (_isMiddleDragging && e.MiddleButton == MouseButtonState.Pressed)
+            {
+                vm?.DragTo(e.GetPosition(Application.Current.MainWindow));
+                return;
+            }
 
             if (vm?.ActiveTool == ToolType.Brush && e.LeftButton == MouseButtonState.Pressed)
             {
@@ -63,24 +65,43 @@ namespace ImageEditor.Views
                 e.Handled = true;
                 return;
             }
-
-            if (_dragStart.HasValue)
-                vm?.DragTo(e.GetPosition(sender as FrameworkElement));
         }
 
         private void Image_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var vm = DataContext as MainViewModel;
             _lastBrushPoint = null;
-            _dragStart = null;
-            (sender as FrameworkElement)?.ReleaseMouseCapture();
-            vm?.EndDrag();
+            if (!_isMiddleDragging)
+                (sender as FrameworkElement)?.ReleaseMouseCapture();
         }
 
         private void Image_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (DataContext is MainViewModel vm)
                 vm.MouseWheelCommand.Execute(e);
+        }
+
+        private void Image_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.MiddleButton == MouseButtonState.Pressed)
+            {
+                var vm = DataContext as MainViewModel;
+                _isMiddleDragging = true;
+                vm?.StartDrag(e.GetPosition(Application.Current.MainWindow));
+                (sender as FrameworkElement)?.CaptureMouse();
+                e.Handled = true;
+            }
+        }
+
+        private void Image_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.MiddleButton == MouseButtonState.Released && _isMiddleDragging)
+            {
+                var vm = DataContext as MainViewModel;
+                _isMiddleDragging = false;
+                vm?.EndDrag();
+                (sender as FrameworkElement)?.ReleaseMouseCapture();
+            }
         }
 
         private Point GetImagePixel(MouseEventArgs e, Image img, MainViewModel vm)

@@ -301,7 +301,9 @@
                                        MouseLeftButtonDown="Image_MouseLeftButtonDown"
                                        MouseMove="Image_MouseMove"
                                        MouseLeftButtonUp="Image_MouseLeftButtonUp"
-                                       MouseWheel="Image_MouseWheel">
+                                       MouseWheel="Image_MouseWheel"
+                                       MouseDown="Image_MouseDown"
+                                       MouseUp="Image_MouseUp">
                                     <Image.RenderTransform>
                                         <TransformGroup>
                                             <ScaleTransform
