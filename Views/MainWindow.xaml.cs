@@ -94,13 +94,22 @@ namespace ImageEditor.Views
             {
                 var img = sender as Image;
                 var current = GetImagePixel(e, img, vm);
+                var bitmap = vm.SelectedTab?.Image;
 
-                int x = (int)Math.Min(_selectionStart.Value.X, current.X);
-                int y = (int)Math.Min(_selectionStart.Value.Y, current.Y);
-                int w = (int)Math.Abs(current.X - _selectionStart.Value.X);
-                int h = (int)Math.Abs(current.Y - _selectionStart.Value.Y);
+                int bmpW = bitmap?.PixelWidth ?? int.MaxValue;
+                int bmpH = bitmap?.PixelHeight ?? int.MaxValue;
 
-                if (w > 0 &&h > 0)
+                double startX = Math.Max(0, Math.Min(_selectionStart.Value.X, bmpW));
+                double startY = Math.Max(0, Math.Min(_selectionStart.Value.Y, bmpH));
+                double endX = Math.Max(0, Math.Min(current.X, bmpW));
+                double endY = Math.Max(0, Math.Min(current.Y, bmpH));
+
+                int x = (int)Math.Min(startX, endX);
+                int y = (int)Math.Min(startY, endY);
+                int w = (int)Math.Abs(endX - startX);
+                int h = (int)Math.Abs(endY - startY);
+
+                if (w > 0 && h > 0)
                 {
                     vm.Selection = new Int32Rect(x, y, w, h);
                     UpdateSelectionOverlay(vm);
