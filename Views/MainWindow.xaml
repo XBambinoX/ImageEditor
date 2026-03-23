@@ -31,6 +31,7 @@
         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutCommand}"/>
         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteCommand}"/>
         <KeyBinding Key="S" Command="{Binding SelectSelectionToolCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding ClearSelectionCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>

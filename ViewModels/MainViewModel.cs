@@ -153,10 +153,11 @@ namespace ImageEditor.ViewModels
         // ================ TOOLBAR =================
         public ICommand SelectBrushCommand { get; }
         public ICommand SelectSelectionToolCommand { get; }
+        public ICommand ClearSelectionCommand { get; }
         public ICommand CopyCommand { get; }
         public ICommand CutCommand { get; }
         public ICommand PasteCommand { get; }
-
+        
 
         // ================= CONSTRUCTOR =================
         public MainViewModel()
@@ -257,11 +258,12 @@ namespace ImageEditor.ViewModels
 
 
             SelectBrushCommand = new RelayCommand(_ => ToggleBrushTool());
-
             SelectSelectionToolCommand = new RelayCommand(_ => ToggleSelectionTool());
+            ClearSelectionCommand = new RelayCommand(_ => Selection = null);
+
             CopyCommand = new RelayCommand(_ => CopySelection(), _ => Selection.HasValue && HasImage);
             CutCommand = new RelayCommand(_ => CutSelection(), _ => Selection.HasValue && HasImage);
-            PasteCommand = new RelayCommand(_ => PasteClipboard(), _ => _clipboard != null && HasImage);
+            PasteCommand = new RelayCommand(_ => PasteClipboard());
         }
 
         // ================= TABS =================
@@ -545,6 +547,11 @@ namespace ImageEditor.ViewModels
             if (!Selection.HasValue || SelectedTab?.Image == null) return;
             var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
             _clipboard = SelectionService.Copy(wb, Selection.Value);
+
+            if (_clipboard != null)
+            {
+                Clipboard.SetImage(_clipboard);
+            }
         }
 
         private void CutSelection()
@@ -553,6 +560,11 @@ namespace ImageEditor.ViewModels
             SaveState();
             var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
             _clipboard = SelectionService.Cut(wb, Selection.Value);
+            if (_clipboard != null)
+            {
+                Clipboard.SetImage(_clipboard);
+            }
+
             SelectedTab.Image = wb;
             SelectedTab.IsModified = true;
             Selection = null;
@@ -561,20 +573,30 @@ namespace ImageEditor.ViewModels
 
         private void PasteClipboard()
         {
-            if (_clipboard == null || SelectedTab?.Image == null) return;
+            if (SelectedTab?.Image == null) return;
+
+            WriteableBitmap source = _clipboard;
+
+            if (source == null && Clipboard.ContainsImage())
+            {
+                var img = Clipboard.GetImage();
+                if (img != null)
+                    source = new WriteableBitmap(img);
+            }
+
+            if (source == null) return;
+
             SaveState();
 
-            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
-            if (wb.IsFrozen) wb = new WriteableBitmap(wb);
+            var wb = SelectedTab.Image as WriteableBitmap;
+            if (wb == null || wb.IsFrozen)
+                wb = new WriteableBitmap(SelectedTab.Image);
 
-            int destX = 0;
-            int destY = 0;
-
-            SelectionService.Paste(wb, _clipboard, destX, destY);
+            SelectionService.Paste(wb, source, 0, 0);
 
             SelectedTab.Image = wb;
             SelectedTab.IsModified = true;
-            Selection = new Int32Rect(destX, destY, _clipboard.PixelWidth, _clipboard.PixelHeight);
+            Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
             OnPropertyChanged(nameof(CurrentImage));
         }
 
