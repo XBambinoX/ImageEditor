@@ -4,6 +4,8 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Deterministic>true</Deterministic>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ProjectGuid>{092D3210-DB41-4F10-A9F9-C34B23F939BB}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>ImageEditor</RootNamespace>
@@ -59,6 +61,7 @@
     <Compile Include="Models\ImageDocument.cs" />
     <Compile Include="Models\ImageInfoModel.cs" />
     <Compile Include="Models\ImageTab.cs" />
+    <Compile Include="Models\Tooltype.cs" />
     <Compile Include="Services\ImageInfoService.cs" />
     <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />
     <Compile Include="Services\ImageProcessing\GammaHelper.cs" />
@@ -70,6 +73,7 @@
     <Compile Include="Services\ImageProcessing\SobelHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
     <Compile Include="Services\Math\Tools.cs" />
+    <Compile Include="Services\Toolbar\DrawingService.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\BlurViewModel.cs" />
     <Compile Include="ViewModels\BrightnessViewModel.cs" />
@@ -82,8 +86,14 @@
     <Compile Include="Views\BrightnessWindow.xaml.cs">
       <DependentUpon>BrightnessWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\BrushSettingsWindow.xaml.cs">
+      <DependentUpon>BrushSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ImageInfoWindow.xaml.cs">
       <DependentUpon>ImageInfoWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ToolbarView.xaml.cs">
+      <DependentUpon>ToolbarView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PixelateWindow.xaml.cs">
       <DependentUpon>PixelateWindow.xaml</DependentUpon>
@@ -120,9 +130,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\BrushSettingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\ImageInfoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ToolbarView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\PixelateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

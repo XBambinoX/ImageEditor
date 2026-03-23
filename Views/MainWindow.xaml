@@ -4,13 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:ImageEditor.ViewModels"
+        xmlns:views="clr-namespace:ImageEditor.Views"
         mc:Ignorable="d"
         WindowStyle="None"
         AllowsTransparency="False"
         Background="#303030"
         WindowState="Maximized"
         Title="MonoFrame"
-		Icon="/Assets/MonoFrame.ico">
+        Icon="/Assets/MonoFrame.ico">
 
     <!-- ViewModel -->
     <Window.DataContext>
@@ -22,6 +23,7 @@
         <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenImageCommand}"/>
         <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveImageCommand}"/>
         <KeyBinding Key="I" Modifiers="Ctrl" Command="{Binding ImageInfoCommand}"/>
+        <KeyBinding Key="B" Command="{Binding SelectBrushCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>
@@ -30,55 +32,55 @@
         <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#444444"/>
         <SolidColorBrush x:Key="TextForegroundBrush" Color="White"/>
 
-		<Style x:Key="CloseButtonStyle" TargetType="Button">
-			<Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
-			<Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="FontSize" Value="16"/>
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="Border" Background="{TemplateBinding Background}">
-							<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-						</Border>
-						<ControlTemplate.Triggers>
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter TargetName="Border" Property="Background" Value="#E81123"/>
-							</Trigger>
-							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="Border" Property="Background" Value="#C41B1B"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-		</Style>
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#C41B1B"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}" />
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="StatusBar">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
-        
+
         <!-- TabControl -->
         <Style TargetType="TabControl">
             <Setter Property="Background" Value="#2D2D30"/>
@@ -96,11 +98,10 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
                         <Border x:Name="Border"
-                        Background="{TemplateBinding Background}"
-                        Padding="{TemplateBinding Padding}"
-                        Margin="0,0,2,0">
-                            <ContentPresenter ContentSource="Header"
-                                      VerticalAlignment="Center"/>
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="0,0,2,0">
+                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
@@ -119,77 +120,52 @@
         <Style TargetType="MenuItem">
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Border x:Name="Border"
-                        Background="{TemplateBinding Background}">
-
+                        <Border x:Name="Border" Background="{TemplateBinding Background}">
                             <Grid>
                                 <ContentPresenter
-                            ContentSource="Header"
-                            Margin="6,2"
-                            VerticalAlignment="Center"
-                            RecognizesAccessKey="True"
-                                    />
-
+                                    ContentSource="Header"
+                                    Margin="6,2"
+                                    VerticalAlignment="Center"
+                                    RecognizesAccessKey="True"/>
                                 <Popup x:Name="Popup"
-                               IsOpen="{TemplateBinding IsSubmenuOpen}"
-                               AllowsTransparency="True"
-                               Focusable="False"
-                               PopupAnimation="Fade">
-
+                                       IsOpen="{TemplateBinding IsSubmenuOpen}"
+                                       AllowsTransparency="True"
+                                       Focusable="False"
+                                       PopupAnimation="Fade">
                                     <Border Background="{StaticResource PrimaryBackgroundBrush}"
-                                    BorderBrush="#555"
-                                    BorderThickness="1">
+                                            BorderBrush="#555"
+                                            BorderThickness="1">
                                         <ItemsPresenter/>
                                     </Border>
                                 </Popup>
                             </Grid>
                         </Border>
-
                         <ControlTemplate.Triggers>
-
-                            <!-- TOP LEVEL → DOWN -->
                             <Trigger Property="Role" Value="TopLevelHeader">
-                                <Setter TargetName="Popup"
-                                Property="Placement"
-                                Value="Bottom"/>
+                                <Setter TargetName="Popup" Property="Placement" Value="Bottom"/>
                             </Trigger>
-
-                            <!-- SUB MENU → RIGHT -->
                             <Trigger Property="Role" Value="SubmenuHeader">
-                                <Setter TargetName="Popup"
-                                Property="Placement"
-                                Value="Right"/>
+                                <Setter TargetName="Popup" Property="Placement" Value="Right"/>
                             </Trigger>
-
-                            <!-- Hover -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border"
-                                Property="Background"
-                                Value="#505050"/>
+                                <Setter TargetName="Border" Property="Background" Value="#505050"/>
                             </Trigger>
-
-                            <!-- Pressed -->
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border"
-                                Property="Background"
-                                Value="#606060"/>
+                                <Setter TargetName="Border" Property="Background" Value="#606060"/>
                             </Trigger>
-
-                            <!-- Disabled -->
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Foreground" Value="#777"/>
                             </Trigger>
-
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
     </Window.Resources>
 
     <DockPanel>
@@ -201,41 +177,27 @@
                 MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
                 BorderBrush="#555555"
                 BorderThickness="0,0,0,1">
-
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                    <Viewbox Width="18" Height="18" Margin="0,0,8,0">
+                        <Canvas Width="100" Height="100">
+                            <Rectangle Width="100" Height="100"
+                                       Stroke="#AAAAAA" StrokeThickness="8"
+                                       RadiusX="10" RadiusY="10"
+                                       Fill="#303030"/>
+                            <Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85" Fill="White"/>
+                            <Ellipse Width="18" Height="18" Fill="White"
+                                     Canvas.Left="65" Canvas.Top="20"/>
+                        </Canvas>
+                    </Viewbox>
+                    <TextBlock Text="MonoFrame" VerticalAlignment="Center" FontSize="16"/>
+                </StackPanel>
 
-					<!-- ICON -->
-					<Viewbox Width="18" Height="18" Margin="0,0,8,0">
-						<Canvas Width="100" Height="100">
-							<Rectangle Width="100" Height="100"
-									   Stroke="#AAAAAA"
-									   StrokeThickness="8"
-									   RadiusX="10" RadiusY="10"
-									   Fill="#303030"/>
-
-							<Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85"
-									 Fill="White"/>
-
-							<Ellipse Width="18" Height="18"
-									 Fill="White"
-									 Canvas.Left="65"
-									 Canvas.Top="20"/>
-						</Canvas>
-					</Viewbox>
-
-					<!-- TITLE -->
-					<TextBlock Text="MonoFrame"
-							   VerticalAlignment="Center"
-							   FontSize="16"/>
-				</StackPanel>
-
-				<!-- Control Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="—" Width="30" Height="25" Command="{Binding MinimizeCommand}"/>
                     <Button Content="▢" Width="30" Height="25" Command="{Binding MaximizeRestoreCommand}"/>
@@ -247,16 +209,15 @@
         <!-- MENU -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
+                <MenuItem Header="_New" Command="{Binding NewImageCommand}"/>
                 <MenuItem Header="_Open" Command="{Binding OpenImageCommand}"/>
-                <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
+                <Separator Margin="-40,0"/>
                 <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
                 <MenuItem Header="Save _As" Command="{Binding SaveAsImageCommand}"/>
-                <MenuItem Header="New" Command="{Binding NewImageCommand}"/>
-                
-                    <Separator Margin="-40,0"/>
+                <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
+                <Separator Margin="-40,0"/>
                 <MenuItem Header="Image _Info" Command="{Binding ImageInfoCommand}"/>
                 <Separator Margin="-40,0"/>
-                
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 
@@ -265,132 +226,133 @@
                 <MenuItem Header="_Redo" Command="{Binding RedoCommand}"/>
             </MenuItem>
 
-			<MenuItem Header="_Tools">
-				<MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
-				<MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
-				<MenuItem Header="Rotate 180" Command="{Binding Rotate180}"/>
-				
-				<Separator Margin="-40,0"/>
-				
-				<MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
-				<MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
-				
-				<Separator Margin="-40,0"/>
-				
-				<MenuItem Header="Blur" Command="{Binding GaussianBlurCommand}"/>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
+                <MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
+                <MenuItem Header="Rotate 180" Command="{Binding Rotate180}"/>
+                <Separator Margin="-40,0"/>
+                <MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
+                <MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
+                <Separator Margin="-40,0"/>
+                <MenuItem Header="Blur" Command="{Binding GaussianBlurCommand}"/>
                 <MenuItem Header="Sharpen" Command="{Binding SharpenCommand}"/>
                 <MenuItem Header="Brightness" Command="{Binding BrightnessCommand}"/>
                 <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
-                <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
+                <MenuItem Header="Edge Detection (Sobel)" Command="{Binding SobelCommand}"/>
                 <MenuItem Header="Invert" Command="{Binding InvertCommand}"/>
                 <MenuItem Header="Pixelate" Command="{Binding PixelateCommand}"/>
                 <MenuItem Header="Gamma Correction" Command="{Binding GammaCommand}"/>
-			</MenuItem>
+            </MenuItem>
 
-			<MenuItem Header="_Help">
-				<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
-			</MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Command="{Binding AboutCommand}"/>
+            </MenuItem>
         </Menu>
 
-        <!-- MAIN CONTENT -->  
+        <!-- MAIN CONTENT -->
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- IMAGE AREA -->
-            <TabControl Grid.Row="0"
-                ItemsSource="{Binding Tabs}"
-                SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
-                Background="#2D2D30"
-                BorderThickness="0">
+            <!-- TOOLBAR -->
+            <views:ToolbarView Grid.Column="0"
+                               DataContext="{Binding}"/>
 
-                <TabControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayTitle}"
-                           VerticalAlignment="Center"
-                           Margin="0,0,8,0"/>
-                            <Button Content="✕"
-                        Width="16" Height="16"
-                        FontSize="10"
-                        Command="{Binding DataContext.CloseTabCommand,
-                                  RelativeSource={RelativeSource AncestorType=Window}}"
-                        CommandParameter="{Binding}"/>
+            <!-- RIGHT SIDE: tabs + statusbar -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- IMAGE AREA -->
+                <TabControl Grid.Row="0"
+                            ItemsSource="{Binding Tabs}"
+                            SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
+                            Background="#2D2D30"
+                            BorderThickness="0">
+
+                    <TabControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayTitle}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0"/>
+                                <Button Content="✕"
+                                        Width="16" Height="16"
+                                        FontSize="10"
+                                        Command="{Binding DataContext.CloseTabCommand,
+                                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Auto">
+                                <Image Source="{Binding Image}"
+                                       Stretch="None"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                       RenderOptions.EdgeMode="Aliased"
+                                       MouseLeftButtonDown="Image_MouseLeftButtonDown"
+                                       MouseMove="Image_MouseMove"
+                                       MouseLeftButtonUp="Image_MouseLeftButtonUp"
+                                       MouseWheel="Image_MouseWheel">
+                                    <Image.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform
+                                                ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                ScaleY="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            <TranslateTransform
+                                                X="{Binding DataContext.ImageOffsetX, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Y="{Binding DataContext.ImageOffsetY, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                        </TransformGroup>
+                                    </Image.RenderTransform>
+                                </Image>
+                            </ScrollViewer>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+
+                </TabControl>
+
+                <!-- STATUSBAR -->
+                <StatusBar Grid.Row="1" Padding="5">
+                    <StatusBar.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                            </Grid>
+                        </ItemsPanelTemplate>
+                    </StatusBar.ItemsPanel>
+
+                    <StatusBarItem Grid.Column="0">
+                        <TextBlock Text="{Binding StatusText}"/>
+                    </StatusBarItem>
+
+                    <StatusBarItem Grid.Column="1">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Scale:"/>
+                            <TextBlock Text="{Binding Zoom, StringFormat={}{0:P0}}"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center"/>
+                            <Slider Width="140"
+                                    Minimum="0.1"
+                                    Maximum="5"
+                                    SmallChange="0.1"
+                                    LargeChange="0.25"
+                                    Value="{Binding Zoom, Mode=TwoWay}"
+                                    VerticalAlignment="Center"/>
                         </StackPanel>
-                    </DataTemplate>
-                </TabControl.ItemTemplate>
-
-                <TabControl.ContentTemplate>
-                    <DataTemplate>
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
-                            <Image Source="{Binding Image}"
-                   Stretch="None"
-                   RenderOptions.BitmapScalingMode="NearestNeighbor"
-                   RenderOptions.EdgeMode="Aliased"
-                   MouseLeftButtonDown="Image_MouseLeftButtonDown"
-                   MouseMove="Image_MouseMove"
-                   MouseLeftButtonUp="Image_MouseLeftButtonUp"
-                   MouseWheel="Image_MouseWheel">
-                                <Image.RenderTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform ScaleX="{Binding DataContext.Zoom,
-                                         RelativeSource={RelativeSource AncestorType=Window}}"
-                                        ScaleY="{Binding DataContext.Zoom,
-                                         RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                        <TranslateTransform X="{Binding DataContext.ImageOffsetX,
-                                             RelativeSource={RelativeSource AncestorType=Window}}"
-                                            Y="{Binding DataContext.ImageOffsetY,
-                                             RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                    </TransformGroup>
-                                </Image.RenderTransform>
-                            </Image>
-                        </ScrollViewer>
-                    </DataTemplate>
-                </TabControl.ContentTemplate>
-
-            </TabControl>
-
-            <!-- Statusbar -->
-			<StatusBar Grid.Row="1" Padding="5">
-				<StatusBar.ItemsPanel>
-					<ItemsPanelTemplate>
-						<Grid>
-							<Grid.ColumnDefinitions>
-								<ColumnDefinition/>
-								<ColumnDefinition Width="Auto"/>
-							</Grid.ColumnDefinitions>
-						</Grid>
-					</ItemsPanelTemplate>
-				</StatusBar.ItemsPanel>
-
-				<!-- Left part -->
-				<StatusBarItem Grid.Column="0">
-					<TextBlock Text="{Binding StatusText}"/>
-				</StatusBarItem>
-
-				<!-- Zoom -->
-				<StatusBarItem Grid.Column="1">
-					<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-
-						<TextBlock Text="Scale:"/>
-						<TextBlock Text="{Binding Zoom, StringFormat={}{0:P0}}"
-								   Margin="0,0,8,0"
-								   VerticalAlignment="Center"/>
-
-						<Slider Width="140"
-								Minimum="0.1"
-								Maximum="5"
-								SmallChange="0.1"
-								LargeChange="0.25"
-								Value="{Binding Zoom, Mode=TwoWay}"
-								VerticalAlignment="Center"/>
-					</StackPanel>
-				</StatusBarItem>
-			</StatusBar>
+                    </StatusBarItem>
+                </StatusBar>
+            </Grid>
         </Grid>
-
     </DockPanel>
 </Window>

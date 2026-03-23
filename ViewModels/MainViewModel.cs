@@ -64,6 +64,30 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private ToolType _activeTool = ToolType.None;
+        public ToolType ActiveTool
+        {
+            get => _activeTool;
+            set { _activeTool = value; OnPropertyChanged(); }
+        }
+
+        private Color _brushColor = Colors.Black;
+        public Color BrushColor
+        {
+            get => _brushColor;
+            set { _brushColor = value; OnPropertyChanged(); }
+        }
+
+        private int _brushSize = 10;
+        public int BrushSize
+        {
+            get => _brushSize;
+            set { _brushSize = value; OnPropertyChanged(); }
+        }
+
+        // Floating settings window
+        private BrushSettingsWindow _brushSettingsWindow;
+
         private double _imageOffsetX;
         public double ImageOffsetX
         {
@@ -109,6 +133,8 @@ namespace ImageEditor.ViewModels
         public ICommand MaximizeRestoreCommand { get; }
         public ICommand CloseCommand { get; }
         public ICommand MouseWheelCommand { get; }
+
+        public ICommand SelectBrushCommand { get; }
 
         // ================= CONSTRUCTOR =================
         public MainViewModel()
@@ -206,6 +232,9 @@ namespace ImageEditor.ViewModels
 
                 Zoom = newZoom;
             });
+
+
+            SelectBrushCommand = new RelayCommand(_ => ToggleBrushTool());
         }
 
         // ================= TABS =================
@@ -396,8 +425,63 @@ namespace ImageEditor.ViewModels
             window.ShowDialog();
         }
 
+        private void ToggleBrushTool()
+        {
+            if (ActiveTool == ToolType.Brush)
+            {
+                ActiveTool = ToolType.None;
+                _brushSettingsWindow?.Close();
+                _brushSettingsWindow = null;
+                return;
+            }
+
+            ActiveTool = ToolType.Brush;
+
+            _brushSettingsWindow = new BrushSettingsWindow();
+            _brushSettingsWindow.Closed += (s, e) =>
+            {
+                if (ActiveTool == ToolType.Brush)
+                {
+                    ActiveTool = ToolType.None;
+                }
+                _brushSettingsWindow = null;
+            };
+
+            var main = Application.Current.MainWindow;
+            _brushSettingsWindow.Left = main.Left + 50;
+            _brushSettingsWindow.Top = main.Top + 80;
+
+            _brushSettingsWindow.Show();
+        }
+
+        public void BrushStroke(Point imagePoint, Point? previousPoint)
+        {
+            if (ActiveTool != ToolType.Brush) return;
+            if (SelectedTab?.Image == null) return;
+
+            if (_brushSettingsWindow != null)
+            {
+                BrushColor = _brushSettingsWindow.SelectedColor;
+                BrushSize = _brushSettingsWindow.BrushSize;
+            }
+
+            var wb = SelectedTab.Image as WriteableBitmap
+                     ?? new WriteableBitmap(SelectedTab.Image);
+
+            if (previousPoint.HasValue)
+                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, BrushSize / 2, BrushColor);
+            else
+                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, BrushSize / 2, BrushColor);
+
+            if (!(SelectedTab.Image is WriteableBitmap))
+                SelectedTab.Image = wb;
+
+            SelectedTab.IsModified = true;
+            OnPropertyChanged(nameof(CurrentImage));
+        }
+
         // ================= UNDO / REDO =================
-        private void SaveState()
+        public void SaveState()
         {
             if (SelectedTab?.Image == null) return;
             SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
