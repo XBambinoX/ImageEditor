@@ -181,7 +181,9 @@ namespace ImageEditor.Views
 
         private void UpdateSelectionOverlay(MainViewModel vm)
         {
-            var rect = FindSelectionRect();
+            var rect = FindVisualChild<Rectangle>(this, "SelectionRect");
+            var rectBlack = FindVisualChild<Rectangle>(this, "SelectionRectBlack");
+            var rectFill = FindVisualChild<Rectangle>(this, "SelectionFill");
             var img = FindVisualChild<Image>(this, "MainImage");
             var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
 
@@ -196,28 +198,32 @@ namespace ImageEditor.Views
                 double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
                 double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
 
-                var topLeft = new Point(s.X / dpiScaleX, s.Y / dpiScaleY);
-                var botRight = new Point((s.X + s.Width) / dpiScaleX, (s.Y + s.Height) / dpiScaleY);
+                var p1 = new Point(s.X / dpiScaleX, s.Y / dpiScaleY);
+                var p2 = new Point((s.X + s.Width) / dpiScaleX, (s.Y + s.Height) / dpiScaleY);
 
                 var transform = img.TransformToVisual(canvas);
-                var canvasTopLeft = transform.Transform(topLeft);
-                var canvasBotRight = transform.Transform(botRight);
+                var c1 = transform.Transform(p1);
+                var c2 = transform.Transform(p2);
 
-                Canvas.SetLeft(rect, canvasTopLeft.X);
-                Canvas.SetTop(rect, canvasTopLeft.Y);
-                rect.Width = canvasBotRight.X - canvasTopLeft.X;
-                rect.Height = canvasBotRight.Y - canvasTopLeft.Y;
-                rect.Visibility = Visibility.Visible;
+                void ApplyRect(Rectangle r)
+                {
+                    Canvas.SetLeft(r, c1.X);
+                    Canvas.SetTop(r, c1.Y);
+                    r.Width = c2.X - c1.X;
+                    r.Height = c2.Y - c1.Y;
+                    r.Visibility = Visibility.Visible;
+                }
+
+                ApplyRect(rect);
+                if (rectBlack != null) ApplyRect(rectBlack);
+                if (rectFill != null) ApplyRect(rectFill);
             }
             else
             {
                 rect.Visibility = Visibility.Collapsed;
+                if (rectBlack != null) rectBlack.Visibility = Visibility.Collapsed;
+                if (rectFill != null) rectFill.Visibility = Visibility.Collapsed;
             }
-        }
-
-        private Rectangle FindSelectionRect()
-        {
-            return FindVisualChild<Rectangle>(this, "SelectionRect");
         }
 
         private T FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
