@@ -459,14 +459,7 @@ namespace ImageEditor.ViewModels
             if (ActiveTool != ToolType.Brush) return;
             if (SelectedTab?.Image == null) return;
 
-            if (_brushSettingsWindow != null)
-            {
-                BrushColor = _brushSettingsWindow.SelectedColor;
-                BrushSize = _brushSettingsWindow.BrushSize;
-            }
-
-            var wb = SelectedTab.Image as WriteableBitmap
-                     ?? new WriteableBitmap(SelectedTab.Image);
+            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
 
             if (previousPoint.HasValue)
                 DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, BrushSize / 2, BrushColor);
@@ -477,7 +470,15 @@ namespace ImageEditor.ViewModels
                 SelectedTab.Image = wb;
 
             SelectedTab.IsModified = true;
-            OnPropertyChanged(nameof(CurrentImage));
+        }
+
+        public void BeginBrushStroke()
+        {
+            if (_brushSettingsWindow != null)
+            {
+                BrushColor = _brushSettingsWindow.SelectedColor;
+                BrushSize = _brushSettingsWindow.BrushSize;
+            }
         }
 
         // ================= UNDO / REDO =================

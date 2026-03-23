@@ -11,6 +11,9 @@ namespace ImageEditor.Views
         private Point? _lastBrushPoint;
         private bool _isMiddleDragging;
 
+        private double _bitmapScaleX = 1.0;
+        private double _bitmapScaleY = 1.0;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -37,7 +40,8 @@ namespace ImageEditor.Views
             if (vm?.ActiveTool == ToolType.Brush)
             {
                 var img = sender as Image;
-                var imgPoint = GetImagePixel(e, img, vm);
+                var imgPoint = GetImagePixel(e, img);
+                vm.BeginBrushStroke();
                 vm.SaveState();
                 vm.BrushStroke(imgPoint, null);
                 _lastBrushPoint = imgPoint;
@@ -59,7 +63,7 @@ namespace ImageEditor.Views
             if (vm?.ActiveTool == ToolType.Brush && e.LeftButton == MouseButtonState.Pressed)
             {
                 var img = sender as Image;
-                var imgPoint = GetImagePixel(e, img, vm);
+                var imgPoint = GetImagePixel(e, img);
                 vm.BrushStroke(imgPoint, _lastBrushPoint);
                 _lastBrushPoint = imgPoint;
                 e.Handled = true;
@@ -104,17 +108,10 @@ namespace ImageEditor.Views
             }
         }
 
-        private Point GetImagePixel(MouseEventArgs e, Image img, MainViewModel vm)
+        private Point GetImagePixel(MouseEventArgs e, Image img)
         {
             var pos = e.GetPosition(img);
-
-            var bitmap = (vm.SelectedTab?.Image);
-            if (bitmap == null) return pos;
-
-            double scaleX = bitmap.PixelWidth / img.ActualWidth;
-            double scaleY = bitmap.PixelHeight / img.ActualHeight;
-
-            return new Point(pos.X * scaleX, pos.Y * scaleY);
+            return new Point(pos.X * _bitmapScaleX, pos.Y * _bitmapScaleY);
         }
     }
 }

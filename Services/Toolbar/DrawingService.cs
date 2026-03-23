@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -26,14 +27,14 @@ namespace ImageEditor.Services
             {
                 byte* buffer = (byte*)bitmap.BackBuffer;
                 int stride = bitmap.BackBufferStride;
-                int r2 = radius * radius;
+                double r2 = (radius - 0.5) * (radius - 0.5);
 
                 for (int y = y0; y <= y1; y++)
                 {
                     for (int x = x0; x <= x1; x++)
                     {
-                        int dx = x - cx;
-                        int dy = y - cy;
+                        double dx = x - cx;
+                        double dy = y - cy;
                         if (dx * dx + dy * dy <= r2)
                         {
                             byte* pixel = buffer + y * stride + x * 4;
@@ -60,7 +61,8 @@ namespace ImageEditor.Services
             double dx = to.X - from.X;
             double dy = to.Y - from.Y;
             double dist = System.Math.Sqrt(dx * dx + dy * dy);
-            int steps = System.Math.Max(1, (int)dist);
+            int step = System.Math.Max(1, radius / 2);
+            int steps = System.Math.Max(1, (int)(dist / step));
 
             for (int i = 0; i <= steps; i++)
             {
