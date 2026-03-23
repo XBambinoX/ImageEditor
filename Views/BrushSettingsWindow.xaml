@@ -6,7 +6,7 @@
         ResizeMode="NoResize"
         Background="#303030"
         Width="220"
-        Height="158"
+        Height="185"
         Title="MonoFrame"
         Topmost="True"
         ShowInTaskbar="False"
@@ -211,6 +211,46 @@
                          TextAlignment="Center"
                          KeyDown="SizeInput_KeyDown"
                          LostFocus="SizeInput_LostFocus"/>
+                </Grid>
+
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="38"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Hard"
+               VerticalAlignment="Center"
+               FontSize="12"
+               FontFamily="Segoe UI"
+               Foreground="#CCCCCC"/>
+
+                    <Slider x:Name="HardnessSlider"
+                        Grid.Column="1"
+                        Minimum="0"
+                        Maximum="100"
+                        Value="100"
+                        VerticalAlignment="Center"
+                        MouseWheel="HardnessSlider_MouseWheel"
+                        ValueChanged="HardnessSlider_ValueChanged"/>
+
+                    <TextBox x:Name="HardnessLabel"
+                         Grid.Column="2"
+                         Height="22"
+                         Background="#3C3C3C"
+                         Foreground="White"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         FontSize="12"
+                         FontFamily="Consolas"
+                         Padding="2,2"
+                         CaretBrush="White"
+                         MaxLength="3"
+                         Text="100"
+                         TextAlignment="Center"
+                         KeyDown="HardnessInput_KeyDown"
+                         LostFocus="HardnessInput_LostFocus"/>
                 </Grid>
 
             </StackPanel>

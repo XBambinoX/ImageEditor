@@ -8,6 +8,7 @@ namespace ImageEditor.Views
     public partial class BrushSettingsWindow : Window
     {
         public Color SelectedColor { get; private set; } = Colors.Black;
+        public double BrushHardness => HardnessSlider.Value / 100.0;
         public int BrushSize => (int)SizeSlider.Value;
         private int MaxSize = 100;
 
@@ -106,5 +107,38 @@ namespace ImageEditor.Views
             else
                 SizeLabel.Text = ((int)SizeSlider.Value).ToString();
         }
+
+        #region Hardness
+        private void HardnessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (HardnessLabel != null)
+                HardnessLabel.Text = ((int)HardnessSlider.Value).ToString();
+        }
+
+        private void HardnessSlider_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            HardnessSlider.Value = Tools.Clamp(HardnessSlider.Value + (e.Delta > 0 ? 1 : -1), 0, 100);
+            e.Handled = true;
+        }
+
+        private void HardnessInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+                TryApplyHardness();
+        }
+
+        private void HardnessInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            TryApplyHardness();
+        }
+
+        private void TryApplyHardness()
+        {
+            if (int.TryParse(HardnessLabel.Text, out int val))
+                HardnessSlider.Value = Tools.Clamp(val, 0, 100);
+            else
+                HardnessLabel.Text = ((int)HardnessSlider.Value).ToString();
+        }
+        #endregion
     }
 }

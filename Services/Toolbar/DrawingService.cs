@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -7,7 +6,7 @@ namespace ImageEditor.Services
 {
     public static class DrawingService
     {
-        public static void DrawCircle(WriteableBitmap bitmap, int cx, int cy, int radius, Color color)
+        public static void DrawCircle(WriteableBitmap bitmap, int cx, int cy, int radius, Color color, double hardness = 1.0)
         {
             if (bitmap == null) return;
 
@@ -27,7 +26,8 @@ namespace ImageEditor.Services
             {
                 byte* buffer = (byte*)bitmap.BackBuffer;
                 int stride = bitmap.BackBufferStride;
-                double r2 = (radius - 0.5) * (radius - 0.5);
+                double r = System.Math.Max(0.5, radius - 0.5);
+                double hardEdge = r * hardness;
 
                 for (int y = y0; y <= y1; y++)
                 {
@@ -35,13 +35,30 @@ namespace ImageEditor.Services
                     {
                         double dx = x - cx;
                         double dy = y - cy;
-                        if (dx * dx + dy * dy <= r2)
+                        double dist = System.Math.Sqrt(dx * dx + dy * dy);
+
+                        if (dist > r) continue;
+
+                        double alpha;
+                        if (dist <= hardEdge)
+                            alpha = 1.0;
+                        else
+                            alpha = 1.0 - (dist - hardEdge) / (r - hardEdge + 0.001);
+
+                        alpha = System.Math.Max(0, System.Math.Min(1, alpha));
+
+                        byte* pixel = buffer + y * stride + x * 4;
+
+                        double srcA = color.A / 255.0 * alpha;
+                        double dstA = pixel[3] / 255.0;
+                        double outA = srcA + dstA * (1.0 - srcA);
+
+                        if (outA > 0)
                         {
-                            byte* pixel = buffer + y * stride + x * 4;
-                            pixel[0] = color.B;
-                            pixel[1] = color.G;
-                            pixel[2] = color.R;
-                            pixel[3] = color.A;
+                            pixel[0] = (byte)((color.B * srcA + pixel[0] * dstA * (1.0 - srcA)) / outA);
+                            pixel[1] = (byte)((color.G * srcA + pixel[1] * dstA * (1.0 - srcA)) / outA);
+                            pixel[2] = (byte)((color.R * srcA + pixel[2] * dstA * (1.0 - srcA)) / outA);
+                            pixel[3] = (byte)(outA * 255);
                         }
                     }
                 }
@@ -49,12 +66,11 @@ namespace ImageEditor.Services
 
             int dirtyW = System.Math.Min(x1 - x0 + 1, width - x0);
             int dirtyH = System.Math.Min(y1 - y0 + 1, height - y0);
-
             bitmap.AddDirtyRect(new Int32Rect(x0, y0, dirtyW, dirtyH));
             bitmap.Unlock();
         }
 
-        public static void DrawLine(WriteableBitmap bitmap, Point from, Point to, int radius, Color color)
+        public static void DrawLine(WriteableBitmap bitmap, Point from, Point to, int radius, Color color, double hardness = 1.0)
         {
             if (bitmap == null) return;
 
@@ -69,7 +85,7 @@ namespace ImageEditor.Services
                 double t = (double)i / steps;
                 int cx = (int)(from.X + dx * t);
                 int cy = (int)(from.Y + dy * t);
-                DrawCircle(bitmap, cx, cy, radius, color);
+                DrawCircle(bitmap, cx, cy, radius, color, hardness);
             }
         }
     }

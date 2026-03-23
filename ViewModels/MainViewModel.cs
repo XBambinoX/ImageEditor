@@ -85,6 +85,13 @@ namespace ImageEditor.ViewModels
             set { _brushSize = value; OnPropertyChanged(); }
         }
 
+        private double _brushHardness = 1.0;
+        public double BrushHardness
+        {
+            get => _brushHardness;
+            set { _brushHardness = value; OnPropertyChanged(); }
+        }
+
         // Floating settings window
         private BrushSettingsWindow _brushSettingsWindow;
 
@@ -462,9 +469,9 @@ namespace ImageEditor.ViewModels
             var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
 
             if (previousPoint.HasValue)
-                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, BrushSize / 2, BrushColor);
+                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, BrushSize / 2, BrushColor, BrushHardness);
             else
-                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, BrushSize / 2, BrushColor);
+                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, BrushSize / 2, BrushColor, BrushHardness);
 
             if (!(SelectedTab.Image is WriteableBitmap))
                 SelectedTab.Image = wb;
@@ -478,6 +485,7 @@ namespace ImageEditor.ViewModels
             {
                 BrushColor = _brushSettingsWindow.SelectedColor;
                 BrushSize = _brushSettingsWindow.BrushSize;
+                BrushHardness = _brushSettingsWindow.BrushHardness;
             }
         }
 
