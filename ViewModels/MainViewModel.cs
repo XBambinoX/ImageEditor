@@ -558,14 +558,15 @@ namespace ImageEditor.ViewModels
         {
             if (!Selection.HasValue || SelectedTab?.Image == null) return;
             SaveState();
-            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
-            _clipboard = SelectionService.Cut(wb, Selection.Value);
-            if (_clipboard != null)
-            {
-                Clipboard.SetImage(_clipboard);
-            }
 
+            var wb = new WriteableBitmap(SelectedTab.Image);
             SelectedTab.Image = wb;
+
+            _clipboard = SelectionService.Cut(wb, Selection.Value);
+
+            if (_clipboard != null)
+                Clipboard.SetImage(_clipboard);
+
             SelectedTab.IsModified = true;
             Selection = null;
             OnPropertyChanged(nameof(CurrentImage));

@@ -21,6 +21,8 @@ namespace ImageEditor.Services
 
         public static WriteableBitmap Cut(WriteableBitmap source, Int32Rect region)
         {
+            if (source == null || source.IsFrozen) return null;
+
             var copied = Copy(source, region);
             if (copied == null) return null;
 
