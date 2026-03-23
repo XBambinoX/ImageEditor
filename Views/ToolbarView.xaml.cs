@@ -10,6 +10,19 @@ namespace ImageEditor.Views
         public ToolbarView()
         {
             InitializeComponent();
+            DataContextChanged += (s, e) =>
+            {
+                if (e.NewValue is MainViewModel vm)
+                {
+                    vm.PropertyChanged += (sender, args) =>
+                    {
+                        if (args.PropertyName == nameof(MainViewModel.ActiveTool))
+                        {
+                            UpdateActiveButton(vm);
+                        }
+                    };
+                }
+            };
         }
 
         private void BrushButton_Click(object sender, RoutedEventArgs e)
