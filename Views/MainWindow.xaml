@@ -23,6 +23,8 @@
         <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenImageCommand}"/>
         <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveImageCommand}"/>
         <KeyBinding Key="I" Modifiers="Ctrl" Command="{Binding ImageInfoCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Ctrl+Shift" Command="{Binding RedoCommand}"/>
         <KeyBinding Key="B" Command="{Binding SelectBrushCommand}"/>
     </Window.InputBindings>
 
