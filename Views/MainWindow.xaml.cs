@@ -107,7 +107,14 @@ namespace ImageEditor.Views
         private Point GetImagePixel(MouseEventArgs e, Image img, MainViewModel vm)
         {
             var pos = e.GetPosition(img);
-            return new Point(pos.X , pos.Y);
+
+            var bitmap = (vm.SelectedTab?.Image);
+            if (bitmap == null) return pos;
+
+            double scaleX = bitmap.PixelWidth / img.ActualWidth;
+            double scaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            return new Point(pos.X * scaleX, pos.Y * scaleY);
         }
     }
 }
