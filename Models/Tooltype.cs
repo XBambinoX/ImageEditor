@@ -3,6 +3,7 @@
     public enum ToolType
     {
         None,
-        Brush
+        Brush,
+        Selection
     }
 }

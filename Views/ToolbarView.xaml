@@ -35,7 +35,6 @@
             </Setter>
         </Style>
 
-        <!-- Active tool highlight -->
         <Style x:Key="ActiveToolButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolButtonStyle}">
             <Setter Property="Background" Value="#3A5A8A"/>
             <Setter Property="Template">
@@ -62,28 +61,40 @@
     <Border BorderBrush="#444444" BorderThickness="0,0,1,0">
         <StackPanel Orientation="Vertical" Margin="0,4,0,0">
 
+            <!-- Selection tool -->
+            <Button x:Name="SelectionButton"
+                    Style="{StaticResource ToolButtonStyle}"
+                    ToolTip="Selection (S)"
+                    Click="SelectionButton_Click">
+                <Viewbox Width="18" Height="18">
+                    <Canvas Width="24" Height="24">
+                        <!-- Dashed rectangle icon -->
+                        <Rectangle Canvas.Left="3" Canvas.Top="3"
+                                   Width="18" Height="18"
+                                   Stroke="#CCCCCC" StrokeThickness="2"
+                                   StrokeDashArray="3,2"
+                                   Fill="Transparent"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+
             <!-- Brush tool -->
             <Button x:Name="BrushButton"
                     Style="{StaticResource ToolButtonStyle}"
                     ToolTip="Brush (B)"
                     Click="BrushButton_Click">
                 <Viewbox Width="18" Height="18">
-                    <!-- Paintbrush SVG-style icon -->
                     <Canvas Width="24" Height="24">
-                        <!-- Handle -->
                         <Rectangle Canvas.Left="10" Canvas.Top="1"
                                    Width="4" Height="13"
                                    RadiusX="2" RadiusY="2"
                                    Fill="#CCCCCC"/>
-                        <!-- Ferrule -->
                         <Rectangle Canvas.Left="9.5" Canvas.Top="13"
                                    Width="5" Height="3"
                                    Fill="#888888"/>
-                        <!-- Bristles -->
                         <Ellipse Canvas.Left="9" Canvas.Top="15"
                                  Width="6" Height="8"
                                  Fill="#CCCCCC"/>
-                        <!-- Tip -->
                         <Polygon Points="12,24 10,20 14,20"
                                  Fill="#AAAAAA"/>
                     </Canvas>

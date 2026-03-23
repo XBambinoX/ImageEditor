@@ -92,6 +92,15 @@ namespace ImageEditor.ViewModels
             set { _brushHardness = value; OnPropertyChanged(); }
         }
 
+        private WriteableBitmap _clipboard;
+
+        private Int32Rect? _selection;
+        public Int32Rect? Selection
+        {
+            get => _selection;
+            set { _selection = value; OnPropertyChanged(); }
+        }
+
         // Floating settings window
         private BrushSettingsWindow _brushSettingsWindow;
 
@@ -141,7 +150,13 @@ namespace ImageEditor.ViewModels
         public ICommand CloseCommand { get; }
         public ICommand MouseWheelCommand { get; }
 
+        // ================ TOOLBAR =================
         public ICommand SelectBrushCommand { get; }
+        public ICommand SelectSelectionToolCommand { get; }
+        public ICommand CopyCommand { get; }
+        public ICommand CutCommand { get; }
+        public ICommand PasteCommand { get; }
+
 
         // ================= CONSTRUCTOR =================
         public MainViewModel()
@@ -242,6 +257,11 @@ namespace ImageEditor.ViewModels
 
 
             SelectBrushCommand = new RelayCommand(_ => ToggleBrushTool());
+
+            SelectSelectionToolCommand = new RelayCommand(_ => ToggleSelectionTool());
+            CopyCommand = new RelayCommand(_ => CopySelection(), _ => Selection.HasValue && HasImage);
+            CutCommand = new RelayCommand(_ => CutSelection(), _ => Selection.HasValue && HasImage);
+            PasteCommand = new RelayCommand(_ => PasteClipboard(), _ => _clipboard != null && HasImage);
         }
 
         // ================= TABS =================
@@ -442,6 +462,11 @@ namespace ImageEditor.ViewModels
                 return;
             }
 
+            if (ActiveTool == ToolType.Selection)
+            {
+                Selection = null;
+            }
+
             ActiveTool = ToolType.Brush;
 
             _brushSettingsWindow = new BrushSettingsWindow();
@@ -494,6 +519,63 @@ namespace ImageEditor.ViewModels
                 BrushSize = _brushSettingsWindow.BrushSize;
                 BrushHardness = _brushSettingsWindow.BrushHardness;
             }
+        }
+
+        private void ToggleSelectionTool()
+        {
+            if (ActiveTool == ToolType.Selection)
+            {
+                ActiveTool = ToolType.None;
+                Selection = null;
+                return;
+            }
+
+            if (ActiveTool == ToolType.Brush)
+            {
+                _brushSettingsWindow?.Close();
+                _brushSettingsWindow = null;
+            }
+
+            ActiveTool = ToolType.Selection;
+            Selection = null;
+        }
+
+        private void CopySelection()
+        {
+            if (!Selection.HasValue || SelectedTab?.Image == null) return;
+            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+            _clipboard = SelectionService.Copy(wb, Selection.Value);
+        }
+
+        private void CutSelection()
+        {
+            if (!Selection.HasValue || SelectedTab?.Image == null) return;
+            SaveState();
+            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+            _clipboard = SelectionService.Cut(wb, Selection.Value);
+            SelectedTab.Image = wb;
+            SelectedTab.IsModified = true;
+            Selection = null;
+            OnPropertyChanged(nameof(CurrentImage));
+        }
+
+        private void PasteClipboard()
+        {
+            if (_clipboard == null || SelectedTab?.Image == null) return;
+            SaveState();
+
+            var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+            if (wb.IsFrozen) wb = new WriteableBitmap(wb);
+
+            int destX = 0;
+            int destY = 0;
+
+            SelectionService.Paste(wb, _clipboard, destX, destY);
+
+            SelectedTab.Image = wb;
+            SelectedTab.IsModified = true;
+            Selection = new Int32Rect(destX, destY, _clipboard.PixelWidth, _clipboard.PixelHeight);
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
         // ================= UNDO / REDO =================

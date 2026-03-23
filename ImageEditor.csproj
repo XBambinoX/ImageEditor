@@ -74,6 +74,7 @@
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
     <Compile Include="Services\Math\Tools.cs" />
     <Compile Include="Services\Toolbar\DrawingService.cs" />
+    <Compile Include="Services\Toolbar\SelectionService.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\BlurViewModel.cs" />
     <Compile Include="ViewModels\BrightnessViewModel.cs" />

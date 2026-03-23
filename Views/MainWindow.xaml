@@ -26,6 +26,11 @@
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}"/>
         <KeyBinding Key="Z" Modifiers="Ctrl+Shift" Command="{Binding RedoCommand}"/>
         <KeyBinding Key="B" Command="{Binding SelectBrushCommand}"/>
+
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyCommand}"/>
+        <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutCommand}"/>
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteCommand}"/>
+        <KeyBinding Key="S" Command="{Binding SelectSelectionToolCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>
@@ -295,8 +300,10 @@
                     <TabControl.ContentTemplate>
                         <DataTemplate>
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                          VerticalScrollBarVisibility="Auto">
-                                <Image Source="{Binding Image}"
+                      VerticalScrollBarVisibility="Auto">
+                                <Grid>
+                                    <Image x:Name="MainImage"
+                                       Source="{Binding Image}"
                                        Stretch="None"
                                        RenderOptions.BitmapScalingMode="NearestNeighbor"
                                        RenderOptions.EdgeMode="Aliased"
@@ -306,17 +313,39 @@
                                        MouseWheel="Image_MouseWheel"
                                        MouseDown="Image_MouseDown"
                                        MouseUp="Image_MouseUp">
-                                    <Image.RenderTransform>
-                                        <TransformGroup>
-                                            <ScaleTransform
-                                                ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                ScaleY="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                            <TranslateTransform
-                                                X="{Binding DataContext.ImageOffsetX, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                Y="{Binding DataContext.ImageOffsetY, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                        </TransformGroup>
-                                    </Image.RenderTransform>
-                                </Image>
+                                        <Image.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform
+                                ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ScaleY="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                <TranslateTransform
+                                X="{Binding DataContext.ImageOffsetX, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Y="{Binding DataContext.ImageOffsetY, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            </TransformGroup>
+                                        </Image.RenderTransform>
+                                    </Image>
+
+                                    <Canvas x:Name="SelectionCanvas"
+                                            IsHitTestVisible="False">
+                                        <Canvas.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform
+                                ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ScaleY="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                <TranslateTransform
+                                X="{Binding DataContext.ImageOffsetX, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Y="{Binding DataContext.ImageOffsetY, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                            </TransformGroup>
+                                        </Canvas.RenderTransform>
+
+                                        <Rectangle x:Name="SelectionRect"
+                               Stroke="White"
+                               StrokeThickness="1"
+                               StrokeDashArray="4,4"
+                               Fill="Transparent"
+                               Visibility="Collapsed"/>
+                                    </Canvas>
+                                </Grid>
                             </ScrollViewer>
                         </DataTemplate>
                     </TabControl.ContentTemplate>
