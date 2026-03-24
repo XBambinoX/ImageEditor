@@ -471,7 +471,11 @@ namespace ImageEditor.ViewModels
 
             ActiveTool = ToolType.Brush;
 
-            _brushSettingsWindow = new BrushSettingsWindow();
+            _brushSettingsWindow = new BrushSettingsWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+
             _brushSettingsWindow.Closed += (s, e) =>
             {
                 if (ActiveTool == ToolType.Brush)

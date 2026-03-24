@@ -10,6 +10,8 @@
         Title="MonoFrame"
         Topmost="True"
         ShowInTaskbar="False"
+        Focusable="False"
+        ShowActivated="False"
         WindowStartupLocation="Manual">
 
     <Border BorderBrush="#555555" BorderThickness="1">
