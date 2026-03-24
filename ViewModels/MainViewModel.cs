@@ -603,6 +603,36 @@ namespace ImageEditor.ViewModels
 
             if (IsFloatingPaste) CommitFloatingPaste();
 
+            // If the pasted image is larger than the current canvas, we need to expand it first
+            var current = SelectedTab.Image;
+            if (source.PixelWidth > current.PixelWidth || source.PixelHeight > current.PixelHeight)
+            {
+                int newW = Math.Max(source.PixelWidth, current.PixelWidth);
+                int newH = Math.Max(source.PixelHeight, current.PixelHeight);
+
+                var dialog = new ExpandCanvasdialog(
+                    source.PixelWidth, source.PixelHeight,
+                    current.PixelWidth, current.PixelHeight)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                dialog.ShowDialog();
+
+                if (dialog.Confirmed)
+                {
+                    SaveState();
+
+                    var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgra32, null);
+                    int stride = newW * 4;
+                    byte[] white = Enumerable.Repeat((byte)255, newH * stride).ToArray();
+                    expanded.WritePixels(new Int32Rect(0, 0, newW, newH), white, stride, 0);
+                    SelectionService.Paste(expanded, new WriteableBitmap(current), 0, 0);
+
+                    SelectedTab.Image = expanded;
+                    OnPropertyChanged(nameof(CurrentImage));
+                }
+            }
+
             SaveState();
 
             var wb = new WriteableBitmap(SelectedTab.Image);
