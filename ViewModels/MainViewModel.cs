@@ -118,6 +118,16 @@ namespace ImageEditor.ViewModels
             set { _imageOffsetY = value; OnPropertyChanged(); }
         }
 
+        // floating paste
+        private WriteableBitmap _pasteFloating;
+        private WriteableBitmap _pasteBackground;
+        private int _pasteX;
+        private int _pasteY;
+        public int PasteX => _pasteX;
+        public int PasteY => _pasteY;
+
+        public bool IsFloatingPaste => _pasteFloating != null;
+
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
@@ -591,18 +601,78 @@ namespace ImageEditor.ViewModels
 
             if (source == null) return;
 
+            if (IsFloatingPaste) CommitFloatingPaste();
+
             SaveState();
 
-            var wb = SelectedTab.Image as WriteableBitmap;
-            if (wb == null || wb.IsFrozen)
-                wb = new WriteableBitmap(SelectedTab.Image);
-
-            SelectionService.Paste(wb, source, 0, 0);
-
+            var wb = new WriteableBitmap(SelectedTab.Image);
             SelectedTab.Image = wb;
+
+            _pasteFloating = source;
+            _pasteX = 0;
+            _pasteY = 0;
+
+            _pasteBackground = SelectionService.Copy(wb,
+                new Int32Rect(0, 0,
+                    Math.Min(source.PixelWidth, wb.PixelWidth),
+                    Math.Min(source.PixelHeight, wb.PixelHeight)));
+
+            SelectionService.Paste(wb, source, _pasteX, _pasteY);
             SelectedTab.IsModified = true;
-            Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
+            Selection = new Int32Rect(_pasteX, _pasteY, source.PixelWidth, source.PixelHeight);
             OnPropertyChanged(nameof(CurrentImage));
+            OnPropertyChanged(nameof(IsFloatingPaste));
+        }
+
+        public void MoveFloatingPaste(int newX, int newY)
+        {
+            if (!IsFloatingPaste || SelectedTab?.Image == null) return;
+
+            var wb = SelectedTab.Image as WriteableBitmap;
+            if (wb == null || wb.IsFrozen) 
+                return;
+
+            SelectionService.Paste(wb, _pasteBackground, _pasteX, _pasteY);
+
+            _pasteX = newX;
+            _pasteY = newY;
+
+            _pasteBackground = SelectionService.Copy(wb,
+                new Int32Rect(
+                    Math.Max(0, newX), Math.Max(0, newY),
+                    Math.Min(_pasteFloating.PixelWidth, wb.PixelWidth - Math.Max(0, newX)),
+                    Math.Min(_pasteFloating.PixelHeight, wb.PixelHeight - Math.Max(0, newY))));
+
+            SelectionService.Paste(wb, _pasteFloating, newX, newY);
+
+            Selection = new Int32Rect(newX, newY, _pasteFloating.PixelWidth, _pasteFloating.PixelHeight);
+            OnPropertyChanged(nameof(CurrentImage));
+        }
+
+        public void CommitFloatingPaste()
+        {
+            _pasteFloating = null;
+            _pasteBackground = null;
+            Selection = null;
+            OnPropertyChanged(nameof(IsFloatingPaste));
+        }
+
+        public void CancelFloatingPaste()
+        {
+            if (!IsFloatingPaste) return;
+
+            // Recover the original background
+            var wb = SelectedTab?.Image as WriteableBitmap;
+            if (wb != null)
+            {
+                SelectionService.Paste(wb, _pasteBackground, _pasteX, _pasteY);
+                OnPropertyChanged(nameof(CurrentImage));
+            }
+
+            _pasteFloating = null;
+            _pasteBackground = null;
+            Selection = null;
+            OnPropertyChanged(nameof(IsFloatingPaste));
         }
 
         // ================= UNDO / REDO =================

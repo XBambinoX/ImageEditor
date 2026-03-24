@@ -16,6 +16,10 @@ namespace ImageEditor.Views
 
         private Point? _selectionStart;
 
+        private Point? _floatingDragStart;
+        private int _floatingDragOriginX;
+        private int _floatingDragOriginY;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -55,10 +59,30 @@ namespace ImageEditor.Views
         private void Image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var vm = DataContext as MainViewModel;
+            var img = sender as Image;
+
+            if (vm?.IsFloatingPaste == true)
+            {
+                var clickPoint = GetImagePixel(e, img, vm);
+
+                if (vm.Selection.HasValue && RectContains(vm.Selection.Value, (int)clickPoint.X, (int)clickPoint.Y))
+                {
+                    _floatingDragStart = clickPoint;
+                    _floatingDragOriginX = vm.PasteX;
+                    _floatingDragOriginY = vm.PasteY;
+                    (sender as FrameworkElement)?.CaptureMouse();
+                    e.Handled = true;
+                    return;
+                }
+                else
+                {
+                    vm.CommitFloatingPaste();
+                    UpdateSelectionOverlay(vm);
+                }
+            }
 
             if (vm?.ActiveTool == ToolType.Selection)
             {
-                var img = sender as Image;
                 _selectionStart = GetImagePixel(e, img, vm);
                 vm.Selection = null;
                 UpdateSelectionOverlay(vm);
@@ -69,7 +93,6 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Brush)
             {
-                var img = sender as Image;
                 var imgPoint = GetImagePixel(e, img, vm);
                 vm.BeginBrushStroke();
                 vm.SaveState();
@@ -87,6 +110,21 @@ namespace ImageEditor.Views
             if (_isMiddleDragging && e.MiddleButton == MouseButtonState.Pressed)
             {
                 vm?.DragTo(e.GetPosition(Application.Current.MainWindow));
+                return;
+            }
+
+            // Floating paste drag
+            if (vm?.IsFloatingPaste == true && _floatingDragStart.HasValue && e.LeftButton == MouseButtonState.Pressed)
+            {
+                var img = sender as Image;
+                var current = GetImagePixel(e, img, vm);
+
+                int dx = (int)(current.X - _floatingDragStart.Value.X);
+                int dy = (int)(current.Y - _floatingDragStart.Value.Y);
+
+                vm.MoveFloatingPaste(_floatingDragOriginX + dx, _floatingDragOriginY + dy);
+                UpdateSelectionOverlay(vm);
+                e.Handled = true;
                 return;
             }
 
@@ -130,6 +168,8 @@ namespace ImageEditor.Views
 
         private void Image_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            _floatingDragStart = null;
+
             var vm = DataContext as MainViewModel;
             _selectionStart = null;
             _lastBrushPoint = null;
@@ -237,5 +277,8 @@ namespace ImageEditor.Views
             }
             return null;
         }
+
+        private bool RectContains(Int32Rect r, int x, int y)
+                      => x >= r.X && x <= r.X + r.Width && y >= r.Y && y <= r.Y + r.Height;
     }
 }
