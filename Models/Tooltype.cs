@@ -4,6 +4,7 @@
     {
         None,
         Brush,
-        Selection
+        Selection,
+        Line
     }
 }

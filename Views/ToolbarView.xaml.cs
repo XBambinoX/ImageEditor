@@ -13,15 +13,11 @@ namespace ImageEditor.Views
             DataContextChanged += (s, e) =>
             {
                 if (e.NewValue is MainViewModel vm)
-                {
                     vm.PropertyChanged += (sender, args) =>
                     {
                         if (args.PropertyName == nameof(MainViewModel.ActiveTool))
-                        {
                             UpdateActiveButton(vm);
-                        }
                     };
-                }
             };
         }
 
@@ -43,6 +39,15 @@ namespace ImageEditor.Views
             }
         }
 
+        private void LineButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.SelectLineToolCommand.Execute(null);
+                UpdateActiveButton(vm);
+            }
+        }
+
         private void UpdateActiveButton(MainViewModel vm)
         {
             BrushButton.Style = vm.ActiveTool == ToolType.Brush
@@ -50,6 +55,10 @@ namespace ImageEditor.Views
                 : (Style)FindResource("ToolButtonStyle");
 
             SelectionButton.Style = vm.ActiveTool == ToolType.Selection
+                ? (Style)FindResource("ActiveToolButtonStyle")
+                : (Style)FindResource("ToolButtonStyle");
+
+            LineButton.Style = vm.ActiveTool == ToolType.Line
                 ? (Style)FindResource("ActiveToolButtonStyle")
                 : (Style)FindResource("ToolButtonStyle");
         }

@@ -33,6 +33,7 @@
         <KeyBinding Key="S" Command="{Binding SelectSelectionToolCommand}"/>
         <KeyBinding Key="A" Modifiers="Ctrl" Command="{Binding SelectAllCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding ClearSelectionCommand}"/>
+        <KeyBinding Key="L" Command="{Binding SelectLineToolCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>

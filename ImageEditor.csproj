@@ -130,6 +130,9 @@
     <Compile Include="Views\ExpandCanvasdialog.xaml.cs">
       <DependentUpon>ExpandCanvasdialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\LineSettingsWindow.xaml.cs">
+      <DependentUpon>LineSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\BrightnessWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -182,6 +185,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ExpandCanvasdialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LineSettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

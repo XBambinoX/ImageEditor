@@ -101,6 +101,19 @@
                 </Viewbox>
             </Button>
 
+            <!-- Line tool -->
+            <Button x:Name="LineButton"
+                    Style="{StaticResource ToolButtonStyle}"
+                    ToolTip="Line (L)"
+                    Click="LineButton_Click">
+                <Viewbox Width="18" Height="18">
+                    <Canvas Width="24" Height="24">
+                        <Line X1="4" Y1="20" X2="20" Y2="4"
+                              Stroke="#CCCCCC" StrokeThickness="2.5"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+
         </StackPanel>
     </Border>
 </UserControl>

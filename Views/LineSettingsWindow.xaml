@@ -1,0 +1,199 @@
+﻿<Window x:Class="ImageEditor.Views.LineSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="NoResize"
+        Background="#303030"
+        Width="220"
+        Height="158"
+        Title="MonoFrame"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        WindowStartupLocation="Manual">
+
+    <Border BorderBrush="#555555" BorderThickness="1">
+        <DockPanel>
+
+            <!-- Titlebar -->
+            <Border DockPanel.Dock="Top"
+                    Background="#303030"
+                    Height="28"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    BorderBrush="#555555"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Line"
+                               VerticalAlignment="Center"
+                               Margin="10,0"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#AAAAAA"/>
+
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Width="28" Height="28"
+                            FontSize="11"
+                            FontFamily="Segoe UI"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="Close_Click">
+                        <Button.Foreground>
+                            <SolidColorBrush Color="#AAAAAA"/>
+                        </Button.Foreground>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Border" Background="Transparent">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Settings -->
+            <StackPanel Margin="12,10,12,12">
+
+                <!-- Mode row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Mode"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#CCCCCC"/>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <RadioButton x:Name="StraightMode"
+                                     Content="Straight"
+                                     IsChecked="True"
+                                     Foreground="#CCCCCC"
+                                     FontSize="12"
+                                     FontFamily="Segoe UI"
+                                     Margin="0,0,10,0"
+                                     VerticalAlignment="Center"/>
+                        <RadioButton x:Name="BezierMode"
+                                     Content="Bezier"
+                                     Foreground="#CCCCCC"
+                                     FontSize="12"
+                                     FontFamily="Segoe UI"
+                                     VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Color row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Color"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#CCCCCC"/>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Border x:Name="ColorSwatch"
+                                Width="28" Height="22"
+                                BorderBrush="#666666"
+                                BorderThickness="1"
+                                Cursor="Hand"
+                                MouseLeftButtonUp="ColorSwatch_Click">
+                            <Border.Background>
+                                <SolidColorBrush x:Name="SwatchBrush" Color="Black"/>
+                            </Border.Background>
+                        </Border>
+
+                        <Popup x:Name="ColorPopup"
+                               PlacementTarget="{Binding ElementName=ColorSwatch}"
+                               Placement="Bottom"
+                               StaysOpen="True"
+                               AllowsTransparency="True">
+                            <Border Background="#2A2A2A"
+                                    BorderBrush="#555555"
+                                    BorderThickness="1"
+                                    Padding="6">
+                                <WrapPanel Width="168" ItemWidth="24" ItemHeight="24">
+                                    <Border Background="Black"        Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#222222"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#555555"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#AAAAAA"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#DDDDDD"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="White"        Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#8B0000"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="Red"          Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="OrangeRed"    Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="Orange"       Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="Yellow"       Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#FFD9B3"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#556B2F"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="Lime"         Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="Teal"         Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#B3FFB3"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#00008B"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="DodgerBlue"   Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="Cyan"         Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#B3D9FF"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="#4B0082"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="BlueViolet"   Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="DeepPink"     Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                    <Border Background="HotPink"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
+                                </WrapPanel>
+                            </Border>
+                        </Popup>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Width row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="28"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Width"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#CCCCCC"/>
+
+                    <Slider x:Name="WidthSlider"
+                            Grid.Column="1"
+                            Minimum="1"
+                            Maximum="30"
+                            Value="2"
+                            VerticalAlignment="Center"
+                            ValueChanged="WidthSlider_ValueChanged"/>
+
+                    <TextBlock x:Name="WidthLabel"
+                               Grid.Column="2"
+                               Text="2"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Right"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#CCCCCC"/>
+                </Grid>
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</Window>

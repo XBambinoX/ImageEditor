@@ -88,5 +88,38 @@ namespace ImageEditor.Services
                 DrawCircle(bitmap, cx, cy, radius, color, hardness);
             }
         }
+
+        public static void DrawBezier(WriteableBitmap bitmap, Point p0, Point p1, Point p2, Point p3, int thickness, Color color)
+        {
+            if (bitmap == null) return;
+
+            double approxLen =
+                System.Math.Sqrt(System.Math.Pow(p1.X - p0.X, 2) + System.Math.Pow(p1.Y - p0.Y, 2)) +
+                System.Math.Sqrt(System.Math.Pow(p2.X - p1.X, 2) + System.Math.Pow(p2.Y - p1.Y, 2)) +
+                System.Math.Sqrt(System.Math.Pow(p3.X - p2.X, 2) + System.Math.Pow(p3.Y - p2.Y, 2));
+
+            int steps = System.Math.Max(64, (int)approxLen);
+
+            Point prev = p0;
+            for (int i = 1; i <= steps; i++)
+            {
+                double t = (double)i / steps;
+                double mt = 1 - t;
+
+                double x = mt * mt * mt * p0.X
+                         + 3 * mt * mt * t * p1.X
+                         + 3 * mt * t * t * p2.X
+                         + t * t * t * p3.X;
+
+                double y = mt * mt * mt * p0.Y
+                         + 3 * mt * mt * t * p1.Y
+                         + 3 * mt * t * t * p2.Y
+                         + t * t * t * p3.Y;
+
+                var curr = new Point(x, y);
+                DrawLine(bitmap, prev, curr, thickness, color);
+                prev = curr;
+            }
+        }
     }
 }

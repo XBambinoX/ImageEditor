@@ -92,6 +92,34 @@ namespace ImageEditor.ViewModels
             set { _brushHardness = value; OnPropertyChanged(); }
         }
 
+
+
+
+        private LineSettingsWindow _lineSettingsWindow;
+
+        private Color _lineColor = Colors.Black;
+        public Color LineColor
+        {
+            get => _lineColor;
+            set { _lineColor = value; OnPropertyChanged(); }
+        }
+
+        private int _lineWidth = 2;
+        public int LineWidth
+        {
+            get => _lineWidth;
+            set { _lineWidth = value; OnPropertyChanged(); }
+        }
+
+        public Point? LineStart { get; set; }
+        public Point? LineEnd { get; set; }
+        public Point? BezierControl1 { get; set; }
+        public Point? BezierControl2 { get; set; }
+        public bool IsBezierSecondPhase { get; set; }
+
+
+
+
         private WriteableBitmap _clipboard;
 
         private Int32Rect? _selection;
@@ -168,6 +196,7 @@ namespace ImageEditor.ViewModels
         public ICommand CutCommand { get; }
         public ICommand PasteCommand { get; }
         public ICommand SelectAllCommand { get; }
+        public ICommand SelectLineToolCommand { get; }
 
 
         // ================= CONSTRUCTOR =================
@@ -282,6 +311,8 @@ namespace ImageEditor.ViewModels
                 ActiveTool = ToolType.Selection;
                 Selection = new Int32Rect(0, 0, SelectedTab.Image.PixelWidth, SelectedTab.Image.PixelHeight);
             }, _ => HasImage);
+
+            SelectLineToolCommand = new RelayCommand(_ => ToggleLineTool());
         }
 
         // ================= TABS =================
@@ -713,6 +744,82 @@ namespace ImageEditor.ViewModels
             OnPropertyChanged(nameof(IsFloatingPaste));
         }
 
+        private void ToggleLineTool()
+        {
+            if (ActiveTool == ToolType.Line)
+            {
+                ActiveTool = ToolType.None;
+                _lineSettingsWindow?.Close();
+                _lineSettingsWindow = null;
+                return;
+            }
+
+            if (ActiveTool == ToolType.Brush)
+            {
+                _brushSettingsWindow?.Close();
+                _brushSettingsWindow = null;
+            }
+
+            ActiveTool = ToolType.Line;
+            LineStart = null;
+            LineEnd = null;
+            IsBezierSecondPhase = false;
+
+            _lineSettingsWindow = new LineSettingsWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+            _lineSettingsWindow.Closed += (s, e) =>
+            {
+                if (ActiveTool == ToolType.Line)
+                    ActiveTool = ToolType.None;
+                _lineSettingsWindow = null;
+            };
+
+            var main = Application.Current.MainWindow;
+            _lineSettingsWindow.Left = main.Left + 50;
+            _lineSettingsWindow.Top = main.Top + 80;
+            _lineSettingsWindow.Show();
+        }
+
+        public void BeginLineSettings()
+        {
+            if (_lineSettingsWindow != null)
+            {
+                LineColor = _lineSettingsWindow.SelectedColor;
+                LineWidth = _lineSettingsWindow.LineWidth;
+            }
+        }
+
+        public bool IsLineBezierMode =>
+            _lineSettingsWindow?.Mode == LineMode.Bezier;
+
+        public void CommitLine(Point from, Point to, Point? cp1 = null, Point? cp2 = null)
+        {
+            if (SelectedTab?.Image == null) return;
+
+            var wb = SelectedTab.Image as WriteableBitmap;
+            if (wb == null || wb.IsFrozen)
+            {
+                wb = new WriteableBitmap(SelectedTab.Image);
+                SelectedTab.Image = wb;
+                OnPropertyChanged(nameof(CurrentImage));
+            }
+
+            if (cp1.HasValue && cp2.HasValue)
+                DrawingService.DrawBezier(wb, from, cp1.Value, cp2.Value, to, LineWidth, LineColor);
+            else
+                DrawingService.DrawLine(wb, from, to, LineWidth, LineColor);
+
+            SelectedTab.IsModified = true;
+
+            LineStart = null;
+            LineEnd = null;
+            BezierControl1 = null;
+            BezierControl2 = null;
+            IsBezierSecondPhase = false;
+        }
+
         // ================= UNDO / REDO =================
         public void SaveState()
         {
@@ -780,5 +887,7 @@ namespace ImageEditor.ViewModels
             w.WindowState = w.WindowState == WindowState.Maximized
                 ? WindowState.Normal : WindowState.Maximized;
         }
+
+        public void OnPropertyChangedPublic(string name) => OnPropertyChanged(name);
     }
 }

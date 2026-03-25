@@ -1,10 +1,12 @@
 ﻿using ImageEditor.Models;
+using ImageEditor.Services;
 using ImageEditor.ViewModels;
 using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace ImageEditor.Views
@@ -19,6 +21,9 @@ namespace ImageEditor.Views
         private Point? _floatingDragStart;
         private int _floatingDragOriginX;
         private int _floatingDragOriginY;
+
+        private Point? _linePreviewStart;
+        private WriteableBitmap _linePreviewBackup; // For storing the image state before drawing the line preview
 
         public MainWindow()
         {
@@ -91,6 +96,52 @@ namespace ImageEditor.Views
                 return;
             }
 
+            if (vm?.ActiveTool == ToolType.Line)
+            {
+                var imgPoint = GetImagePixel(e, img, vm);
+                vm.BeginLineSettings();
+
+                if (!vm.IsLineBezierMode)
+                {
+                    vm.LineStart = imgPoint;
+                    _linePreviewStart = imgPoint;
+                    _linePreviewBackup = new WriteableBitmap(vm.SelectedTab.Image);
+                    vm.SaveState();
+                    (sender as FrameworkElement)?.CaptureMouse();
+                }
+                else
+                {
+                    if (!vm.LineStart.HasValue)
+                    {
+                        // First click — set the start point
+                        vm.LineStart = imgPoint;
+                        _linePreviewStart = imgPoint;
+                        _linePreviewBackup = new WriteableBitmap(vm.SelectedTab.Image);
+                        vm.SaveState();
+                        (sender as FrameworkElement)?.CaptureMouse();
+                    }
+                    else if (!vm.IsBezierSecondPhase)
+                    {
+                        vm.LineEnd = imgPoint;
+                        var s = vm.LineStart.Value;
+                        var en = imgPoint;
+                        vm.BezierControl1 = new Point(s.X + (en.X - s.X) / 3, s.Y + (en.Y - s.Y) / 3);
+                        vm.BezierControl2 = new Point(s.X + 2 * (en.X - s.X) / 3, s.Y + 2 * (en.Y - s.Y) / 3);
+                        vm.IsBezierSecondPhase = true;
+                    }
+                    else
+                    {
+                        // Third click — commit the line with the specified control points
+                        vm.CommitLine(vm.LineStart.Value, vm.LineEnd.Value,
+                                      vm.BezierControl1, vm.BezierControl2);
+                        _linePreviewBackup = null;
+                    }
+                }
+
+                e.Handled = true;
+                return;
+            }
+
             if (vm?.ActiveTool == ToolType.Brush)
             {
                 var imgPoint = GetImagePixel(e, img, vm);
@@ -125,6 +176,45 @@ namespace ImageEditor.Views
                 vm.MoveFloatingPaste(_floatingDragOriginX + dx, _floatingDragOriginY + dy);
                 UpdateSelectionOverlay(vm);
                 e.Handled = true;
+                return;
+            }
+
+            if (vm?.ActiveTool == ToolType.Line && _linePreviewStart.HasValue)
+            {
+                var img = sender as Image;
+                var current = GetImagePixel(e, img, vm);
+
+                // Recover the image state before drawing the preview
+                if (_linePreviewBackup != null && vm.SelectedTab != null)
+                {
+                    var preview = new WriteableBitmap(_linePreviewBackup);
+                    vm.SelectedTab.Image = preview;
+
+                    if (!vm.IsLineBezierMode && e.LeftButton == MouseButtonState.Pressed)
+                    {
+                        DrawingService.DrawLine(preview, _linePreviewStart.Value, current,
+                                                        vm.LineWidth, vm.LineColor);
+                    }
+                    else if (vm.IsBezierSecondPhase && vm.BezierControl1.HasValue && vm.BezierControl2.HasValue)
+                    {
+                        var cp1 = vm.BezierControl1.Value;
+                        var cp2 = vm.BezierControl2.Value;
+                        double d1 = Math.Sqrt(Math.Pow(current.X - cp1.X, 2) + Math.Pow(current.Y - cp1.Y, 2));
+                        double d2 = Math.Sqrt(Math.Pow(current.X - cp2.X, 2) + Math.Pow(current.Y - cp2.Y, 2));
+
+                        if (d1 < d2)
+                            vm.BezierControl1 = current;
+                        else
+                            vm.BezierControl2 = current;
+
+                        DrawingService.DrawBezier(preview,
+                            vm.LineStart.Value, vm.BezierControl1.Value,
+                            vm.BezierControl2.Value, vm.LineEnd.Value,
+                            vm.LineWidth, vm.LineColor);
+                    }
+
+                    vm.OnPropertyChangedPublic(nameof(vm.CurrentImage));
+                }
                 return;
             }
 
@@ -175,6 +265,17 @@ namespace ImageEditor.Views
             _lastBrushPoint = null;
             if (!_isMiddleDragging)
                 (sender as FrameworkElement)?.ReleaseMouseCapture();
+
+            if (vm?.ActiveTool == ToolType.Line && !vm.IsLineBezierMode && vm.LineStart.HasValue)
+            {
+                var img = sender as Image;
+                var imgPoint = GetImagePixel(e, img, vm);
+                vm.CommitLine(vm.LineStart.Value, imgPoint);
+                _linePreviewBackup = null;
+                _linePreviewStart = null;
+                (sender as FrameworkElement)?.ReleaseMouseCapture();
+                return;
+            }
         }
 
         private void Image_MouseWheel(object sender, MouseWheelEventArgs e)
