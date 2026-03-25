@@ -167,7 +167,8 @@ namespace ImageEditor.ViewModels
         public ICommand CopyCommand { get; }
         public ICommand CutCommand { get; }
         public ICommand PasteCommand { get; }
-        
+        public ICommand SelectAllCommand { get; }
+
 
         // ================= CONSTRUCTOR =================
         public MainViewModel()
@@ -274,6 +275,13 @@ namespace ImageEditor.ViewModels
             CopyCommand = new RelayCommand(_ => CopySelection(), _ => Selection.HasValue && HasImage);
             CutCommand = new RelayCommand(_ => CutSelection(), _ => Selection.HasValue && HasImage);
             PasteCommand = new RelayCommand(_ => PasteClipboard());
+
+            SelectAllCommand = new RelayCommand(_ =>
+            {
+                if (SelectedTab?.Image == null) return;
+                ActiveTool = ToolType.Selection;
+                Selection = new Int32Rect(0, 0, SelectedTab.Image.PixelWidth, SelectedTab.Image.PixelHeight);
+            }, _ => HasImage);
         }
 
         // ================= TABS =================
