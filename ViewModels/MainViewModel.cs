@@ -681,10 +681,7 @@ namespace ImageEditor.ViewModels
             _pasteX = 0;
             _pasteY = 0;
 
-            _pasteBackground = SelectionService.Copy(wb,
-                new Int32Rect(0, 0,
-                    Math.Min(source.PixelWidth, wb.PixelWidth),
-                    Math.Min(source.PixelHeight, wb.PixelHeight)));
+            _pasteBackground = CaptureBackground(wb, 0, 0, source.PixelWidth, source.PixelHeight);
 
             SelectionService.Paste(wb, source, _pasteX, _pasteY);
             SelectedTab.IsModified = true;
@@ -706,21 +703,52 @@ namespace ImageEditor.ViewModels
             _pasteX = newX;
             _pasteY = newY;
 
-            // Safe clamping to ensure we don't go out of bounds
-            int clampedX = Math.Max(0, newX);
-            int clampedY = Math.Max(0, newY);
-            int clampedW = Math.Min(_pasteFloating.PixelWidth, wb.PixelWidth - clampedX);
-            int clampedH = Math.Min(_pasteFloating.PixelHeight, wb.PixelHeight - clampedY);
-
-            if (clampedW > 0 && clampedH > 0)
-                _pasteBackground = SelectionService.Copy(wb, new Int32Rect(clampedX, clampedY, clampedW, clampedH));
-            else
-                _pasteBackground = null;
+            _pasteBackground = CaptureBackground(wb, _pasteX, _pasteY,
+                                                _pasteFloating.PixelWidth, _pasteFloating.PixelHeight);
 
             SelectionService.Paste(wb, _pasteFloating, _pasteX, _pasteY);
 
             Selection = new Int32Rect(_pasteX, _pasteY, _pasteFloating.PixelWidth, _pasteFloating.PixelHeight);
             OnPropertyChanged(nameof(CurrentImage));
+        }
+
+        private WriteableBitmap CaptureBackground(WriteableBitmap wb, int x, int y, int w, int h)
+        {
+            var bg = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+            int stride = w * 4;
+            byte[] white = Enumerable.Repeat((byte)255, h * stride).ToArray();
+            bg.WritePixels(new Int32Rect(0, 0, w, h), white, stride, 0);
+
+            int clampedX = Math.Max(0, x);
+            int clampedY = Math.Max(0, y);
+            int clampedW = Math.Min(w, wb.PixelWidth - clampedX);
+            int clampedH = Math.Min(h, wb.PixelHeight - clampedY);
+
+            if (clampedW <= 0 || clampedH <= 0) return bg;
+
+            int bpp = 4;
+            int srcStride = clampedW * bpp;
+            byte[] pixels = new byte[clampedH * srcStride];
+            wb.CopyPixels(new Int32Rect(clampedX, clampedY, clampedW, clampedH), pixels, srcStride, 0);
+
+            int dstX = clampedX - x;
+            int dstY = clampedY - y;
+
+            int dstStride = w * bpp;
+            byte[] bgPixels = new byte[h * dstStride];
+            bg.CopyPixels(bgPixels, dstStride, 0);
+
+            for (int row = 0; row < clampedH; row++)
+            {
+                int src = row * srcStride;
+                int dst = (dstY + row) * dstStride + dstX * bpp;
+                int copyLen = Math.Min(srcStride, bgPixels.Length - dst);
+                if (copyLen <= 0) break;
+                Array.Copy(pixels, src, bgPixels, dst, copyLen);
+            }
+
+            bg.WritePixels(new Int32Rect(0, 0, w, h), bgPixels, dstStride, 0);
+            return bg;
         }
 
         public void CommitFloatingPaste()
@@ -844,11 +872,7 @@ namespace ImageEditor.ViewModels
             _pasteX = newX;
             _pasteY = newY;
 
-            _pasteBackground = SelectionService.Copy(wb,
-                new Int32Rect(
-                    Math.Max(0, _pasteX), Math.Max(0, _pasteY),
-                    Math.Min(newW, wb.PixelWidth - Math.Max(0, _pasteX)),
-                    Math.Min(newH, wb.PixelHeight - Math.Max(0, _pasteY))));
+            _pasteBackground = CaptureBackground(wb, _pasteX, _pasteY, newW, newH);
 
             SelectionService.Paste(wb, _pasteFloating, _pasteX, _pasteY);
 

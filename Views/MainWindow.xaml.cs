@@ -501,8 +501,8 @@ namespace ImageEditor.Views
         private (Int32Rect rect, int newX, int newY) ComputeResizedRect(Int32Rect orig, ResizeHandle handle, Point delta,   MainViewModel vm, Image img, bool keepAspect)
         {
             var bitmap = vm.SelectedTab?.Image;
-            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
-            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+            double dpiScaleX = bitmap.PixelWidth / (img.ActualWidth * vm.Zoom);
+            double dpiScaleY = bitmap.PixelHeight / (img.ActualHeight * vm.Zoom);
 
             int dx = (int)(delta.X * dpiScaleX);
             int dy = (int)(delta.Y * dpiScaleY);
