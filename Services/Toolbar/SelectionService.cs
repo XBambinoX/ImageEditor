@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using ImageEditor.Services.Math;
 
 namespace ImageEditor.Services
 {
@@ -8,7 +9,7 @@ namespace ImageEditor.Services
     {
         public static WriteableBitmap Copy(WriteableBitmap source, Int32Rect region)
         {
-            region = ClampRect(region, source.PixelWidth, source.PixelHeight);
+            region = Tools.ClampRect(region, source.PixelWidth, source.PixelHeight);
             if (region.Width <= 0 || region.Height <= 0) return null;
 
             var result = new WriteableBitmap(region.Width, region.Height, source.DpiX, source.DpiY, source.Format, null);
@@ -26,7 +27,7 @@ namespace ImageEditor.Services
             var copied = Copy(source, region);
             if (copied == null) return null;
 
-            region = ClampRect(region, source.PixelWidth, source.PixelHeight);
+            region = Tools.ClampRect(region, source.PixelWidth, source.PixelHeight);
 
             int stride = region.Width * (source.Format.BitsPerPixel / 8);
             byte[] white = new byte[region.Height * stride];
@@ -81,13 +82,49 @@ namespace ImageEditor.Services
             target.WritePixels(new Int32Rect(x0, y0, drawW, drawH), cropped, dstStride, 0);
         }
 
-        private static Int32Rect ClampRect(Int32Rect r, int maxW, int maxH)
+        public static WriteableBitmap Resize(WriteableBitmap source, int newW, int newH)
         {
-            int x = System.Math.Max(0, r.X);
-            int y = System.Math.Max(0, r.Y);
-            int w = System.Math.Min(r.Width, maxW - x);
-            int h = System.Math.Min(r.Height, maxH - y);
-            return new Int32Rect(x, y, System.Math.Max(0, w), System.Math.Max(0, h));
+            if (source == null || newW <= 0 || newH <= 0) return source;
+
+            int srcW = source.PixelWidth;
+            int srcH = source.PixelHeight;
+            int bpp = source.Format.BitsPerPixel / 8;
+            int srcStride = srcW * bpp;
+
+            byte[] srcPixels = new byte[srcH * srcStride];
+            source.CopyPixels(srcPixels, srcStride, 0);
+
+            int dstStride = newW * bpp;
+            byte[] dstPixels = new byte[newH * dstStride];
+
+            for (int y = 0; y < newH; y++)
+            {
+                double fy = (double)y / (newH - 1) * (srcH - 1);
+                int y0 = System.Math.Max(0, (int)fy);
+                int y1 = System.Math.Min(srcH - 1, y0 + 1);
+                double ty = fy - y0;
+
+                for (int x = 0; x < newW; x++)
+                {
+                    double fx = (double)x / (newW - 1) * (srcW - 1);
+                    int x0 = System.Math.Max(0, (int)fx);
+                    int x1 = System.Math.Min(srcW - 1, x0 + 1);
+                    double tx = fx - x0;
+
+                    for (int c = 0; c < bpp; c++)
+                    {
+                        double top = srcPixels[y0 * srcStride + x0 * bpp + c] * (1 - tx)
+                                   + srcPixels[y0 * srcStride + x1 * bpp + c] * tx;
+                        double bot = srcPixels[y1 * srcStride + x0 * bpp + c] * (1 - tx)
+                                   + srcPixels[y1 * srcStride + x1 * bpp + c] * tx;
+                        dstPixels[y * dstStride + x * bpp + c] = (byte)(top * (1 - ty) + bot * ty);
+                    }
+                }
+            }
+
+            var result = new WriteableBitmap(newW, newH, source.DpiX, source.DpiY, source.Format, null);
+            result.WritePixels(new Int32Rect(0, 0, newW, newH), dstPixels, dstStride, 0);
+            return result;
         }
     }
 }

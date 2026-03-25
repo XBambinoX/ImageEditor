@@ -25,6 +25,14 @@ namespace ImageEditor.Views
         private Point? _linePreviewStart;
         private WriteableBitmap _linePreviewBackup; // For storing the image state before drawing the line preview
 
+        // For selection resizing
+        private enum ResizeHandle { None, TL, TC, TR, ML, MR, BL, BC, BR }
+        private ResizeHandle _activeHandle = ResizeHandle.None;
+        private Point? _resizeDragStart;
+        private Int32Rect _resizeOriginalRect;
+        private const double HandleSize = 8;
+        private const double HandleHitRadius = 10;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -69,21 +77,36 @@ namespace ImageEditor.Views
             if (vm?.IsFloatingPaste == true)
             {
                 var clickPoint = GetImagePixel(e, img, vm);
+                var canvasPoint = GetCanvasPoint(e, img, vm);
 
-                if (vm.Selection.HasValue && RectContains(vm.Selection.Value, (int)clickPoint.X, (int)clickPoint.Y))
+                if (vm.Selection.HasValue)
                 {
-                    _floatingDragStart = clickPoint;
-                    _floatingDragOriginX = vm.PasteX;
-                    _floatingDragOriginY = vm.PasteY;
-                    (sender as FrameworkElement)?.CaptureMouse();
-                    e.Handled = true;
-                    return;
+                    var (sc1, sc2) = GetSelectionCanvasPoints(vm, img);
+                    var hit = HitTestHandle(canvasPoint, sc1, sc2);
+
+                    if (hit != ResizeHandle.None)
+                    {
+                        _activeHandle = hit;
+                        _resizeDragStart = canvasPoint;
+                        _resizeOriginalRect = vm.Selection.Value;
+                        (sender as FrameworkElement)?.CaptureMouse();
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (RectContains(vm.Selection.Value, (int)clickPoint.X, (int)clickPoint.Y))
+                    {
+                        _floatingDragStart = clickPoint;
+                        _floatingDragOriginX = vm.PasteX;
+                        _floatingDragOriginY = vm.PasteY;
+                        (sender as FrameworkElement)?.CaptureMouse();
+                        e.Handled = true;
+                        return;
+                    }
                 }
-                else
-                {
-                    vm.CommitFloatingPaste();
-                    UpdateSelectionOverlay(vm);
-                }
+
+                vm.CommitFloatingPaste();
+                UpdateSelectionOverlay(vm);
             }
 
             if (vm?.ActiveTool == ToolType.Selection)
@@ -161,6 +184,20 @@ namespace ImageEditor.Views
             if (_isMiddleDragging && e.MiddleButton == MouseButtonState.Pressed)
             {
                 vm?.DragTo(e.GetPosition(Application.Current.MainWindow));
+                return;
+            }
+
+            if (_activeHandle != ResizeHandle.None && _resizeDragStart.HasValue && e.LeftButton == MouseButtonState.Pressed)
+            {
+                var canvasPoint = GetCanvasPoint(e, sender as Image, vm);
+                var delta = new Point(canvasPoint.X - _resizeDragStart.Value.X,
+                                      canvasPoint.Y - _resizeDragStart.Value.Y);
+
+                var (newRect, newX, newY) = ComputeResizedRect(_resizeOriginalRect, _activeHandle, delta, vm, sender as Image,
+                                                                Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift));
+                vm.ResizeFloatingPaste(newRect.Width, newRect.Height, newX, newY);
+                UpdateSelectionOverlay(vm);
+                e.Handled = true;
                 return;
             }
 
@@ -258,6 +295,9 @@ namespace ImageEditor.Views
 
         private void Image_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            _activeHandle = ResizeHandle.None;
+            _resizeDragStart = null;
+
             _floatingDragStart = null;
 
             var vm = DataContext as MainViewModel;
@@ -358,12 +398,15 @@ namespace ImageEditor.Views
                 ApplyRect(rect);
                 if (rectBlack != null) ApplyRect(rectBlack);
                 if (rectFill != null) ApplyRect(rectFill);
+
+                UpdateHandles(vm.IsFloatingPaste && vm.Selection.HasValue, c1, c2);
             }
             else
             {
                 rect.Visibility = Visibility.Collapsed;
                 if (rectBlack != null) rectBlack.Visibility = Visibility.Collapsed;
                 if (rectFill != null) rectFill.Visibility = Visibility.Collapsed;
+                UpdateHandles(false, new Point(), new Point());
             }
         }
 
@@ -381,5 +424,116 @@ namespace ImageEditor.Views
 
         private bool RectContains(Int32Rect r, int x, int y)
                       => x >= r.X && x <= r.X + r.Width && y >= r.Y && y <= r.Y + r.Height;
+
+        private void UpdateHandles(bool visible, Point c1, Point c2)
+        {
+            double cx = (c1.X + c2.X) / 2;
+            double cy = (c1.Y + c2.Y) / 2;
+            double half = HandleSize / 2;
+
+            var positions = new (string name, double x, double y)[]
+            {
+                ("Handle_TL", c1.X, c1.Y),
+                ("Handle_TC", cx,   c1.Y),
+                ("Handle_TR", c2.X, c1.Y),
+                ("Handle_ML", c1.X, cy),
+                ("Handle_MR", c2.X, cy),
+                ("Handle_BL", c1.X, c2.Y),
+                ("Handle_BC", cx,   c2.Y),
+                ("Handle_BR", c2.X, c2.Y),
+            };
+
+            foreach (var (name, x, y) in positions)
+            {
+                var h = FindVisualChild<Rectangle>(this, name);
+                if (h == null) continue;
+                h.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                if (visible)
+                {
+                    Canvas.SetLeft(h, x - half);
+                    Canvas.SetTop(h, y - half);
+                }
+            }
+        }
+
+        private ResizeHandle HitTestHandle(Point canvasPoint, Point c1, Point c2)
+        {
+            double cx = (c1.X + c2.X) / 2;
+            double cy = (c1.Y + c2.Y) / 2;
+            double r = HandleHitRadius;
+
+            (ResizeHandle h, double x, double y)[] handles =
+            {
+                (ResizeHandle.TL, c1.X, c1.Y), (ResizeHandle.TC, cx, c1.Y), (ResizeHandle.TR, c2.X, c1.Y),
+                (ResizeHandle.ML, c1.X, cy),                                 (ResizeHandle.MR, c2.X, cy),
+                (ResizeHandle.BL, c1.X, c2.Y), (ResizeHandle.BC, cx, c2.Y), (ResizeHandle.BR, c2.X, c2.Y),
+            };
+
+            foreach (var (handle, x, y) in handles)
+                if (Math.Abs(canvasPoint.X - x) <= r && Math.Abs(canvasPoint.Y - y) <= r)
+                    return handle;
+
+            return ResizeHandle.None;
+        }
+
+        private Point GetCanvasPoint(MouseEventArgs e, Image img, MainViewModel vm)
+        {
+            var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+            return canvas != null ? e.GetPosition(canvas) : e.GetPosition(img);
+        }
+
+        private (Point c1, Point c2) GetSelectionCanvasPoints(MainViewModel vm, Image img)
+        {
+            var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+            var s = vm.Selection.Value;
+            var bitmap = vm.SelectedTab?.Image;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            var p1 = new Point(s.X / dpiScaleX, s.Y / dpiScaleY);
+            var p2 = new Point((s.X + s.Width) / dpiScaleX, (s.Y + s.Height) / dpiScaleY);
+
+            var transform = img.TransformToVisual(canvas);
+            return (transform.Transform(p1), transform.Transform(p2));
+        }
+
+        private (Int32Rect rect, int newX, int newY) ComputeResizedRect(Int32Rect orig, ResizeHandle handle, Point delta,   MainViewModel vm, Image img, bool keepAspect)
+        {
+            var bitmap = vm.SelectedTab?.Image;
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            int dx = (int)(delta.X * dpiScaleX);
+            int dy = (int)(delta.Y * dpiScaleY);
+
+            int x = orig.X, y = orig.Y, w = orig.Width, h = orig.Height;
+
+            switch (handle)
+            {
+                case ResizeHandle.TL: x += dx; y += dy; w -= dx; h -= dy; break;
+                case ResizeHandle.TC: y += dy; h -= dy; break;
+                case ResizeHandle.TR: y += dy; w += dx; h -= dy; break;
+                case ResizeHandle.ML: x += dx; w -= dx; break;
+                case ResizeHandle.MR: w += dx; break;
+                case ResizeHandle.BL: x += dx; w -= dx; h += dy; break;
+                case ResizeHandle.BC: h += dy; break;
+                case ResizeHandle.BR: w += dx; h += dy; break;
+            }
+
+            w = Math.Max(4, w);
+            h = Math.Max(4, h);
+
+            if (keepAspect)
+            {
+                double aspect = (double)orig.Width / orig.Height;
+                if (w / (double)h > aspect)
+                    w = (int)(h * aspect);
+                else
+                    h = (int)(w / aspect);
+            }
+
+            return (new Int32Rect(x, y, w, h), x, y);
+        }
     }
 }

@@ -350,6 +350,16 @@
                                            StrokeDashOffset="0"
                                            Fill="Transparent"
                                            Visibility="Collapsed"/>
+
+                                        <Rectangle x:Name="Handle_TL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
+                                        <Rectangle x:Name="Handle_TC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
+                                        <Rectangle x:Name="Handle_TR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
+                                        <Rectangle x:Name="Handle_ML" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
+                                        <Rectangle x:Name="Handle_MR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
+                                        <Rectangle x:Name="Handle_BL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
+                                        <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
+                                        <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
+
                                     </Canvas>
                                 </Grid>
                             </ScrollViewer>

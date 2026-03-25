@@ -149,6 +149,8 @@ namespace ImageEditor.ViewModels
         // floating paste
         private WriteableBitmap _pasteFloating;
         private WriteableBitmap _pasteBackground;
+        private WriteableBitmap _pasteFloatingOriginal;
+
         private int _pasteX;
         private int _pasteY;
         public int PasteX => _pasteX;
@@ -675,6 +677,7 @@ namespace ImageEditor.ViewModels
             SelectedTab.Image = wb;
 
             _pasteFloating = source;
+            _pasteFloatingOriginal = source;
             _pasteX = 0;
             _pasteY = 0;
 
@@ -695,23 +698,28 @@ namespace ImageEditor.ViewModels
             if (!IsFloatingPaste || SelectedTab?.Image == null) return;
 
             var wb = SelectedTab.Image as WriteableBitmap;
-            if (wb == null || wb.IsFrozen) 
-                return;
+            if (wb == null || wb.IsFrozen) return;
 
+            // Restore the original background before moving
             SelectionService.Paste(wb, _pasteBackground, _pasteX, _pasteY);
 
             _pasteX = newX;
             _pasteY = newY;
 
-            _pasteBackground = SelectionService.Copy(wb,
-                new Int32Rect(
-                    Math.Max(0, newX), Math.Max(0, newY),
-                    Math.Min(_pasteFloating.PixelWidth, wb.PixelWidth - Math.Max(0, newX)),
-                    Math.Min(_pasteFloating.PixelHeight, wb.PixelHeight - Math.Max(0, newY))));
+            // Safe clamping to ensure we don't go out of bounds
+            int clampedX = Math.Max(0, newX);
+            int clampedY = Math.Max(0, newY);
+            int clampedW = Math.Min(_pasteFloating.PixelWidth, wb.PixelWidth - clampedX);
+            int clampedH = Math.Min(_pasteFloating.PixelHeight, wb.PixelHeight - clampedY);
 
-            SelectionService.Paste(wb, _pasteFloating, newX, newY);
+            if (clampedW > 0 && clampedH > 0)
+                _pasteBackground = SelectionService.Copy(wb, new Int32Rect(clampedX, clampedY, clampedW, clampedH));
+            else
+                _pasteBackground = null;
 
-            Selection = new Int32Rect(newX, newY, _pasteFloating.PixelWidth, _pasteFloating.PixelHeight);
+            SelectionService.Paste(wb, _pasteFloating, _pasteX, _pasteY);
+
+            Selection = new Int32Rect(_pasteX, _pasteY, _pasteFloating.PixelWidth, _pasteFloating.PixelHeight);
             OnPropertyChanged(nameof(CurrentImage));
         }
 
@@ -815,6 +823,37 @@ namespace ImageEditor.ViewModels
             BezierControl1 = null;
             BezierControl2 = null;
             IsBezierSecondPhase = false;
+        }
+
+        public void ResizeFloatingPaste(int newW, int newH, int newX, int newY)
+        {
+            if (!IsFloatingPaste || SelectedTab?.Image == null) return;
+
+            newW = Math.Max(4, newW);
+            newH = Math.Max(4, newH);
+
+            var wb = SelectedTab.Image as WriteableBitmap;
+            if (wb == null || wb.IsFrozen) return;
+
+            // Restore the background before resizing
+            SelectionService.Paste(wb, _pasteBackground, _pasteX, _pasteY);
+
+            // Make sure the new size doesn't exceed canvas bounds
+            _pasteFloating = SelectionService.Resize(_pasteFloatingOriginal, newW, newH);
+
+            _pasteX = newX;
+            _pasteY = newY;
+
+            _pasteBackground = SelectionService.Copy(wb,
+                new Int32Rect(
+                    Math.Max(0, _pasteX), Math.Max(0, _pasteY),
+                    Math.Min(newW, wb.PixelWidth - Math.Max(0, _pasteX)),
+                    Math.Min(newH, wb.PixelHeight - Math.Max(0, _pasteY))));
+
+            SelectionService.Paste(wb, _pasteFloating, _pasteX, _pasteY);
+
+            Selection = new Int32Rect(_pasteX, _pasteY, newW, newH);
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
         // ================= UNDO / REDO =================
