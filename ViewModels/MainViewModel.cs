@@ -669,6 +669,23 @@ namespace ImageEditor.ViewModels
                     SelectedTab.Image = expanded;
                     OnPropertyChanged(nameof(CurrentImage));
                 }
+
+                SaveState();
+
+                var wbitmap = new WriteableBitmap(SelectedTab.Image);
+
+                _pasteFloating = source;
+                _pasteFloatingOriginal = source;
+                _pasteX = 0;
+                _pasteY = 0;
+
+                _pasteBackground = CaptureBackground(wbitmap, 0, 0, source.PixelWidth, source.PixelHeight);
+
+                SelectionService.Paste(wbitmap, source, _pasteX, _pasteY);
+                SelectedTab.IsModified = true;
+                Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
+                OnPropertyChanged(nameof(CurrentImage));
+                OnPropertyChanged(nameof(IsFloatingPaste));
             }
 
             SaveState();
