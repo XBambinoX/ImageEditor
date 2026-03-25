@@ -31,8 +31,7 @@ namespace ImageEditor.Views
         {
             if (sender is Border border && border.Background is SolidColorBrush brush)
             {
-                SelectedColor = brush.Color;
-                SwatchBrush.Color = SelectedColor;
+                ApplyColor(brush.Color);
             }
             ColorPopup.IsOpen = false;
         }
@@ -42,5 +41,42 @@ namespace ImageEditor.Views
             if (WidthLabel != null)
                 WidthLabel.Text = ((int)WidthSlider.Value).ToString();
         }
+
+        private void HexInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+                TryApplyHex();
+        }
+
+        private void HexInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            TryApplyHex();
+        }
+
+        private void TryApplyHex()
+        {
+            var text = HexInput.Text.Trim();
+            if (!text.StartsWith("#"))
+                text = "#" + text;
+
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(text);
+                ApplyColor(color);
+            }
+            catch
+            {
+                HexInput.Text = ColorToHex(SelectedColor);
+            }
+        }
+
+        private void ApplyColor(Color color)
+        {
+            SelectedColor = color;
+            SwatchBrush.Color = color;
+            HexInput.Text = ColorToHex(color);
+        }
+
+        private string ColorToHex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
     }
 }
