@@ -505,17 +505,14 @@ namespace ImageEditor.ViewModels
 
         private void ToggleBrushTool()
         {
+            _lineSettingsWindow?.Close();
+
             if (ActiveTool == ToolType.Brush)
             {
                 ActiveTool = ToolType.None;
                 _brushSettingsWindow?.Close();
                 _brushSettingsWindow = null;
                 return;
-            }
-
-            if (ActiveTool == ToolType.Selection)
-            {
-                Selection = null;
             }
 
             ActiveTool = ToolType.Brush;
