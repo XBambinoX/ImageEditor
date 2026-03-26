@@ -544,6 +544,27 @@ namespace ImageEditor.Views
                     h = (int)(w / aspect);
             }
 
+            switch (handle)
+            {
+                case ResizeHandle.TL:
+                    x = orig.X + orig.Width - w;
+                    y = orig.Y + orig.Height - h;
+                    break;
+                case ResizeHandle.TC:
+                    y = orig.Y + orig.Height - h;
+                    break;
+                case ResizeHandle.TR:
+                    x = orig.X;
+                    y = orig.Y + orig.Height - h;
+                    break;
+                case ResizeHandle.ML:
+                    x = orig.X + orig.Width - w;
+                    break;
+                case ResizeHandle.BL:
+                    x = orig.X + orig.Width - w;
+                    break;
+            }
+
             return (new Int32Rect(x, y, w, h), x, y);
         }
     }
