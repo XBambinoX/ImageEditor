@@ -505,41 +505,6 @@ namespace ImageEditor.ViewModels
             window.ShowDialog();
         }
 
-        private void ToggleBrushTool()
-        {
-            _lineSettingsWindow?.Close();
-
-            if (ActiveTool == ToolType.Brush)
-            {
-                ActiveTool = ToolType.None;
-                _brushSettingsWindow?.Close();
-                _brushSettingsWindow = null;
-                return;
-            }
-
-            ActiveTool = ToolType.Brush;
-
-            _brushSettingsWindow = new BrushSettingsWindow
-            {
-                Owner = Application.Current.MainWindow
-            };
-
-            _brushSettingsWindow.Closed += (s, e) =>
-            {
-                if (ActiveTool == ToolType.Brush)
-                {
-                    ActiveTool = ToolType.None;
-                }
-                _brushSettingsWindow = null;
-            };
-
-            var main = Application.Current.MainWindow;
-            _brushSettingsWindow.Left = main.Left + 50;
-            _brushSettingsWindow.Top = main.Top + 80;
-
-            _brushSettingsWindow.Show();
-        }
-
         public void BrushStroke(Point imagePoint, Point? previousPoint)
         {
             if (ActiveTool != ToolType.Brush) return;
@@ -575,12 +540,73 @@ namespace ImageEditor.ViewModels
             }
         }
 
-        private void ToggleSelectionTool()
+        #region toggle tools methods
+        private void ToggleBrushTool()
         {
-            if (ActiveTool == ToolType.Selection)
+            _lineSettingsWindow?.Close();
+
+            if (ActiveTool == ToolType.Brush)
             {
                 ActiveTool = ToolType.None;
-                Selection = null;
+                _brushSettingsWindow?.Close();
+                _brushSettingsWindow = null;
+                return;
+            }
+
+            ActiveTool = ToolType.Brush;
+
+            _brushSettingsWindow = new BrushSettingsWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            _brushSettingsWindow.Closed += (s, e) =>
+            {
+                if (ActiveTool == ToolType.Brush)
+                {
+                    ActiveTool = ToolType.None;
+                }
+                _brushSettingsWindow = null;
+            };
+
+            var main = Application.Current.MainWindow;
+            _brushSettingsWindow.Left = main.Left + 50;
+            _brushSettingsWindow.Top = main.Top + 80;
+
+            _brushSettingsWindow.Show();
+        }
+
+        private void ToggleSelectionTool()
+        {
+            switch (ActiveTool)
+            {
+                case ToolType.Selection:
+                    ActiveTool = ToolType.None;
+                    Selection = null;
+                    return;
+
+                case ToolType.Brush:
+                    _brushSettingsWindow?.Close();
+                    _brushSettingsWindow = null;
+                    break;
+
+                case ToolType.Line:
+                    _lineSettingsWindow?.Close();
+                    _lineSettingsWindow = null;
+                    break;
+            }
+
+            ActiveTool = ToolType.Selection;
+            Selection = null;
+        }
+
+        private void ToggleLineTool()
+        {
+            if (ActiveTool == ToolType.Line)
+            {
+                ActiveTool = ToolType.None;
+                _lineSettingsWindow?.Close();
+                _lineSettingsWindow = null;
                 return;
             }
 
@@ -590,9 +616,28 @@ namespace ImageEditor.ViewModels
                 _brushSettingsWindow = null;
             }
 
-            ActiveTool = ToolType.Selection;
-            Selection = null;
+            ActiveTool = ToolType.Line;
+            LineStart = null;
+            LineEnd = null;
+            IsBezierSecondPhase = false;
+
+            _lineSettingsWindow = new LineSettingsWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+            _lineSettingsWindow.Closed += (s, e) =>
+            {
+                if (ActiveTool == ToolType.Line)
+                    ActiveTool = ToolType.None;
+                _lineSettingsWindow = null;
+            };
+
+            var main = Application.Current.MainWindow;
+            _lineSettingsWindow.Left = main.Left + 50;
+            _lineSettingsWindow.Top = main.Top + 80;
+            _lineSettingsWindow.Show();
         }
+        #endregion
 
         private void CopySelection()
         {
@@ -792,44 +837,6 @@ namespace ImageEditor.ViewModels
             _pasteBackground = null;
             Selection = null;
             OnPropertyChanged(nameof(IsFloatingPaste));
-        }
-
-        private void ToggleLineTool()
-        {
-            if (ActiveTool == ToolType.Line)
-            {
-                ActiveTool = ToolType.None;
-                _lineSettingsWindow?.Close();
-                _lineSettingsWindow = null;
-                return;
-            }
-
-            if (ActiveTool == ToolType.Brush)
-            {
-                _brushSettingsWindow?.Close();
-                _brushSettingsWindow = null;
-            }
-
-            ActiveTool = ToolType.Line;
-            LineStart = null;
-            LineEnd = null;
-            IsBezierSecondPhase = false;
-
-            _lineSettingsWindow = new LineSettingsWindow
-            {
-                Owner = Application.Current.MainWindow
-            };
-            _lineSettingsWindow.Closed += (s, e) =>
-            {
-                if (ActiveTool == ToolType.Line)
-                    ActiveTool = ToolType.None;
-                _lineSettingsWindow = null;
-            };
-
-            var main = Application.Current.MainWindow;
-            _lineSettingsWindow.Left = main.Left + 50;
-            _lineSettingsWindow.Top = main.Top + 80;
-            _lineSettingsWindow.Show();
         }
 
         public void BeginLineSettings()

@@ -72,11 +72,11 @@ namespace ImageEditor.Views
         private void Image_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var vm = DataContext as MainViewModel;
-            var img = sender as Image;
+            var img = FindVisualChild<Image>(this, "MainImage");
 
             if (vm?.IsFloatingPaste == true)
             {
-                var clickPoint = GetImagePixel(e, img, vm);
+                var clickPoint = GetImagePixel(e, vm);
                 var canvasPoint = GetCanvasPoint(e, img, vm);
 
                 if (vm.Selection.HasValue)
@@ -111,7 +111,7 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Selection)
             {
-                _selectionStart = GetImagePixel(e, img, vm);
+                _selectionStart = GetImagePixel(e, vm);
                 vm.Selection = null;
                 UpdateSelectionOverlay(vm);
                 (sender as FrameworkElement)?.CaptureMouse();
@@ -121,7 +121,7 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Line)
             {
-                var imgPoint = GetImagePixel(e, img, vm);
+                var imgPoint = GetImagePixel(e, vm);
                 vm.BeginLineSettings();
 
                 if (!vm.IsLineBezierMode)
@@ -167,12 +167,12 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Brush)
             {
-                var imgPoint = GetImagePixel(e, img, vm);
+                var imgPoint = GetImagePixel(e, vm);
                 vm.BeginBrushStroke();
                 vm.SaveState();
                 vm.BrushStroke(imgPoint, null);
                 _lastBrushPoint = imgPoint;
-                img?.CaptureMouse();
+                (sender as FrameworkElement)?.CaptureMouse();
                 return;
             }
         }
@@ -193,7 +193,7 @@ namespace ImageEditor.Views
                 var delta = new Point(canvasPoint.X - _resizeDragStart.Value.X,
                                       canvasPoint.Y - _resizeDragStart.Value.Y);
 
-                var (newRect, newX, newY) = ComputeResizedRect(_resizeOriginalRect, _activeHandle, delta, vm, sender as Image,
+                var (newRect, newX, newY) = ComputeResizedRect(_resizeOriginalRect, _activeHandle, delta, vm,
                                                                 Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift));
                 vm.ResizeFloatingPaste(newRect.Width, newRect.Height, newX, newY);
                 UpdateSelectionOverlay(vm);
@@ -205,7 +205,7 @@ namespace ImageEditor.Views
             if (vm?.IsFloatingPaste == true && _floatingDragStart.HasValue && e.LeftButton == MouseButtonState.Pressed)
             {
                 var img = sender as Image;
-                var current = GetImagePixel(e, img, vm);
+                var current = GetImagePixel(e, vm);
 
                 int dx = (int)(current.X - _floatingDragStart.Value.X);
                 int dy = (int)(current.Y - _floatingDragStart.Value.Y);
@@ -219,7 +219,7 @@ namespace ImageEditor.Views
             if (vm?.ActiveTool == ToolType.Line && _linePreviewStart.HasValue)
             {
                 var img = sender as Image;
-                var current = GetImagePixel(e, img, vm);
+                var current = GetImagePixel(e, vm);
 
                 // Recover the image state before drawing the preview
                 if (_linePreviewBackup != null && vm.SelectedTab != null)
@@ -258,7 +258,7 @@ namespace ImageEditor.Views
             if (vm?.ActiveTool == ToolType.Selection && e.LeftButton == MouseButtonState.Pressed && _selectionStart.HasValue)
             {
                 var img = sender as Image;
-                var current = GetImagePixel(e, img, vm);
+                var current = GetImagePixel(e, vm);
                 var bitmap = vm.SelectedTab?.Image;
 
                 int bmpW = bitmap?.PixelWidth ?? int.MaxValue;
@@ -285,7 +285,7 @@ namespace ImageEditor.Views
             if (vm?.ActiveTool == ToolType.Brush && e.LeftButton == MouseButtonState.Pressed)
             {
                 var img = sender as Image;
-                var imgPoint = GetImagePixel(e, img, vm);
+                var imgPoint = GetImagePixel(e, vm);
                 vm.BrushStroke(imgPoint, _lastBrushPoint);
                 _lastBrushPoint = imgPoint;
                 e.Handled = true;
@@ -309,7 +309,7 @@ namespace ImageEditor.Views
             if (vm?.ActiveTool == ToolType.Line && !vm.IsLineBezierMode && vm.LineStart.HasValue)
             {
                 var img = sender as Image;
-                var imgPoint = GetImagePixel(e, img, vm);
+                var imgPoint = GetImagePixel(e, vm);
                 vm.CommitLine(vm.LineStart.Value, imgPoint);
                 _linePreviewBackup = null;
                 _linePreviewStart = null;
@@ -347,8 +347,11 @@ namespace ImageEditor.Views
             }
         }
 
-        private Point GetImagePixel(MouseEventArgs e, Image img, MainViewModel vm)
+        private Point GetImagePixel(MouseEventArgs e, MainViewModel vm)
         {
+            var img = FindVisualChild<Image>(this, "MainImage");
+            if (img == null) return new Point();
+
             var pos = e.GetPosition(img);
 
             var bitmap = vm.SelectedTab?.Image;
@@ -485,6 +488,9 @@ namespace ImageEditor.Views
         private (Point c1, Point c2) GetSelectionCanvasPoints(MainViewModel vm, Image img)
         {
             var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+            if (canvas == null || img == null || img.ActualWidth <= 0)
+                return (new Point(), new Point());
+
             var s = vm.Selection.Value;
             var bitmap = vm.SelectedTab?.Image;
 
@@ -498,9 +504,14 @@ namespace ImageEditor.Views
             return (transform.Transform(p1), transform.Transform(p2));
         }
 
-        private (Int32Rect rect, int newX, int newY) ComputeResizedRect(Int32Rect orig, ResizeHandle handle, Point delta,   MainViewModel vm, Image img, bool keepAspect)
+        private (Int32Rect rect, int newX, int newY) ComputeResizedRect(Int32Rect orig, ResizeHandle handle, Point delta,   MainViewModel vm, bool keepAspect)
         {
+            var img = FindVisualChild<Image>(this, "MainImage");
+            if (img == null) return (orig, orig.X, orig.Y);
+
             var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null) return (orig, orig.X, orig.Y);
+
             double dpiScaleX = bitmap.PixelWidth / (img.ActualWidth * vm.Zoom);
             double dpiScaleY = bitmap.PixelHeight / (img.ActualHeight * vm.Zoom);
 
