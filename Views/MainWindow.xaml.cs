@@ -35,6 +35,11 @@ namespace ImageEditor.Views
 
         private Color _eyedropperPreviewColor;
 
+        private Point? _textPosition; // canvas coordinates
+        private Point? _textImagePosition; // pixel coordinates
+        private bool _isDraggingText;
+        private Point? _textDragStart;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -215,6 +220,26 @@ namespace ImageEditor.Views
                     }
                 }
 
+                e.Handled = true;
+                return;
+            }
+
+            if (vm?.ActiveTool == ToolType.Text)
+            {
+                var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+                var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+                // if the text overlay is already visible, commit the text instead of starting a new one
+                if (border?.Visibility == Visibility.Visible)
+                {
+                    CommitText(vm);
+                    return;
+                }
+
+                var imgPoint = GetImagePixel(e, vm);
+                var canvasPoint = e.GetPosition(canvas);
+
+                ShowTextOverlay(canvasPoint, imgPoint, vm);
                 e.Handled = true;
                 return;
             }
@@ -679,6 +704,82 @@ namespace ImageEditor.Views
             if (hexText != null) hexText.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
             preview.Visibility = Visibility.Visible;
+        }
+
+        private void ShowTextOverlay(Point canvasPoint, Point imagePoint, MainViewModel vm)
+        {
+            var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            if (box == null || border == null) return;
+
+            _textPosition = canvasPoint;
+            _textImagePosition = imagePoint;
+
+            // Apply text settings from the ViewModel
+            box.FontSize = vm.TextFontSize;
+            box.FontFamily = new FontFamily(vm.TextFontFamily);
+            box.FontWeight = vm.TextBold ? FontWeights.Bold : FontWeights.Normal;
+            box.FontStyle = vm.TextItalic ? FontStyles.Italic : FontStyles.Normal;
+            box.TextAlignment = vm.TextAlignment;
+            box.Foreground = new SolidColorBrush(vm.ActiveColor);
+            box.CaretBrush = new SolidColorBrush(vm.ActiveColor);
+            box.Text = "";
+
+            Canvas.SetLeft(border, canvasPoint.X);
+            Canvas.SetTop(border, canvasPoint.Y);
+            border.Width = 200;
+            border.Height = 60;
+            border.Visibility = Visibility.Visible;
+
+            box.Focus();
+        }
+
+        private void HideTextOverlay()
+        {
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            if (border != null) border.Visibility = Visibility.Collapsed;
+            _textPosition = null;
+            _textImagePosition = null;
+        }
+
+        private void CommitText(MainViewModel vm)
+        {
+            var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
+            if (box == null || string.IsNullOrWhiteSpace(box.Text))
+            {
+                HideTextOverlay();
+                return;
+            }
+
+            if (_textImagePosition == null) return;
+
+            vm.CommitText(
+                box.Text,
+                _textImagePosition.Value);
+
+            HideTextOverlay();
+        }
+
+        private void TextOverlay_KeyDown(object sender, KeyEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null) return;
+
+            if (e.Key == Key.Escape)
+            {
+                HideTextOverlay();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Enter &&
+                     (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
+            {
+                CommitText(vm);
+                e.Handled = true;
+            }
+        }
+
+        private void TextOverlay_LostFocus(object sender, RoutedEventArgs e)
+        {
         }
     }
 }

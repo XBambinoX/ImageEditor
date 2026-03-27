@@ -387,6 +387,25 @@
                                             </StackPanel>
                                         </Border>
 
+                                        <Border x:Name="TextOverlayBorder"
+                                            Visibility="Collapsed"
+                                            BorderBrush="#0078D7"
+                                            BorderThickness="1"
+                                            Background="Transparent"
+                                            IsHitTestVisible="True">
+                                            <TextBox x:Name="TextOverlayBox"
+                                                 Background="Transparent"
+                                                 Foreground="Black"
+                                                 BorderThickness="0"
+                                                 AcceptsReturn="True"
+                                                 TextWrapping="Wrap"
+                                                 FontSize="16"
+                                                 CaretBrush="Black"
+                                                 Padding="2"
+                                                 KeyDown="TextOverlay_KeyDown"
+                                                 LostFocus="TextOverlay_LostFocus"/>
+                                        </Border>
+
                                     </Canvas>
                                 </Grid>
                             </ScrollViewer> 

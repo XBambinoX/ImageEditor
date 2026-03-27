@@ -149,6 +149,43 @@ namespace ImageEditor.ViewModels
             set { _activeColor = value; OnPropertyChanged(); }
         }
 
+        //Text tool properties
+        private string _textFontFamily = "Arial";
+        public string TextFontFamily
+        {
+            get => _textFontFamily;
+            set { _textFontFamily = value; OnPropertyChanged(); }
+        }
+
+        private double _textFontSize = 16;
+        public double TextFontSize
+        {
+            get => _textFontSize;
+            set { _textFontSize = value; OnPropertyChanged(); }
+        }
+
+        private bool _textBold;
+        public bool TextBold
+        {
+            get => _textBold;
+            set { _textBold = value; OnPropertyChanged(); }
+        }
+
+        private bool _textItalic;
+        public bool TextItalic
+        {
+            get => _textItalic;
+            set { _textItalic = value; OnPropertyChanged(); }
+        }
+
+        private TextAlignment _textAlignment = TextAlignment.Left;
+        public TextAlignment _TextAlignment
+        {
+            get => _textAlignment;
+            set { _textAlignment = value; OnPropertyChanged(); }
+        }
+        public TextAlignment TextAlignment => _textAlignment;
+
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
@@ -922,6 +959,47 @@ namespace ImageEditor.ViewModels
             BezierControl1 = null;
             BezierControl2 = null;
             IsBezierSecondPhase = false;
+        }
+
+        public void CommitText(string text, Point imagePosition)
+        {
+            if (SelectedTab?.Image == null) return;
+            SaveState();
+
+            var wb = SelectedTab.Image as WriteableBitmap
+                     ?? new WriteableBitmap(SelectedTab.Image);
+
+            var visual = new DrawingVisual();
+            using (var ctx = visual.RenderOpen())
+            {
+                // Existing image rendering
+                ctx.DrawImage(wb, new Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
+
+                // Text rendering
+                var formattedText = new FormattedText(
+                    text,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(
+                        new FontFamily(TextFontFamily),
+                        TextItalic ? FontStyles.Italic : FontStyles.Normal,
+                        TextBold ? FontWeights.Bold : FontWeights.Normal,
+                        FontStretches.Normal),
+                    TextFontSize,
+                    new SolidColorBrush(ActiveColor),
+                    96);
+
+                formattedText.TextAlignment = TextAlignment;
+                ctx.DrawText(formattedText, imagePosition);
+            }
+
+            var rtb = new RenderTargetBitmap(
+                wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(visual);
+
+            SelectedTab.Image = new WriteableBitmap(rtb);
+            SelectedTab.IsModified = true;
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
         public void ResizeFloatingPaste(int newW, int newH, int newX, int newY)
