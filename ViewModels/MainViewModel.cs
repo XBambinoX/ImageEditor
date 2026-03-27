@@ -743,6 +743,10 @@ namespace ImageEditor.ViewModels
                 TextBold = _textSettingsWindow.IsBold;
                 TextItalic = _textSettingsWindow.IsItalic;
                 TextAlignment = _textSettingsWindow.Alignment;
+
+                // update text overlay if open
+                var mainWindow = Application.Current.MainWindow as MainWindow;
+                mainWindow?.UpdateTextOverlayStyle(this);
             };
 
             _textSettingsWindow.Closed += (s, e) =>

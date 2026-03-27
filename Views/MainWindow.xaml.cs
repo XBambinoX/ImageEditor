@@ -74,6 +74,11 @@ namespace ImageEditor.Views
                                 }
                             }
                         }
+
+                        if (args.PropertyName == nameof(MainViewModel.ActiveColor))
+                        {
+                            UpdateTextOverlayStyle(vm);
+                        }
                     };
                 }
             };
@@ -513,6 +518,28 @@ namespace ImageEditor.Views
             }
         }
 
+        public void UpdateTextOverlayStyle(MainViewModel vm)
+        {
+            var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            if (box == null || border?.Visibility != Visibility.Visible) return;
+
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var bitmap = vm.SelectedTab?.Image;
+            if (img == null || bitmap == null || img.ActualWidth <= 0) return;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            box.FontSize = Math.Max(6, vm.TextFontSize / dpiScaleX * vm.Zoom);
+            box.FontFamily = new FontFamily(vm.TextFontFamily);
+            box.FontWeight = vm.TextBold ? FontWeights.Bold : FontWeights.Normal;
+            box.FontStyle = vm.TextItalic ? FontStyles.Italic : FontStyles.Normal;
+            box.TextAlignment = vm.TextAlignment;
+            box.Foreground = new SolidColorBrush(vm.ActiveColor);
+            box.CaretBrush = new SolidColorBrush(vm.ActiveColor);
+        }
+
         private T FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -716,16 +743,8 @@ namespace ImageEditor.Views
             _textPosition = canvasPoint;
             _textImagePosition = imagePoint;
 
-            box.FontSize = vm.TextFontSize;
-            box.FontFamily = new FontFamily(vm.TextFontFamily);
-            box.FontWeight = vm.TextBold ? FontWeights.Bold : FontWeights.Normal;
-            box.FontStyle = vm.TextItalic ? FontStyles.Italic : FontStyles.Normal;
-            box.TextAlignment = vm.TextAlignment;
-            box.Foreground = new SolidColorBrush(vm.ActiveColor);
-            box.CaretBrush = new SolidColorBrush(vm.ActiveColor);
             box.Text = "";
 
-            // Convert imagePoint to canvas coordinates considering zoom and image scaling
             var bitmap = vm.SelectedTab?.Image;
             if (bitmap == null || img.ActualWidth <= 0) return;
 
@@ -740,6 +759,8 @@ namespace ImageEditor.Views
             Canvas.SetTop(border, canvasPos.Y);
 
             border.Visibility = Visibility.Visible;
+            UpdateTextOverlayStyle(vm);
+
             box.Focus();
         }
 
