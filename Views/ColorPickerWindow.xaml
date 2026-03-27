@@ -6,9 +6,11 @@
         ResizeMode="NoResize"
         Background="#303030"
         Width="220"
-        Height="130"
+        Height="105"
         Title="MonoFrame"
         Topmost="True"
+        Focusable="False"
+        ShowActivated="False"
         ShowInTaskbar="False"
         WindowStartupLocation="Manual">
 

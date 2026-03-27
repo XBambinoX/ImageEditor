@@ -100,9 +100,6 @@ namespace ImageEditor.ViewModels
         public Point? BezierControl2 { get; set; }
         public bool IsBezierSecondPhase { get; set; }
 
-
-
-
         private WriteableBitmap _clipboard;
 
         private Int32Rect? _selection;
@@ -111,6 +108,9 @@ namespace ImageEditor.ViewModels
             get => _selection;
             set { _selection = value; OnPropertyChanged(); }
         }
+
+        private ColorPickerWindow _colorPickerWindow;
+
 
         // Floating settings window
         private BrushSettingsWindow _brushSettingsWindow;
@@ -190,6 +190,7 @@ namespace ImageEditor.ViewModels
         public ICommand PasteCommand { get; }
         public ICommand SelectAllCommand { get; }
         public ICommand SelectLineToolCommand { get; }
+        public ICommand ToggleColorPickerCommand { get; }
 
 
         // ================= CONSTRUCTOR =================
@@ -306,6 +307,7 @@ namespace ImageEditor.ViewModels
             }, _ => HasImage);
 
             SelectLineToolCommand = new RelayCommand(_ => ToggleLineTool());
+            ToggleColorPickerCommand = new RelayCommand(_ => ToggleColorPicker());
         }
 
         // ================= TABS =================
@@ -533,8 +535,6 @@ namespace ImageEditor.ViewModels
         #region toggle tools methods
         private void ToggleBrushTool()
         {
-            _lineSettingsWindow?.Close();
-
             if (ActiveTool == ToolType.Brush)
             {
                 ActiveTool = ToolType.None;
@@ -543,6 +543,7 @@ namespace ImageEditor.ViewModels
                 return;
             }
 
+            CloseAllToolWindows(ToolType.Brush);
             ActiveTool = ToolType.Brush;
 
             _brushSettingsWindow = new BrushSettingsWindow
@@ -568,24 +569,13 @@ namespace ImageEditor.ViewModels
 
         private void ToggleSelectionTool()
         {
-            switch (ActiveTool)
+            if (ActiveTool == ToolType.Selection)
             {
-                case ToolType.Selection:
-                    ActiveTool = ToolType.None;
-                    Selection = null;
-                    return;
-
-                case ToolType.Brush:
-                    _brushSettingsWindow?.Close();
-                    _brushSettingsWindow = null;
-                    break;
-
-                case ToolType.Line:
-                    _lineSettingsWindow?.Close();
-                    _lineSettingsWindow = null;
-                    break;
+                ActiveTool = ToolType.None;
+                return;
             }
 
+            CloseAllToolWindows();
             ActiveTool = ToolType.Selection;
             Selection = null;
         }
@@ -626,6 +616,51 @@ namespace ImageEditor.ViewModels
             _lineSettingsWindow.Left = main.Left + 50;
             _lineSettingsWindow.Top = main.Top + 80;
             _lineSettingsWindow.Show();
+        }
+
+        private void ToggleColorPicker()
+        {
+            if (_colorPickerWindow != null)
+            {
+                _colorPickerWindow.Close();
+                _colorPickerWindow = null;
+                return;
+            }
+
+            _colorPickerWindow = new ColorPickerWindow(ActiveColor)
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            _colorPickerWindow.ColorChanged += color => ActiveColor = color;
+            _colorPickerWindow.Closed += (s, e) => _colorPickerWindow = null;
+
+            var main = Application.Current.MainWindow;
+            double topOffset = 80;
+
+            if (_brushSettingsWindow != null)
+                topOffset = _brushSettingsWindow.Top - main.Top + _brushSettingsWindow.Height + 8;
+            else if (_lineSettingsWindow != null)
+                topOffset = _lineSettingsWindow.Top - main.Top + _lineSettingsWindow.Height + 8;
+
+            _colorPickerWindow.Left = main.Left + 50;
+            _colorPickerWindow.Top = main.Top + topOffset;
+            _colorPickerWindow.Show();
+        }
+
+        private void CloseAllToolWindows(ToolType except = ToolType.None)
+        {
+            if (except != ToolType.Brush)
+            {
+                _brushSettingsWindow?.Close();
+                _brushSettingsWindow = null;
+            }
+
+            if (except != ToolType.Line)
+            {
+                _lineSettingsWindow?.Close();
+                _lineSettingsWindow = null;
+            }
         }
         #endregion
 

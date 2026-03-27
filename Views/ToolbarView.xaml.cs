@@ -68,19 +68,8 @@ namespace ImageEditor.Views
 
         private void ActiveColor_Click(object sender, MouseButtonEventArgs e)
         {
-            var vm = DataContext as MainViewModel;
-            if (vm == null) return;
-
-            var picker = new ColorPickerWindow(vm.ActiveColor)
-            {
-                Owner = Window.GetWindow(this)
-            };
-
-            if (picker.ShowDialog() == true)
-            {
-                vm.ActiveColor = picker.SelectedColor;
-                ActiveSwatchBrush.Color = picker.SelectedColor;
-            }
+            if (DataContext is MainViewModel vm)
+                vm.ToggleColorPickerCommand.Execute(null);
         }
     }
 }

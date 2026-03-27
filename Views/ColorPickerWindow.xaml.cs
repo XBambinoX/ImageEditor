@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -8,18 +9,18 @@ namespace ImageEditor.Views
     public partial class ColorPickerWindow : Window
     {
         public Color SelectedColor { get; private set; }
+        public event Action<Color> ColorChanged;
 
         public ColorPickerWindow(Color initialColor)
         {
             InitializeComponent();
             ApplyColor(initialColor);
-        }
+        }   
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => DragMove();
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
             Close();
         }
 
@@ -60,6 +61,7 @@ namespace ImageEditor.Views
             SelectedColor = color;
             SwatchBrush.Color = color;
             HexInput.Text = ColorToHex(color);
+            ColorChanged?.Invoke(color);
         }
 
         private string ColorToHex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";

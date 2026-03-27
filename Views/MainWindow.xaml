@@ -30,10 +30,12 @@
         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyCommand}"/>
         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutCommand}"/>
         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteCommand}"/>
+        
         <KeyBinding Key="S" Command="{Binding SelectSelectionToolCommand}"/>
         <KeyBinding Key="A" Modifiers="Ctrl" Command="{Binding SelectAllCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding ClearSelectionCommand}"/>
         <KeyBinding Key="L" Command="{Binding SelectLineToolCommand}"/>
+        <KeyBinding Key="C" Command="{Binding ToggleColorPickerCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>
