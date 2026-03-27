@@ -36,6 +36,7 @@
         <KeyBinding Key="Escape" Command="{Binding ClearSelectionCommand}"/>
         <KeyBinding Key="L" Command="{Binding SelectLineToolCommand}"/>
         <KeyBinding Key="C" Command="{Binding ToggleColorPickerCommand}"/>
+        <KeyBinding Key="E" Command="{Binding SelectEyedropperCommand}"/>
     </Window.InputBindings>
 
     <Window.Resources>
@@ -362,9 +363,38 @@
                                         <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
                                         <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
 
+
+
+                                        <Border x:Name="EyedropperPreview"
+                                            Width="60" Height="30"
+                                            Background="#2A2A2A"
+                                            BorderBrush="#555555"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Visibility="Collapsed"
+                                            IsHitTestVisible="False">
+                                            <StackPanel Orientation="Horizontal" Margin="4,0">
+                                                <Border x:Name="EyedropperColorPreview"
+                                                    Width="20" Height="20"
+                                                    BorderBrush="#666666"
+                                                    BorderThickness="1"
+                                                    Margin="0,0,4,0"/>
+                                                <TextBlock x:Name="EyedropperHexText"
+                                                   FontSize="10"
+                                                   FontFamily="Consolas"
+                                                   Foreground="White"
+                                                   VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+
+
+
+
+
+
                                     </Canvas>
                                 </Grid>
-                            </ScrollViewer>
+                            </ScrollViewer> 
                         </DataTemplate>
                     </TabControl.ContentTemplate>
 

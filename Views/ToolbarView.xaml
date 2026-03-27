@@ -114,6 +114,28 @@
                 </Viewbox>
             </Button>
 
+            <Button x:Name="EyedropperButton"
+        Style="{StaticResource ToolButtonStyle}"
+        ToolTip="Eyedropper (E)"
+        Click="EyedropperButton_Click">
+                <Viewbox Width="18" Height="18">
+                    <Canvas Width="24" Height="24">
+                        <Line X1="16" Y1="3" X2="20" Y2="7" Stroke="#CCCCCC" StrokeThickness="2"/>
+                        <Rectangle Canvas.Left="5" Canvas.Top="6"
+                       Width="10" Height="14"
+                       RadiusX="1" RadiusY="1"
+                       Fill="Transparent"
+                       Stroke="#CCCCCC" StrokeThickness="1.5"
+                       RenderTransformOrigin="0.5,0.5">
+                            <Rectangle.RenderTransform>
+                                <RotateTransform Angle="-45" CenterX="10" CenterY="13"/>
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                        <Polygon Points="4,20 2,22 4,22" Fill="#CCCCCC"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+
             <Separator Margin="4,6" Background="#444444" Height="1"/>
 
             <!-- Active color -->

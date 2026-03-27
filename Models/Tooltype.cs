@@ -5,6 +5,7 @@
         None,
         Brush,
         Selection,
-        Line
+        Line,
+        Eyedropper
     }
 }

@@ -33,6 +33,8 @@ namespace ImageEditor.Views
         private const double HandleSize = 8;
         private const double HandleHitRadius = 10;
 
+        private Color _eyedropperPreviewColor;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -175,6 +177,28 @@ namespace ImageEditor.Views
                 (sender as FrameworkElement)?.CaptureMouse();
                 return;
             }
+
+            if (vm?.ActiveTool == ToolType.Eyedropper)
+            {
+                var imgPoint = GetImagePixel(e, vm);
+                var bitmap = vm.SelectedTab?.Image as WriteableBitmap;
+
+                if (bitmap != null)
+                {
+                    int px = (int)imgPoint.X;
+                    int py = (int)imgPoint.Y;
+
+                    if (px >= 0 && px < bitmap.PixelWidth && py >= 0 && py < bitmap.PixelHeight)
+                    {
+                        byte[] pixel = new byte[4];
+                        bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 4, 0);
+                        vm.ActiveColor = Color.FromRgb(pixel[2], pixel[1], pixel[0]);
+                    }
+                }
+
+                e.Handled = true;
+                return;
+            }
         }
 
         private void Image_MouseMove(object sender, MouseEventArgs e)
@@ -290,6 +314,52 @@ namespace ImageEditor.Views
                 _lastBrushPoint = imgPoint;
                 e.Handled = true;
                 return;
+            }
+
+            if (vm?.ActiveTool == ToolType.Eyedropper)
+            {
+                var img = sender as Image;
+                var imgPoint = GetImagePixel(e, vm);
+                var bitmap = vm.SelectedTab?.Image as WriteableBitmap;
+
+                if (bitmap != null)
+                {
+                    int px = (int)imgPoint.X;
+                    int py = (int)imgPoint.Y;
+
+                    if (px >= 0 && px < bitmap.PixelWidth && py >= 0 && py < bitmap.PixelHeight)
+                    {
+                        byte[] pixel = new byte[4];
+                        bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 4, 0);
+
+                        _eyedropperPreviewColor = Color.FromRgb(pixel[2], pixel[1], pixel[0]); // BGRA
+
+                        var preview = FindVisualChild<Border>(this, "EyedropperPreview");
+                        var colorBox = FindVisualChild<Border>(this, "EyedropperColorPreview");
+                        var hexText = FindVisualChild<TextBlock>(this, "EyedropperHexText");
+                        var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+                        if (preview != null && canvas != null)
+                        {
+                            var canvasPoint = e.GetPosition(canvas);
+                            Canvas.SetLeft(preview, canvasPoint.X + 15);
+                            Canvas.SetTop(preview, canvasPoint.Y - 35);
+
+                            if (colorBox != null)
+                                colorBox.Background = new SolidColorBrush(_eyedropperPreviewColor);
+                            if (hexText != null)
+                                hexText.Text = $"#{_eyedropperPreviewColor.R:X2}{_eyedropperPreviewColor.G:X2}{_eyedropperPreviewColor.B:X2}";
+
+                            preview.Visibility = Visibility.Visible;
+                        }
+                    }
+                }
+                return;
+            }
+            else
+            {
+                var preview = FindVisualChild<Border>(this, "EyedropperPreview");
+                if (preview != null) preview.Visibility = Visibility.Collapsed;
             }
         }
 

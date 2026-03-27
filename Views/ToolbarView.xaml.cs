@@ -64,12 +64,25 @@ namespace ImageEditor.Views
             LineButton.Style = vm.ActiveTool == ToolType.Line
                 ? (Style)FindResource("ActiveToolButtonStyle")
                 : (Style)FindResource("ToolButtonStyle");
+
+            EyedropperButton.Style = vm.ActiveTool == ToolType.Eyedropper
+                ? (Style)FindResource("ActiveToolButtonStyle")
+                : (Style)FindResource("ToolButtonStyle");
         }
 
         private void ActiveColor_Click(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is MainViewModel vm)
                 vm.ToggleColorPickerCommand.Execute(null);
+        }
+
+        private void EyedropperButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.SelectEyedropperCommand.Execute(null);
+                UpdateActiveButton(vm);
+            }
         }
     }
 }

@@ -191,6 +191,7 @@ namespace ImageEditor.ViewModels
         public ICommand SelectAllCommand { get; }
         public ICommand SelectLineToolCommand { get; }
         public ICommand ToggleColorPickerCommand { get; }
+        public ICommand SelectEyedropperCommand { get; }
 
 
         // ================= CONSTRUCTOR =================
@@ -308,6 +309,8 @@ namespace ImageEditor.ViewModels
 
             SelectLineToolCommand = new RelayCommand(_ => ToggleLineTool());
             ToggleColorPickerCommand = new RelayCommand(_ => ToggleColorPicker());
+
+            SelectEyedropperCommand = new RelayCommand(_ => ToggleEyedropperTool());
         }
 
         // ================= TABS =================
@@ -530,6 +533,18 @@ namespace ImageEditor.ViewModels
                 BrushSize = _brushSettingsWindow.BrushSize;
                 BrushHardness = _brushSettingsWindow.BrushHardness;
             }
+        }
+
+        private void ToggleEyedropperTool()
+        {
+            if (ActiveTool == ToolType.Eyedropper)
+            {
+                ActiveTool = ToolType.None;
+                return;
+            }
+
+            CloseAllToolWindows();
+            ActiveTool = ToolType.Eyedropper;
         }
 
         #region toggle tools methods
