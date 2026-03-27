@@ -37,6 +37,7 @@
         <KeyBinding Key="L" Command="{Binding SelectLineToolCommand}"/>
         <KeyBinding Key="C" Command="{Binding ToggleColorPickerCommand}"/>
         <KeyBinding Key="E" Command="{Binding SelectEyedropperCommand}"/>
+        <KeyBinding Key="T" Command="{Binding SelectTextToolCommand}"/>        
     </Window.InputBindings>
 
     <Window.Resources>

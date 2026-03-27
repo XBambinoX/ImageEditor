@@ -6,6 +6,7 @@
         Brush,
         Selection,
         Line,
-        Eyedropper
+        Eyedropper,
+        Text
     }
 }

@@ -114,6 +114,22 @@
                 </Viewbox>
             </Button>
 
+            <Button x:Name="TextButton"
+                Style="{StaticResource ToolButtonStyle}"
+                ToolTip="Text (T)"
+                Click="TextButton_Click">
+                <Viewbox Width="18" Height="18">
+                    <Canvas Width="24" Height="24">
+                        <Line X1="4" Y1="5" X2="20" Y2="5"
+                  Stroke="#CCCCCC" StrokeThickness="2"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Line X1="12" Y1="5" X2="12" Y2="20"
+                  Stroke="#CCCCCC" StrokeThickness="2"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    </Canvas>
+                </Viewbox>
+            </Button>
+
             <Button x:Name="EyedropperButton"
         Style="{StaticResource ToolButtonStyle}"
         ToolTip="Eyedropper (E)"

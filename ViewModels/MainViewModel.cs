@@ -192,6 +192,7 @@ namespace ImageEditor.ViewModels
         public ICommand SelectLineToolCommand { get; }
         public ICommand ToggleColorPickerCommand { get; }
         public ICommand SelectEyedropperCommand { get; }
+        public ICommand SelectTextToolCommand { get; }
 
 
         // ================= CONSTRUCTOR =================
@@ -311,6 +312,7 @@ namespace ImageEditor.ViewModels
             ToggleColorPickerCommand = new RelayCommand(_ => ToggleColorPicker());
 
             SelectEyedropperCommand = new RelayCommand(_ => ToggleEyedropperTool());
+            SelectTextToolCommand = new RelayCommand(_ => ToggleTextTool());
         }
 
         // ================= TABS =================
@@ -670,6 +672,18 @@ namespace ImageEditor.ViewModels
                 _lineSettingsWindow?.Close();
                 _lineSettingsWindow = null;
             }
+        }
+
+        private void ToggleTextTool()
+        {
+            if (ActiveTool == ToolType.Text)
+            {
+                ActiveTool = ToolType.None;
+                return;
+            }
+
+            CloseAllToolWindows();
+            ActiveTool = ToolType.Text;
         }
         #endregion
 
