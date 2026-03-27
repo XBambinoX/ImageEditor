@@ -58,6 +58,18 @@ namespace ImageEditor.Views
                             UpdateSelectionOverlay(vm);
                             if (vm.ActiveTool != ToolType.Eyedropper)
                                 HideEyedropperPreview();
+                            else
+                            {
+                                var img2 = FindVisualChild<Image>(this, "MainImage");
+                                var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+                                var bitmap = vm.SelectedTab?.Image as WriteableBitmap;
+
+                                if (img2 != null && canvas != null && bitmap != null)
+                                {
+                                    var imgPoint = GetImagePixelFromPoint(Mouse.GetPosition(img2), img2, vm);
+                                    UpdateEyedropperPreview(imgPoint, Mouse.GetPosition(canvas), bitmap);
+                                }
+                            }
                         }
                     };
                 }
@@ -328,38 +340,11 @@ namespace ImageEditor.Views
                 var img = sender as Image;
                 var imgPoint = GetImagePixel(e, vm);
                 var bitmap = vm.SelectedTab?.Image as WriteableBitmap;
+                var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
 
-                if (bitmap != null)
+                if (bitmap != null && canvas != null)
                 {
-                    int px = (int)imgPoint.X;
-                    int py = (int)imgPoint.Y;
-
-                    if (px >= 0 && px < bitmap.PixelWidth && py >= 0 && py < bitmap.PixelHeight)
-                    {
-                        byte[] pixel = new byte[4];
-                        bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 4, 0);
-
-                        _eyedropperPreviewColor = Color.FromRgb(pixel[2], pixel[1], pixel[0]); // BGRA
-
-                        var preview = FindVisualChild<Border>(this, "EyedropperPreview");
-                        var colorBox = FindVisualChild<Border>(this, "EyedropperColorPreview");
-                        var hexText = FindVisualChild<TextBlock>(this, "EyedropperHexText");
-                        var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
-
-                        if (preview != null && canvas != null)
-                        {
-                            var canvasPoint = e.GetPosition(canvas);
-                            Canvas.SetLeft(preview, canvasPoint.X + 15);
-                            Canvas.SetTop(preview, canvasPoint.Y - 35);
-
-                            if (colorBox != null)
-                                colorBox.Background = new SolidColorBrush(_eyedropperPreviewColor);
-                            if (hexText != null)
-                                hexText.Text = $"#{_eyedropperPreviewColor.R:X2}{_eyedropperPreviewColor.G:X2}{_eyedropperPreviewColor.B:X2}";
-
-                            preview.Visibility = Visibility.Visible;
-                        }
-                    }
+                    UpdateEyedropperPreview(imgPoint, GetCanvasPoint(e, img, vm), bitmap);
                 }
                 return;
             }
@@ -442,6 +427,16 @@ namespace ImageEditor.Views
             double scaleX = bitmap.PixelWidth / img.ActualWidth;
             double scaleY = bitmap.PixelHeight / img.ActualHeight;
 
+            return new Point(pos.X * scaleX, pos.Y * scaleY);
+        }
+
+        private Point GetImagePixelFromPoint(Point pos, Image img, MainViewModel vm)
+        {
+            var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null || img.ActualWidth <= 0) return pos;
+
+            double scaleX = bitmap.PixelWidth / img.ActualWidth;
+            double scaleY = bitmap.PixelHeight / img.ActualHeight;
             return new Point(pos.X * scaleX, pos.Y * scaleY);
         }
 
@@ -654,6 +649,36 @@ namespace ImageEditor.Views
         {
             var preview = FindVisualChild<Border>(this, "EyedropperPreview");
             if (preview != null) preview.Visibility = Visibility.Collapsed;
+        }
+
+        private void UpdateEyedropperPreview(Point imgPoint, Point canvasPoint, WriteableBitmap bitmap)
+        {
+            int px = (int)imgPoint.X;
+            int py = (int)imgPoint.Y;
+
+            if (px < 0 || px >= bitmap.PixelWidth || py < 0 || py >= bitmap.PixelHeight)
+            {
+                HideEyedropperPreview();
+                return;
+            }
+
+            byte[] pixel = new byte[4];
+            bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 4, 0);
+            var color = Color.FromRgb(pixel[2], pixel[1], pixel[0]);
+
+            var preview = FindVisualChild<Border>(this, "EyedropperPreview");
+            var colorBox = FindVisualChild<Border>(this, "EyedropperColorPreview");
+            var hexText = FindVisualChild<TextBlock>(this, "EyedropperHexText");
+
+            if (preview == null) return;
+
+            Canvas.SetLeft(preview, canvasPoint.X + 15);
+            Canvas.SetTop(preview, canvasPoint.Y - 45);
+
+            if (colorBox != null) colorBox.Background = new SolidColorBrush(color);
+            if (hexText != null) hexText.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+
+            preview.Visibility = Visibility.Visible;
         }
     }
 }
