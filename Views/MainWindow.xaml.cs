@@ -38,6 +38,8 @@ namespace ImageEditor.Views
         private Point? _textPosition; // canvas coordinates
         private Point? _textImagePosition; // pixel coordinates
 
+        private InputBindingCollection _savedBindings;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -550,7 +552,11 @@ namespace ImageEditor.Views
 
             // Focus the TextBox after style update to ensure caret visibility
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
-                new System.Action(() => box.Focus()));
+                new Action(() =>
+                {
+                    box.Focus();
+                    box.CaretIndex = Math.Min(caretIndex, box.Text.Length);
+                }));
         }
 
         private T FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
@@ -775,6 +781,7 @@ namespace ImageEditor.Views
             UpdateTextOverlayStyle(vm);
 
             box.Focus();
+            DisableHotkeys();
         }
 
         private void HideTextOverlay()
@@ -783,6 +790,7 @@ namespace ImageEditor.Views
             if (border != null) border.Visibility = Visibility.Collapsed;
             _textPosition = null;
             _textImagePosition = null;
+            RestoreHotkeys();
         }
 
         private void CommitText(MainViewModel vm)
@@ -823,6 +831,24 @@ namespace ImageEditor.Views
 
         private void TextOverlay_LostFocus(object sender, RoutedEventArgs e)
         {
+        }
+
+        public void DisableHotkeys()
+        {
+            if (_savedBindings != null) return;
+            _savedBindings = new InputBindingCollection();
+            foreach (InputBinding b in InputBindings)
+                _savedBindings.Add(b);
+            InputBindings.Clear();
+        }
+
+        public void RestoreHotkeys()
+        {
+            if (_savedBindings == null) return;
+            InputBindings.Clear();
+            foreach (InputBinding b in _savedBindings)
+                InputBindings.Add(b);
+            _savedBindings = null;
         }
     }
 }
