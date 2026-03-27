@@ -179,12 +179,13 @@ namespace ImageEditor.ViewModels
         }
 
         private TextAlignment _textAlignment = TextAlignment.Left;
-        public TextAlignment _TextAlignment
+        public TextAlignment TextAlignment
         {
             get => _textAlignment;
             set { _textAlignment = value; OnPropertyChanged(); }
         }
-        public TextAlignment TextAlignment => _textAlignment;
+
+        private TextSettingsWindow _textSettingsWindow; 
 
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
@@ -709,6 +710,12 @@ namespace ImageEditor.ViewModels
                 _lineSettingsWindow?.Close();
                 _lineSettingsWindow = null;
             }
+
+            if (except != ToolType.Text)
+            {
+                _textSettingsWindow?.Close();
+                _textSettingsWindow = null;
+            }
         }
 
         private void ToggleTextTool()
@@ -716,11 +723,39 @@ namespace ImageEditor.ViewModels
             if (ActiveTool == ToolType.Text)
             {
                 ActiveTool = ToolType.None;
+                _textSettingsWindow?.Close();
+                _textSettingsWindow = null;
                 return;
             }
 
             CloseAllToolWindows();
             ActiveTool = ToolType.Text;
+
+            _textSettingsWindow = new TextSettingsWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            _textSettingsWindow.SettingsChanged += () =>
+            {
+                TextFontFamily = _textSettingsWindow.SelectedFont;
+                TextFontSize = _textSettingsWindow.FontSize;
+                TextBold = _textSettingsWindow.IsBold;
+                TextItalic = _textSettingsWindow.IsItalic;
+                TextAlignment = _textSettingsWindow.Alignment;
+            };
+
+            _textSettingsWindow.Closed += (s, e) =>
+            {
+                if (ActiveTool == ToolType.Text)
+                    ActiveTool = ToolType.None;
+                _textSettingsWindow = null;
+            };
+
+            var main = Application.Current.MainWindow;
+            _textSettingsWindow.Left = main.Left + 50;
+            _textSettingsWindow.Top = main.Top + 80;
+            _textSettingsWindow.Show();
         }
         #endregion
 
