@@ -529,7 +529,11 @@ namespace ImageEditor.Views
             if (img == null || bitmap == null || img.ActualWidth <= 0) return;
 
             double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
-            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            // cursor and selection state
+            int caretIndex = box.CaretIndex;
+            int selectionStart = box.SelectionStart;
+            int selectionLength = box.SelectionLength;
 
             box.FontSize = Math.Max(6, vm.TextFontSize / dpiScaleX * vm.Zoom);
             box.FontFamily = new FontFamily(vm.TextFontFamily);
@@ -538,6 +542,15 @@ namespace ImageEditor.Views
             box.TextAlignment = vm.TextAlignment;
             box.Foreground = new SolidColorBrush(vm.ActiveColor);
             box.CaretBrush = new SolidColorBrush(vm.ActiveColor);
+
+            // Focus and selection restoration
+            box.CaretIndex = Math.Min(caretIndex, box.Text.Length);
+            box.Select(Math.Min(selectionStart, box.Text.Length),
+                       Math.Min(selectionLength, box.Text.Length - selectionStart));
+
+            // Focus the TextBox after style update to ensure caret visibility
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+                new System.Action(() => box.Focus()));
         }
 
         private T FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
