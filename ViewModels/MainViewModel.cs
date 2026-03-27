@@ -636,15 +636,9 @@ namespace ImageEditor.ViewModels
             _colorPickerWindow.Closed += (s, e) => _colorPickerWindow = null;
 
             var main = Application.Current.MainWindow;
-            double topOffset = 80;
-
-            if (_brushSettingsWindow != null)
-                topOffset = _brushSettingsWindow.Top - main.Top + _brushSettingsWindow.Height + 8;
-            else if (_lineSettingsWindow != null)
-                topOffset = _lineSettingsWindow.Top - main.Top + _lineSettingsWindow.Height + 8;
 
             _colorPickerWindow.Left = main.Left + 50;
-            _colorPickerWindow.Top = main.Top + topOffset;
+            _colorPickerWindow.Top = main.Top + main.ActualHeight - _colorPickerWindow.Height - 40;
             _colorPickerWindow.Show();
         }
 
