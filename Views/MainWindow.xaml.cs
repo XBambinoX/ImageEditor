@@ -37,8 +37,6 @@ namespace ImageEditor.Views
 
         private Point? _textPosition; // canvas coordinates
         private Point? _textImagePosition; // pixel coordinates
-        private bool _isDraggingText;
-        private Point? _textDragStart;
 
         public MainWindow()
         {
@@ -710,12 +708,14 @@ namespace ImageEditor.Views
         {
             var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
             var border = FindVisualChild<Border>(this, "TextOverlayBorder");
-            if (box == null || border == null) return;
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var selCanvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+            if (box == null || border == null || img == null || selCanvas == null) return;
 
             _textPosition = canvasPoint;
             _textImagePosition = imagePoint;
 
-            // Apply text settings from the ViewModel
             box.FontSize = vm.TextFontSize;
             box.FontFamily = new FontFamily(vm.TextFontFamily);
             box.FontWeight = vm.TextBold ? FontWeights.Bold : FontWeights.Normal;
@@ -725,12 +725,21 @@ namespace ImageEditor.Views
             box.CaretBrush = new SolidColorBrush(vm.ActiveColor);
             box.Text = "";
 
-            Canvas.SetLeft(border, canvasPoint.X);
-            Canvas.SetTop(border, canvasPoint.Y);
-            border.Width = 200;
-            border.Height = 60;
-            border.Visibility = Visibility.Visible;
+            // Convert imagePoint to canvas coordinates considering zoom and image scaling
+            var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null || img.ActualWidth <= 0) return;
 
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            var p = new Point(imagePoint.X / dpiScaleX, imagePoint.Y / dpiScaleY);
+            var transform = img.TransformToVisual(selCanvas);
+            var canvasPos = transform.Transform(p);
+
+            Canvas.SetLeft(border, canvasPos.X);
+            Canvas.SetTop(border, canvasPos.Y);
+
+            border.Visibility = Visibility.Visible;
             box.Focus();
         }
 

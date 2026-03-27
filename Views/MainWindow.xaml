@@ -307,21 +307,18 @@
                     <TabControl.ContentTemplate>
                         <DataTemplate>
                             <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
-                                <Grid Background="Transparent"
-                                      MouseLeftButtonDown="Image_MouseLeftButtonDown"
-                                      MouseMove="Image_MouseMove"
-                                      MouseLeftButtonUp="Image_MouseLeftButtonUp"
-                                      MouseWheel="Image_MouseWheel"
-                                      MouseDown="Image_MouseDown"
-                                      MouseUp="Image_MouseUp">
-                                    <Image x:Name="MainImage"
-                                       Source="{Binding Image}"
-                                       Stretch="None"
-                                       RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                       RenderOptions.EdgeMode="Aliased"
-                                       MouseLeave="Image_MouseLeave">
-                                        <Image.RenderTransform>
+                                VerticalScrollBarVisibility="Auto">
+                                <Grid Background="Transparent">
+                                    <Grid x:Name="ImageContainer"
+                                          Background="Transparent"
+                                          MouseLeftButtonDown="Image_MouseLeftButtonDown"
+                                          MouseMove="Image_MouseMove"
+                                          MouseLeftButtonUp="Image_MouseLeftButtonUp"
+                                          MouseWheel="Image_MouseWheel"
+                                          MouseDown="Image_MouseDown"
+                                          MouseUp="Image_MouseUp">
+
+                                        <Grid.RenderTransform>
                                             <TransformGroup>
                                                 <ScaleTransform
                                                     ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -330,85 +327,43 @@
                                                     X="{Binding DataContext.ImageOffsetX, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     Y="{Binding DataContext.ImageOffsetY, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                             </TransformGroup>
-                                        </Image.RenderTransform>
-                                    </Image>
+                                        </Grid.RenderTransform>
 
-                                    <Canvas x:Name="SelectionCanvas"
-                                            IsHitTestVisible="False">
+                                        <Image x:Name="MainImage"
+                                           Source="{Binding Image}"
+                                           Stretch="None"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                           RenderOptions.EdgeMode="Aliased"
+                                           MouseLeave="Image_MouseLeave"/>
 
-                                        <Rectangle x:Name="SelectionFill"
-                                           Fill="#330078D7"
-                                           Visibility="Collapsed"/>
+                                        <Canvas x:Name="SelectionCanvas"
+                                                IsHitTestVisible="False">
+                                            
+                                            <Rectangle x:Name="SelectionFill" Fill="#330078D7" Visibility="Collapsed"/>
+                                            <Rectangle x:Name="SelectionRectBlack" Stroke="Black" StrokeThickness="1" StrokeDashArray="4,4" StrokeDashOffset="4" Fill="Transparent" Visibility="Collapsed"/>
+                                            <Rectangle x:Name="SelectionRect" Stroke="White" StrokeThickness="1" StrokeDashArray="4,4" StrokeDashOffset="0" Fill="Transparent" Visibility="Collapsed"/>
+                                            <Rectangle x:Name="Handle_TL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
+                                            <Rectangle x:Name="Handle_TC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
+                                            <Rectangle x:Name="Handle_TR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
+                                            <Rectangle x:Name="Handle_ML" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
+                                            <Rectangle x:Name="Handle_MR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
+                                            <Rectangle x:Name="Handle_BL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
+                                            <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
+                                            <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
+                                            <Border x:Name="EyedropperPreview" Width="90" Height="40" Background="#2A2A2A" BorderBrush="#555555" BorderThickness="1" CornerRadius="4" Visibility="Collapsed" IsHitTestVisible="False">
+                                                <StackPanel Orientation="Horizontal" Margin="6,0">
+                                                    <Border x:Name="EyedropperColorPreview" Width="28" Height="28" BorderBrush="#666666" BorderThickness="1" Margin="0,0,6,0"/>
+                                                    <TextBlock x:Name="EyedropperHexText" FontSize="11" FontFamily="Consolas" Foreground="White" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border x:Name="TextOverlayBorder" Visibility="Collapsed" BorderBrush="#0078D7" BorderThickness="1" Background="Transparent" IsHitTestVisible="True">
+                                                <TextBox x:Name="TextOverlayBox" Background="Transparent" Foreground="Black" BorderThickness="0" AcceptsReturn="True" TextWrapping="Wrap" FontSize="16" CaretBrush="Black" Padding="2" KeyDown="TextOverlay_KeyDown" LostFocus="TextOverlay_LostFocus"/>
+                                            </Border>
+                                        </Canvas>
+                                    </Grid>
 
-                                        <Rectangle x:Name="SelectionRectBlack"
-                                           Stroke="Black"
-                                           StrokeThickness="1"
-                                           StrokeDashArray="4,4"
-                                           StrokeDashOffset="4"
-                                           Fill="Transparent"
-                                           Visibility="Collapsed"/>
-
-                                        <Rectangle x:Name="SelectionRect"
-                                           Stroke="White"
-                                           StrokeThickness="1"
-                                           StrokeDashArray="4,4"
-                                           StrokeDashOffset="0"
-                                           Fill="Transparent"
-                                           Visibility="Collapsed"/>
-
-                                        <Rectangle x:Name="Handle_TL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
-                                        <Rectangle x:Name="Handle_TC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
-                                        <Rectangle x:Name="Handle_TR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
-                                        <Rectangle x:Name="Handle_ML" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
-                                        <Rectangle x:Name="Handle_MR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
-                                        <Rectangle x:Name="Handle_BL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
-                                        <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
-                                        <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
-
-                                        <Border x:Name="EyedropperPreview"
-                                            Width="90" Height="40"
-                                            Background="#2A2A2A"
-                                            BorderBrush="#555555"
-                                            BorderThickness="1"
-                                            CornerRadius="4"
-                                            Visibility="Collapsed"
-                                            IsHitTestVisible="False">
-                                            <StackPanel Orientation="Horizontal" Margin="6,0">
-                                                <Border x:Name="EyedropperColorPreview"
-                                                    Width="28" Height="28"
-                                                    BorderBrush="#666666"
-                                                    BorderThickness="1"
-                                                    Margin="0,0,6,0"/>
-                                                <TextBlock x:Name="EyedropperHexText"
-                                                   FontSize="11"
-                                                   FontFamily="Consolas"
-                                                   Foreground="White"
-                                                   VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border x:Name="TextOverlayBorder"
-                                            Visibility="Collapsed"
-                                            BorderBrush="#0078D7"
-                                            BorderThickness="1"
-                                            Background="Transparent"
-                                            IsHitTestVisible="True">
-                                            <TextBox x:Name="TextOverlayBox"
-                                                 Background="Transparent"
-                                                 Foreground="Black"
-                                                 BorderThickness="0"
-                                                 AcceptsReturn="True"
-                                                 TextWrapping="Wrap"
-                                                 FontSize="16"
-                                                 CaretBrush="Black"
-                                                 Padding="2"
-                                                 KeyDown="TextOverlay_KeyDown"
-                                                 LostFocus="TextOverlay_LostFocus"/>
-                                        </Border>
-
-                                    </Canvas>
                                 </Grid>
-                            </ScrollViewer> 
+                            </ScrollViewer>
                         </DataTemplate>
                     </TabControl.ContentTemplate>
 
