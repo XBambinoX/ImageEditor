@@ -318,7 +318,8 @@
                                        Source="{Binding Image}"
                                        Stretch="None"
                                        RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                       RenderOptions.EdgeMode="Aliased">
+                                       RenderOptions.EdgeMode="Aliased"
+                                       MouseLeave="Image_MouseLeave">
                                         <Image.RenderTransform>
                                             <TransformGroup>
                                                 <ScaleTransform
@@ -363,8 +364,6 @@
                                         <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
                                         <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
 
-
-
                                         <Border x:Name="EyedropperPreview"
                                             Width="60" Height="30"
                                             Background="#2A2A2A"
@@ -386,11 +385,6 @@
                                                    VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
-
-
-
-
-
 
                                     </Canvas>
                                 </Grid>

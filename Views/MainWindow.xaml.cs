@@ -52,6 +52,13 @@ namespace ImageEditor.Views
                         {
                             UpdateSelectionOverlay(vm);
                         }
+
+                        if (args.PropertyName == nameof(MainViewModel.ActiveTool))
+                        {
+                            UpdateSelectionOverlay(vm);
+                            if (vm.ActiveTool != ToolType.Eyedropper)
+                                HideEyedropperPreview();
+                        }
                     };
                 }
             };
@@ -417,6 +424,11 @@ namespace ImageEditor.Views
             }
         }
 
+        private void Image_MouseLeave(object sender, MouseEventArgs e)
+        {
+            HideEyedropperPreview();
+        }
+
         private Point GetImagePixel(MouseEventArgs e, MainViewModel vm)
         {
             var img = FindVisualChild<Image>(this, "MainImage");
@@ -636,6 +648,12 @@ namespace ImageEditor.Views
             }
 
             return (new Int32Rect(x, y, w, h), x, y);
+        }
+
+        private void HideEyedropperPreview()
+        {
+            var preview = FindVisualChild<Border>(this, "EyedropperPreview");
+            if (preview != null) preview.Visibility = Visibility.Collapsed;
         }
     }
 }
