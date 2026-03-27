@@ -38,6 +38,11 @@ namespace ImageEditor.Views
         private Point? _textPosition; // canvas coordinates
         private Point? _textImagePosition; // pixel coordinates
 
+        private bool _isDraggingText;
+        private Point? _textDragStart;
+        private Point _textDragOriginCanvas;
+        private Point _textDragOriginImage;
+
         private InputBindingCollection _savedBindings;
 
         public MainWindow()
@@ -234,16 +239,29 @@ namespace ImageEditor.Views
                 var border = FindVisualChild<Border>(this, "TextOverlayBorder");
                 var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
 
-                // if the text overlay is already visible, commit the text instead of starting a new one
                 if (border?.Visibility == Visibility.Visible)
                 {
+                    var clickOnCanvas = e.GetPosition(canvas);
+                    var borderLeft = Canvas.GetLeft(border);
+                    var borderTop = Canvas.GetTop(border);
+                    var borderRight = borderLeft + border.ActualWidth;
+                    var borderBottom = borderTop + border.ActualHeight;
+
+                    bool clickedInsideBorder = clickOnCanvas.X >= borderLeft && clickOnCanvas.X <= borderRight
+                                            && clickOnCanvas.Y >= borderTop && clickOnCanvas.Y <= borderBottom;
+
+                    if (clickedInsideBorder)
+                    {
+                        e.Handled = true;
+                        return; // do not commit text if clicking inside the text box
+                    }
+
                     CommitText(vm);
                     return;
                 }
 
                 var imgPoint = GetImagePixel(e, vm);
                 var canvasPoint = e.GetPosition(canvas);
-
                 ShowTextOverlay(canvasPoint, imgPoint, vm);
                 e.Handled = true;
                 return;
@@ -770,6 +788,16 @@ namespace ImageEditor.Views
             double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
             double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
 
+            _textImagePosition = new Point(
+                _textImagePosition.Value.X + 3 * dpiScaleX,
+                _textImagePosition.Value.Y + 3 * dpiScaleY + 16 * dpiScaleY // +16 for default font size, +3 for padding
+            );
+
+            double handleHeightInPixels = 16 * dpiScaleY; // reserve space for one line of text above the click point to avoid covering it
+            _textImagePosition = new Point(
+                _textImagePosition.Value.X,
+                _textImagePosition.Value.Y + handleHeightInPixels);
+
             var p = new Point(imagePoint.X / dpiScaleX, imagePoint.Y / dpiScaleY);
             var transform = img.TransformToVisual(selCanvas);
             var canvasPos = transform.Transform(p);
@@ -850,5 +878,63 @@ namespace ImageEditor.Views
                 InputBindings.Add(b);
             _savedBindings = null;
         }
+
+        #region text dragging methods
+        private void TextDragHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+            if (border == null || canvas == null) return;
+
+            _isDraggingText = true;
+            _textDragStart = e.GetPosition(canvas);
+            _textDragOriginCanvas = new Point(Canvas.GetLeft(border), Canvas.GetTop(border));
+
+            (sender as Border)?.CaptureMouse();
+            e.Handled = true;
+        }
+
+        private void TextDragHandle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isDraggingText || !_textDragStart.HasValue) return;
+
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var vm = DataContext as MainViewModel;
+            if (border == null || canvas == null || img == null || vm == null) return;
+
+            var current = e.GetPosition(canvas);
+            double newLeft = _textDragOriginCanvas.X + (current.X - _textDragStart.Value.X);
+            double newTop = _textDragOriginCanvas.Y + (current.Y - _textDragStart.Value.Y);
+
+            Canvas.SetLeft(border, newLeft);
+            Canvas.SetTop(border, newTop);
+
+            var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null || img.ActualWidth <= 0) return;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            var transform = canvas.TransformToVisual(img);
+            var imgPoint = transform.Transform(new Point(newLeft, newTop));
+
+            _textImagePosition = new Point(
+                imgPoint.X * dpiScaleX,
+                imgPoint.Y * dpiScaleY);
+
+            e.Handled = true;
+        }
+
+        private void TextDragHandle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            _isDraggingText = false;
+            _textDragStart = null;
+            (sender as Border)?.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+        #endregion
     }
 }
