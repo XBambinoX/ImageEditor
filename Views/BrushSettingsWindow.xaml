@@ -6,7 +6,7 @@
         ResizeMode="NoResize"
         Background="#303030"
         Width="220"
-        Height="185"
+        Height="120"
         Title="MonoFrame"
         Topmost="True"
         ShowInTaskbar="False"
@@ -66,114 +66,6 @@
 
             <!-- Settings -->
             <StackPanel Margin="12,10,12,12">
-
-                <!-- Color row -->
-                <Grid Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="50"/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Text="Color"
-                               VerticalAlignment="Center"
-                               FontSize="12"
-                               FontFamily="Segoe UI"
-                               Foreground="#CCCCCC"/>
-
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Border x:Name="ColorSwatch"
-                                Width="28" Height="22"
-                                BorderBrush="#666666"
-                                BorderThickness="1"
-                                Cursor="Hand"
-                                MouseLeftButtonDown="ColorSwatch_Click">
-                            <Border.Background>
-                                <SolidColorBrush x:Name="SwatchBrush" Color="Black"/>
-                            </Border.Background>
-                        </Border>
-
-                        <Popup x:Name="ColorPopup"
-                               PlacementTarget="{Binding ElementName=ColorSwatch}"
-                               Placement="Bottom"
-                               StaysOpen="True"
-                               AllowsTransparency="True">
-                            <Border Background="#2A2A2A"
-                                    BorderBrush="#555555"
-                                    BorderThickness="1"
-                                    Padding="6">
-                                <WrapPanel Width="168" ItemWidth="24" ItemHeight="24">
-                                    <Border Background="Black"        Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#222222"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#555555"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#AAAAAA"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#DDDDDD"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="White"        Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#8B0000"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="Red"          Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="OrangeRed"    Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="Orange"       Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="Yellow"       Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#FFD9B3"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#1b2a1b"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#556B2F"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="Lime"         Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="Teal"         Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#B3FFB3"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#F0FFF0"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#00008B"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="DodgerBlue"   Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="Cyan"         Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#B3D9FF"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#F0F8FF"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#16213e"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#4B0082"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="BlueViolet"   Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="MediumOrchid" Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="DeepPink"     Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="HotPink"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#FFB3B3"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#8B4513"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#3d2b1f"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#FFF8DC"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#FFFFB3"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#EEEEEE"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                    <Border Background="#1a1a2e"      Margin="2" Cursor="Hand" MouseLeftButtonUp="Color_Click"/>
-                                </WrapPanel>
-                            </Border>
-                        </Popup>
-                    </StackPanel>
-                </Grid>
-
-                <!-- HEX row -->
-                <Grid Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="50"/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Text="Hex"
-                               VerticalAlignment="Center"
-                               FontSize="12"
-                               FontFamily="Segoe UI"
-                               Foreground="#CCCCCC"/>
-
-                    <TextBox x:Name="HexInput"
-                             Grid.Column="1"
-                             Height="22"
-                             Background="#3C3C3C"
-                             Foreground="White"
-                             BorderBrush="#555555"
-                             BorderThickness="1"
-                             FontSize="12"
-                             FontFamily="Consolas"
-                             Padding="4,2"
-                             CaretBrush="White"
-                             MaxLength="7"
-                             Text="#000000"
-                             KeyDown="HexInput_KeyDown"
-                             LostFocus="HexInput_LostFocus"/>
-                </Grid>
-
                 <!-- Size row -->
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -223,10 +115,10 @@
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Text="Hard"
-               VerticalAlignment="Center"
-               FontSize="12"
-               FontFamily="Segoe UI"
-               Foreground="#CCCCCC"/>
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       FontFamily="Segoe UI"
+                       Foreground="#CCCCCC"/>
 
                     <Slider x:Name="HardnessSlider"
                         Grid.Column="1"

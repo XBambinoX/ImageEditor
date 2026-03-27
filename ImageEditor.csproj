@@ -133,6 +133,9 @@
     <Compile Include="Views\LineSettingsWindow.xaml.cs">
       <DependentUpon>LineSettingsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ColorPickerWindow.xaml.cs">
+      <DependentUpon>ColorPickerWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\BrightnessWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -189,6 +192,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\LineSettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ColorPickerWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

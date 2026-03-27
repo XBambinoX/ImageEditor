@@ -71,13 +71,6 @@ namespace ImageEditor.ViewModels
             set { _activeTool = value; OnPropertyChanged(); }
         }
 
-        private Color _brushColor = Colors.Black;
-        public Color BrushColor
-        {
-            get => _brushColor;
-            set { _brushColor = value; OnPropertyChanged(); }
-        }
-
         private int _brushSize = 10;
         public int BrushSize
         {
@@ -92,17 +85,7 @@ namespace ImageEditor.ViewModels
             set { _brushHardness = value; OnPropertyChanged(); }
         }
 
-
-
-
         private LineSettingsWindow _lineSettingsWindow;
-
-        private Color _lineColor = Colors.Black;
-        public Color LineColor
-        {
-            get => _lineColor;
-            set { _lineColor = value; OnPropertyChanged(); }
-        }
 
         private int _lineWidth = 2;
         public int LineWidth
@@ -157,6 +140,14 @@ namespace ImageEditor.ViewModels
         public int PasteY => _pasteY;
 
         public bool IsFloatingPaste => _pasteFloating != null;
+
+
+        private Color _activeColor = Colors.Black;
+        public Color ActiveColor
+        {
+            get => _activeColor;
+            set { _activeColor = value; OnPropertyChanged(); }
+        }
 
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
@@ -523,9 +514,9 @@ namespace ImageEditor.ViewModels
             int radius = Math.Max(1, BrushSize / 2);
 
             if (previousPoint.HasValue)
-                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, radius, BrushColor, BrushHardness);
+                DrawingService.DrawLine(wb, previousPoint.Value, imagePoint, radius, ActiveColor, BrushHardness);
             else
-                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, radius, BrushColor, BrushHardness);
+                DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, radius, ActiveColor, BrushHardness);
 
             SelectedTab.IsModified = true;
         }
@@ -534,7 +525,6 @@ namespace ImageEditor.ViewModels
         {
             if (_brushSettingsWindow != null)
             {
-                BrushColor = _brushSettingsWindow.SelectedColor;
                 BrushSize = _brushSettingsWindow.BrushSize;
                 BrushHardness = _brushSettingsWindow.BrushHardness;
             }
@@ -843,7 +833,6 @@ namespace ImageEditor.ViewModels
         {
             if (_lineSettingsWindow != null)
             {
-                LineColor = _lineSettingsWindow.SelectedColor;
                 LineWidth = _lineSettingsWindow.LineWidth;
             }
         }
@@ -864,9 +853,9 @@ namespace ImageEditor.ViewModels
             }
 
             if (cp1.HasValue && cp2.HasValue)
-                DrawingService.DrawBezier(wb, from, cp1.Value, cp2.Value, to, LineWidth, LineColor);
+                DrawingService.DrawBezier(wb, from, cp1.Value, cp2.Value, to, LineWidth, ActiveColor);
             else
-                DrawingService.DrawLine(wb, from, to, LineWidth, LineColor);
+                DrawingService.DrawLine(wb, from, to, LineWidth, ActiveColor);
 
             SelectedTab.IsModified = true;
 

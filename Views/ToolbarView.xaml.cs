@@ -2,6 +2,7 @@
 using ImageEditor.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ImageEditor.Views
 {
@@ -17,6 +18,8 @@ namespace ImageEditor.Views
                     {
                         if (args.PropertyName == nameof(MainViewModel.ActiveTool))
                             UpdateActiveButton(vm);
+                        if (args.PropertyName == nameof(MainViewModel.ActiveColor))
+                            ActiveSwatchBrush.Color = vm.ActiveColor;
                     };
             };
         }
@@ -61,6 +64,23 @@ namespace ImageEditor.Views
             LineButton.Style = vm.ActiveTool == ToolType.Line
                 ? (Style)FindResource("ActiveToolButtonStyle")
                 : (Style)FindResource("ToolButtonStyle");
+        }
+
+        private void ActiveColor_Click(object sender, MouseButtonEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null) return;
+
+            var picker = new ColorPickerWindow(vm.ActiveColor)
+            {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (picker.ShowDialog() == true)
+            {
+                vm.ActiveColor = picker.SelectedColor;
+                ActiveSwatchBrush.Color = picker.SelectedColor;
+            }
         }
     }
 }

@@ -230,7 +230,7 @@ namespace ImageEditor.Views
                     if (!vm.IsLineBezierMode && e.LeftButton == MouseButtonState.Pressed)
                     {
                         DrawingService.DrawLine(preview, _linePreviewStart.Value, current,
-                                                        vm.LineWidth, vm.LineColor);
+                                                        vm.LineWidth, vm.ActiveColor);
                     }
                     else if (vm.IsBezierSecondPhase && vm.BezierControl1.HasValue && vm.BezierControl2.HasValue)
                     {
@@ -247,7 +247,7 @@ namespace ImageEditor.Views
                         DrawingService.DrawBezier(preview,
                             vm.LineStart.Value, vm.BezierControl1.Value,
                             vm.BezierControl2.Value, vm.LineEnd.Value,
-                            vm.LineWidth, vm.LineColor);
+                            vm.LineWidth, vm.ActiveColor);
                     }
 
                     vm.OnPropertyChangedPublic(nameof(vm.CurrentImage));

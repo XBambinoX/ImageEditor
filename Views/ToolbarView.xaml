@@ -114,6 +114,21 @@
                 </Viewbox>
             </Button>
 
+            <Separator Margin="4,6" Background="#444444" Height="1"/>
+
+            <!-- Active color -->
+            <Border x:Name="ActiveColorSwatch"
+                Width="28" Height="28"
+                Margin="3,4"
+                BorderBrush="#666666"
+                BorderThickness="1"
+                Cursor="Hand"
+                MouseLeftButtonDown="ActiveColor_Click">
+                <Border.Background>
+                    <SolidColorBrush x:Name="ActiveSwatchBrush" Color="Black"/>
+                </Border.Background>
+            </Border>
+
         </StackPanel>
     </Border>
 </UserControl>

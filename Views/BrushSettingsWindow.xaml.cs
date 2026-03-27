@@ -7,7 +7,6 @@ namespace ImageEditor.Views
 {
     public partial class BrushSettingsWindow : Window
     {
-        public Color SelectedColor { get; private set; } = Colors.Black;
         public double BrushHardness => HardnessSlider.Value / 100.0;
         public int BrushSize => (int)SizeSlider.Value;
         private int MaxSize = 100;
@@ -23,59 +22,6 @@ namespace ImageEditor.Views
         {
             DragMove();
         }
-
-        private void ColorSwatch_Click(object sender, MouseButtonEventArgs e)
-        {
-            ColorPopup.IsOpen = true;
-        }
-
-        private void Color_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is System.Windows.Controls.Border border &&
-                border.Background is SolidColorBrush brush)
-            {
-                ApplyColor(brush.Color);
-            }
-
-            ColorPopup.IsOpen = false;
-        }
-
-        private void HexInput_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                TryApplyHex();
-        }
-
-        private void HexInput_LostFocus(object sender, RoutedEventArgs e)
-        {
-            TryApplyHex();
-        }
-
-        private void TryApplyHex()
-        {
-            var text = HexInput.Text.Trim();
-            if (!text.StartsWith("#"))
-                text = "#" + text;
-
-            try
-            {
-                var color = (Color)ColorConverter.ConvertFromString(text);
-                ApplyColor(color);
-            }
-            catch
-            {
-                HexInput.Text = ColorToHex(SelectedColor);
-            }
-        }
-
-        private void ApplyColor(Color color)
-        {
-            SelectedColor = color;
-            SwatchBrush.Color = color;
-            HexInput.Text = ColorToHex(color);
-        }
-
-        private string ColorToHex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
 
         private void SizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
