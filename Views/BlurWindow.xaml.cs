@@ -18,5 +18,10 @@ namespace ImageEditor.Views
                 vm.Radius += e.Delta > 0 ? 1 : -1;
             }
         }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
     }
 }

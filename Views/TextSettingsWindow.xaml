@@ -1,0 +1,372 @@
+﻿<Window x:Class="ImageEditor.Views.TextSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="NoResize"
+        Background="#303030"
+        Width="220"
+        Height="165"
+        Title="MonoFrame"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        WindowStartupLocation="Manual">
+
+    <Window.Resources>
+        <Style TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#3A5A8A" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="14" Height="14" Fill="#0078D7"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#555555" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="#555555" BorderThickness="1">
+        <DockPanel>
+
+            <!-- Titlebar -->
+            <Border DockPanel.Dock="Top"
+                    Background="#303030"
+                    Height="28"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    BorderBrush="#555555"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Text"
+                               VerticalAlignment="Center"
+                               Margin="10,0"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#AAAAAA"/>
+
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Width="28" Height="28"
+                            FontSize="11"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="Close_Click">
+                        <Button.Foreground>
+                            <SolidColorBrush Color="#AAAAAA"/>
+                        </Button.Foreground>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Border" Background="Transparent">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <StackPanel Margin="12,10,12,12">
+
+                <!-- Font row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Font" VerticalAlignment="Center"
+                               FontSize="12" FontFamily="Segoe UI" Foreground="#CCCCCC"/>
+                    <ComboBox x:Name="FontComboBox"
+                          Grid.Column="1"
+                          Height="22"
+                          Foreground="#CCCCCC"
+                          BorderBrush="#555555"
+                          FontSize="12"
+                          SelectionChanged="FontComboBox_SelectionChanged">
+
+                        <ComboBox.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#383838"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#383838"/>
+                        </ComboBox.Resources>
+
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox">
+                                <Setter Property="Background" Value="#3C3C3C"/>
+                                <Setter Property="Foreground" Value="#CCCCCC"/>
+                                <Setter Property="BorderBrush" Value="#555555"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ComboBox">
+                                            <Grid>
+                                                <Border x:Name="Border"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"/>
+                                                <ContentPresenter x:Name="ContentSite"
+                                                  IsHitTestVisible="False"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  Margin="6,2,24,2"
+                                              VerticalAlignment="Center"/>
+                                                <ToggleButton x:Name="ToggleButton"
+                                                      Grid.Column="1"
+                                                      Focusable="False"
+                                                      IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                      ClickMode="Press">
+                                                    <ToggleButton.Template>
+                                                        <ControlTemplate TargetType="ToggleButton">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition/>
+                                                                    <ColumnDefinition Width="18"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border Grid.ColumnSpan="2"
+                                                                    Background="Transparent"/>
+                                                                <Border Grid.Column="1"
+                                                                    Background="#3C3C3C"
+                                                                    BorderBrush="#555555"
+                                                                    BorderThickness="1,0,0,0">
+                                                                    <Path Data="M 0 0 L 4 4 L 8 0 Z"
+                                                                      Fill="#AAAAAA"
+                                                                      HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </Grid>
+                                                        </ControlTemplate>
+                                                    </ToggleButton.Template>
+                                                </ToggleButton>
+                                                <Popup x:Name="Popup"
+                                                   Placement="Bottom"
+                                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                   AllowsTransparency="True"
+                                                   Focusable="False"
+                                                   PopupAnimation="Slide">
+                                                    <Grid MinWidth="{TemplateBinding ActualWidth}"
+                                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                                        <Border Background="#2D2D2D"
+                                                            BorderBrush="#555555"
+                                                            BorderThickness="1">
+                                                            <ScrollViewer>
+                                                                <ScrollViewer.Resources>
+                                                                    <Style TargetType="ScrollBar">
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate TargetType="ScrollBar">
+                                                                                    <Grid Background="#2D2D2D">
+                                                                                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                                                                            <Track.DecreaseRepeatButton>
+                                                                                                <RepeatButton Command="ScrollBar.LineUpCommand" Opacity="0"/>
+                                                                                            </Track.DecreaseRepeatButton>
+                                                                                            <Track.Thumb>
+                                                                                                <Thumb>
+                                                                                                    <Thumb.Template>
+                                                                                                        <ControlTemplate TargetType="Thumb">
+                                                                                                            <Border Background="#666666"
+                                                                                                                CornerRadius="2"
+                                                                                                                Margin="2,1">
+                                                                                                                <Border.Style>
+                                                                                                                    <Style TargetType="Border">
+                                                                                                                        <Style.Triggers>
+                                                                                                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Thumb}}" Value="True">
+                                                                                                                                <Setter Property="Background" Value="#999999"/>
+                                                                                                                            </DataTrigger>
+                                                                                                                        </Style.Triggers>
+                                                                                                                    </Style>
+                                                                                                                </Border.Style>
+                                                                                                            </Border>
+                                                                                                        </ControlTemplate>
+                                                                                                    </Thumb.Template>
+                                                                                                </Thumb>
+                                                                                            </Track.Thumb>
+                                                                                            <Track.IncreaseRepeatButton>
+                                                                                                <RepeatButton Command="ScrollBar.LineDownCommand" Opacity="0"/>
+                                                                                            </Track.IncreaseRepeatButton>
+                                                                                        </Track>
+                                                                                    </Grid>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style>
+                                                                </ScrollViewer.Resources>
+                                                                <ItemsPresenter/>
+                                                            </ScrollViewer>
+                                                        </Border>
+                                                    </Grid>
+                                                </Popup>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ComboBox.Style>
+
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Background" Value="#2D2D2D"/>
+                                <Setter Property="Foreground" Value="#CCCCCC"/>
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="FontFamily" Value="Segoe UI"/>
+                                <Setter Property="Padding" Value="6,3"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter Property="Background" Value="#3A5A8A"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#3A5A8A"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+
+                    </ComboBox>
+                </Grid>
+
+                <!-- Size row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="38"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Size" VerticalAlignment="Center"
+                               FontSize="12" FontFamily="Segoe UI" Foreground="#CCCCCC"/>
+                    <Slider x:Name="SizeSlider"
+                            Grid.Column="1"
+                            Minimum="6" Maximum="200" Value="16"
+                            VerticalAlignment="Center"
+                            ValueChanged="SizeSlider_ValueChanged"/>
+                    <TextBox x:Name="SizeLabel"
+                             Grid.Column="2" Height="22"
+                             Background="#3C3C3C" Foreground="White"
+                             BorderBrush="#555555" BorderThickness="1"
+                             FontSize="12" FontFamily="Consolas"
+                             Padding="2,2" CaretBrush="White"
+                             MaxLength="3" Text="16" TextAlignment="Center"
+                             KeyDown="SizeInput_KeyDown"
+                             LostFocus="SizeInput_LostFocus"/>
+                </Grid>
+
+                <!-- Style row -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Style" VerticalAlignment="Center"
+                               FontSize="12" FontFamily="Segoe UI" Foreground="#CCCCCC"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ToggleButton x:Name="BoldButton"
+                                      Width="28" Height="22"
+                                      Content="B"
+                                      FontWeight="Bold"
+                                      FontSize="12"
+                                      Margin="0,0,4,0"
+                                      Checked="Style_Changed"
+                                      Unchecked="Style_Changed">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Background" Value="#3C3C3C"/>
+                                    <Setter Property="Foreground" Value="#CCCCCC"/>
+                                    <Setter Property="BorderBrush" Value="#555555"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Background" Value="#3A5A8A"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                        <ToggleButton x:Name="ItalicButton"
+                                      Width="28" Height="22"
+                                      Content="I"
+                                      FontStyle="Italic"
+                                      FontSize="12"
+                                      Checked="Style_Changed"
+                                      Unchecked="Style_Changed">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Background" Value="#3C3C3C"/>
+                                    <Setter Property="Foreground" Value="#CCCCCC"/>
+                                    <Setter Property="BorderBrush" Value="#555555"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Background" Value="#3A5A8A"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Alignment row -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Align" VerticalAlignment="Center"
+                               FontSize="12" FontFamily="Segoe UI" Foreground="#CCCCCC"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <RadioButton x:Name="AlignLeft" Content="L" IsChecked="True"
+                                     Foreground="#CCCCCC" FontSize="12" Margin="0,0,8,0"
+                                     VerticalAlignment="Center"
+                                     Checked="Alignment_Changed"/>
+                        <RadioButton x:Name="AlignCenter" Content="C"
+                                     Foreground="#CCCCCC" FontSize="12" Margin="0,0,8,0"
+                                     VerticalAlignment="Center"
+                                     Checked="Alignment_Changed"/>
+                        <RadioButton x:Name="AlignRight" Content="R"
+                                     Foreground="#CCCCCC" FontSize="12"
+                                     VerticalAlignment="Center"
+                                     Checked="Alignment_Changed"/>
+                    </StackPanel>
+                </Grid>
+
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</Window>

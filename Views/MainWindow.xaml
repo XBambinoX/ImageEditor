@@ -4,148 +4,223 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:ImageEditor.ViewModels"
+        xmlns:views="clr-namespace:ImageEditor.Views"
         mc:Ignorable="d"
         WindowStyle="None"
         AllowsTransparency="False"
         Background="#303030"
         WindowState="Maximized"
-        Title="MonoFrame"
-		Icon="/Assets/MonoFrame.ico">
+        Title="MonoFrame">
 
     <!-- ViewModel -->
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
 
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewImageCommand}"/>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenImageCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveImageCommand}"/>
+        <KeyBinding Key="I" Modifiers="Ctrl" Command="{Binding ImageInfoCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Ctrl+Shift" Command="{Binding RedoCommand}"/>
+        <KeyBinding Key="B" Command="{Binding SelectBrushCommand}"/>
+
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyCommand}"/>
+        <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding CutCommand}"/>
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteCommand}"/>
+        
+        <KeyBinding Key="S" Command="{Binding SelectSelectionToolCommand}"/>
+        <KeyBinding Key="A" Modifiers="Ctrl" Command="{Binding SelectAllCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding ClearSelectionCommand}"/>
+        <KeyBinding Key="L" Command="{Binding SelectLineToolCommand}"/>
+        <KeyBinding Key="C" Command="{Binding ToggleColorPickerCommand}"/>
+        <KeyBinding Key="E" Command="{Binding SelectEyedropperCommand}"/>
+        <KeyBinding Key="T" Command="{Binding SelectTextToolCommand}"/>        
+    </Window.InputBindings>
+
     <Window.Resources>
+        <views:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+        
         <!-- Main colors -->
         <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="#303030"/>
         <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#444444"/>
         <SolidColorBrush x:Key="TextForegroundBrush" Color="White"/>
 
-		<Style x:Key="CloseButtonStyle" TargetType="Button">
-			<Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
-			<Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="FontSize" Value="16"/>
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="Border" Background="{TemplateBinding Background}">
-							<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-						</Border>
-						<ControlTemplate.Triggers>
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter TargetName="Border" Property="Background" Value="#E81123"/>
-							</Trigger>
-							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="Border" Property="Background" Value="#C41B1B"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-		</Style>
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#C41B1B"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}" />
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="{StaticResource BorderBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="StatusBar">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
-        <Style TargetType="MenuItem">
-            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
-            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
-			<Setter Property="FontSize" Value="16"/>
+        <!-- TabControl -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <!-- TabItem -->
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#3C3C3C"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="MenuItem">
+                    <ControlTemplate TargetType="TabItem">
                         <Border x:Name="Border"
-                        Background="{TemplateBinding Background}">
-
-                            <Grid>
-                                <ContentPresenter
-                            ContentSource="Header"
-                            Margin="6,2"
-                            VerticalAlignment="Center"
-                            RecognizesAccessKey="True"
-                                    />
-
-                                <Popup x:Name="Popup"
-                               IsOpen="{TemplateBinding IsSubmenuOpen}"
-                               AllowsTransparency="True"
-                               Focusable="False"
-                               PopupAnimation="Fade">
-
-                                    <Border Background="{StaticResource PrimaryBackgroundBrush}"
-                                    BorderBrush="#555"
-                                    BorderThickness="1">
-                                        <ItemsPresenter/>
-                                    </Border>
-                                </Popup>
-                            </Grid>
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="0,0,2,0">
+                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
                         </Border>
-
                         <ControlTemplate.Triggers>
-
-                            <!-- TOP LEVEL → DOWN -->
-                            <Trigger Property="Role" Value="TopLevelHeader">
-                                <Setter TargetName="Popup"
-                                Property="Placement"
-                                Value="Bottom"/>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </Trigger>
-
-                            <!-- SUB MENU → RIGHT -->
-                            <Trigger Property="Role" Value="SubmenuHeader">
-                                <Setter TargetName="Popup"
-                                Property="Placement"
-                                Value="Right"/>
-                            </Trigger>
-
-                            <!-- Hover -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border"
-                                Property="Background"
-                                Value="#505050"/>
+                                <Setter TargetName="Border" Property="Background" Value="#505050"/>
                             </Trigger>
-
-                            <!-- Pressed -->
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border"
-                                Property="Background"
-                                Value="#606060"/>
-                            </Trigger>
-
-                            <!-- Disabled -->
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="#777"/>
-                            </Trigger>
-
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Foreground" Value="{StaticResource TextForegroundBrush}"/>
+            <Setter Property="Background" Value="{StaticResource PrimaryBackgroundBrush}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}">
+                            <Grid>
+                                <ContentPresenter
+                                    ContentSource="Header"
+                                    Margin="6,2"
+                                    VerticalAlignment="Center"
+                                    RecognizesAccessKey="True"/>
+                                <Popup x:Name="Popup"
+                                       IsOpen="{TemplateBinding IsSubmenuOpen}"
+                                       AllowsTransparency="True"
+                                       Focusable="False"
+                                       PopupAnimation="Fade">
+                                    <Border Background="{StaticResource PrimaryBackgroundBrush}"
+                                            BorderBrush="#555"
+                                            BorderThickness="1">
+                                        <ItemsPresenter/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Role" Value="TopLevelHeader">
+                                <Setter TargetName="Popup" Property="Placement" Value="Bottom"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Popup" Property="Placement" Value="Right"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#505050"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#606060"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#3A5A8A" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="14" Height="14" Fill="#0078D7"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#555555" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Window.Resources>
 
     <DockPanel>
@@ -157,41 +232,27 @@
                 MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
                 BorderBrush="#555555"
                 BorderThickness="0,0,0,1">
-
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                    <Viewbox Width="18" Height="18" Margin="0,0,8,0">
+                        <Canvas Width="100" Height="100">
+                            <Rectangle Width="100" Height="100"
+                                       Stroke="#AAAAAA" StrokeThickness="8"
+                                       RadiusX="10" RadiusY="10"
+                                       Fill="#303030"/>
+                            <Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85" Fill="White"/>
+                            <Ellipse Width="18" Height="18" Fill="White"
+                                     Canvas.Left="65" Canvas.Top="20"/>
+                        </Canvas>
+                    </Viewbox>
+                    <TextBlock Text="MonoFrame" VerticalAlignment="Center" FontSize="16"/>
+                </StackPanel>
 
-					<!-- ICON -->
-					<Viewbox Width="18" Height="18" Margin="0,0,8,0">
-						<Canvas Width="100" Height="100">
-							<Rectangle Width="100" Height="100"
-									   Stroke="#AAAAAA"
-									   StrokeThickness="8"
-									   RadiusX="10" RadiusY="10"
-									   Fill="#303030"/>
-
-							<Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85"
-									 Fill="White"/>
-
-							<Ellipse Width="18" Height="18"
-									 Fill="White"
-									 Canvas.Left="65"
-									 Canvas.Top="20"/>
-						</Canvas>
-					</Viewbox>
-
-					<!-- TITLE -->
-					<TextBlock Text="MonoFrame"
-							   VerticalAlignment="Center"
-							   FontSize="16"/>
-				</StackPanel>
-
-				<!-- Control Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="—" Width="30" Height="25" Command="{Binding MinimizeCommand}"/>
                     <Button Content="▢" Width="30" Height="25" Command="{Binding MaximizeRestoreCommand}"/>
@@ -203,14 +264,15 @@
         <!-- MENU -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
+                <MenuItem Header="_New" Command="{Binding NewImageCommand}"/>
                 <MenuItem Header="_Open" Command="{Binding OpenImageCommand}"/>
-                <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
+                <Separator Margin="-40,0"/>
                 <MenuItem Header="_Save" Command="{Binding SaveImageCommand}"/>
-
+                <MenuItem Header="Save _As" Command="{Binding SaveAsImageCommand}"/>
+                <MenuItem Header="_Close" Command="{Binding CloseImageCommand}"/>
                 <Separator Margin="-40,0"/>
                 <MenuItem Header="Image _Info" Command="{Binding ImageInfoCommand}"/>
                 <Separator Margin="-40,0"/>
-                
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 
@@ -219,97 +281,220 @@
                 <MenuItem Header="_Redo" Command="{Binding RedoCommand}"/>
             </MenuItem>
 
-			<MenuItem Header="_Tools">
-				<MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
-				<MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
-				<MenuItem Header="Rotate 180" Command="{Binding Rotate180}"/>
-				
-				<Separator Margin="-40,0"/>
-				
-				<MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
-				<MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
-				
-				<Separator Margin="-40,0"/>
-				
-				<MenuItem Header="Blur" Command="{Binding GaussianBlurCommand}"/>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="Rotate 90 Clockwise" Command="{Binding Rotate90Clockwise}"/>
+                <MenuItem Header="Rotate 90 Counter-Clockwise" Command="{Binding Rotate90CounterClockwise}"/>
+                <MenuItem Header="Rotate 180" Command="{Binding Rotate180}"/>
+                <Separator Margin="-40,0"/>
+                <MenuItem Header="Flip Vertical" Command="{Binding FlipVertical}"/>
+                <MenuItem Header="Flip Horizontal" Command="{Binding FlipHorizontal}"/>
+                <Separator Margin="-40,0"/>
+                <MenuItem Header="Blur" Command="{Binding GaussianBlurCommand}"/>
                 <MenuItem Header="Sharpen" Command="{Binding SharpenCommand}"/>
                 <MenuItem Header="Brightness" Command="{Binding BrightnessCommand}"/>
                 <MenuItem Header="Grayscale" Command="{Binding GrayscaleCommand}"/>
-                <MenuItem Header="Edge Detection(Sobel)" Command="{Binding SobelCommand}"/>
+                <MenuItem Header="Edge Detection (Sobel)" Command="{Binding SobelCommand}"/>
                 <MenuItem Header="Invert" Command="{Binding InvertCommand}"/>
                 <MenuItem Header="Pixelate" Command="{Binding PixelateCommand}"/>
                 <MenuItem Header="Gamma Correction" Command="{Binding GammaCommand}"/>
-			</MenuItem>
+            </MenuItem>
 
-			<MenuItem Header="_Help">
-				<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
-			</MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Command="{Binding AboutCommand}"/>
+            </MenuItem>
         </Menu>
 
         <!-- MAIN CONTENT -->
         <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <!-- IMAGE AREA -->
-            <Border Grid.Row="0" Margin="10" CornerRadius="5" Background="Transparent">
-                <ScrollViewer x:Name="ImageScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Image Source="{Binding Image}" Stretch="None"
-                           MouseLeftButtonDown="Image_MouseLeftButtonDown"
-                           MouseMove="Image_MouseMove"
-                           MouseLeftButtonUp="Image_MouseLeftButtonUp"
-						   MouseWheel="Image_MouseWheel">
-						<Image.RenderTransform>
-							<TransformGroup>
-								<ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}"/>
-								<TranslateTransform X="{Binding ImageOffsetX}" Y="{Binding ImageOffsetY}"/>
-							</TransformGroup>
-                        </Image.RenderTransform>
-                        
-                    </Image>
-                </ScrollViewer>
-            </Border>
+            <!-- TOOLBAR -->
+            <views:ToolbarView Grid.Column="0"
+                               DataContext="{Binding}"/>
 
-			<!-- Statusbar -->
-			<StatusBar Grid.Row="1" Padding="5">
-				<StatusBar.ItemsPanel>
-					<ItemsPanelTemplate>
-						<Grid>
-							<Grid.ColumnDefinitions>
-								<ColumnDefinition/>
-								<ColumnDefinition Width="Auto"/>
-							</Grid.ColumnDefinitions>
-						</Grid>
-					</ItemsPanelTemplate>
-				</StatusBar.ItemsPanel>
+            <!-- RIGHT SIDE: tabs + statusbar -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-				<!-- Left part -->
-				<StatusBarItem Grid.Column="0">
-					<TextBlock Text="{Binding StatusText}"/>
-				</StatusBarItem>
+                <!-- IMAGE AREA -->
+                <TabControl Grid.Row="0"
+                            ItemsSource="{Binding Tabs}"
+                            SelectedItem="{Binding SelectedTab, Mode=TwoWay}"
+                            Background="#2D2D30"
+                            BorderThickness="0">
 
-				<!-- Zoom -->
-				<StatusBarItem Grid.Column="1">
-					<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TabControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayTitle}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0"/>
+                                <Button Content="✕"
+                                        Width="16" Height="16"
+                                        FontSize="10"
+                                        Command="{Binding DataContext.CloseTabCommand,
+                                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
 
-						<TextBlock Text="Scale:"/>
-						<TextBlock Text="{Binding Zoom, StringFormat={}{0:P0}}"
-								   Margin="0,0,8,0"
-								   VerticalAlignment="Center"/>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                VerticalScrollBarVisibility="Auto">
+                                <Grid Background="Transparent">
+                                    <Grid x:Name="ImageContainer"
+                                          Background="Transparent"
+                                          MouseLeftButtonDown="Image_MouseLeftButtonDown"
+                                          MouseMove="Image_MouseMove"
+                                          MouseLeftButtonUp="Image_MouseLeftButtonUp"
+                                          MouseWheel="Image_MouseWheel"
+                                          MouseDown="Image_MouseDown"
+                                          MouseUp="Image_MouseUp">
 
-						<Slider Width="140"
-								Minimum="0.1"
-								Maximum="5"
-								SmallChange="0.1"
-								LargeChange="0.25"
-								Value="{Binding Zoom, Mode=TwoWay}"
-								VerticalAlignment="Center"/>
-					</StackPanel>
-				</StatusBarItem>
-			</StatusBar>
+                                        <Grid.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform
+                                                    ScaleX="{Binding Data.Zoom, Source={StaticResource Proxy}}"
+                                                    ScaleY="{Binding Data.Zoom, Source={StaticResource Proxy}}"/>
+                                                <TranslateTransform
+                                                    X="{Binding Data.ImageOffsetX, Source={StaticResource Proxy}}"
+                                                    Y="{Binding Data.ImageOffsetY, Source={StaticResource Proxy}}"/>
+                                            </TransformGroup>
+                                        </Grid.RenderTransform>
+
+                                        <Image x:Name="MainImage"
+                                           Source="{Binding Image}"
+                                           Stretch="None"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                           RenderOptions.EdgeMode="Aliased"
+                                           MouseLeave="Image_MouseLeave"/>
+
+                                        <Canvas x:Name="SelectionCanvas"
+                                                IsHitTestVisible="True">
+
+                                            <Rectangle x:Name="SelectionFill" Fill="#330078D7" Visibility="Collapsed"/>
+                                            <Rectangle x:Name="SelectionRectBlack" Stroke="Black" StrokeThickness="1" StrokeDashArray="4,4" StrokeDashOffset="4" Fill="Transparent" Visibility="Collapsed"/>
+                                            <Rectangle x:Name="SelectionRect" Stroke="White" StrokeThickness="1" StrokeDashArray="4,4" StrokeDashOffset="0" Fill="Transparent" Visibility="Collapsed"/>
+                                            <Rectangle x:Name="Handle_TL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
+                                            <Rectangle x:Name="Handle_TC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
+                                            <Rectangle x:Name="Handle_TR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
+                                            <Rectangle x:Name="Handle_ML" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
+                                            <Rectangle x:Name="Handle_MR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeWE"/>
+                                            <Rectangle x:Name="Handle_BL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
+                                            <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
+                                            <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
+
+                                            <Border x:Name="TextOverlayBorder"
+                                                Visibility="Collapsed"
+                                                BorderBrush="#0078D7"
+                                                BorderThickness="1"
+                                                Background="Transparent"
+                                                IsHitTestVisible="True">
+                                                <StackPanel>
+                                                    <Border x:Name="TextDragHandle"
+                                                        Height="16"
+                                                        Background="#0078D7"
+                                                        Cursor="SizeAll"
+                                                        MouseLeftButtonDown="TextDragHandle_MouseLeftButtonDown"
+                                                        MouseMove="TextDragHandle_MouseMove"
+                                                        MouseLeftButtonUp="TextDragHandle_MouseLeftButtonUp">
+                                                        <TextBlock Text="⠿"
+                                                           FontSize="10"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="White"/>
+                                                    </Border>
+
+                                                    <TextBox x:Name="TextOverlayBox"
+                                                         Background="Transparent"
+                                                         Foreground="Black"
+                                                         BorderThickness="0"
+                                                         AcceptsReturn="True"
+                                                         TextWrapping="NoWrap"
+                                                         MinWidth="50"
+                                                         FontSize="16"
+                                                         CaretBrush="Black"
+                                                         Padding="2"
+                                                         KeyDown="TextOverlay_KeyDown"
+                                                         LostFocus="TextOverlay_LostFocus"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                        </Canvas>
+                                    </Grid>
+
+                                    <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False">
+                                        <Border x:Name="EyedropperPreview" 
+                                            Width="90" Height="40" 
+                                            Background="#2A2A2A" 
+                                            BorderBrush="#555555" 
+                                            BorderThickness="1" 
+                                            CornerRadius="4" 
+                                            Visibility="Collapsed" 
+                                            IsHitTestVisible="False">
+                                            <StackPanel Orientation="Horizontal" Margin="6,0">
+                                                <Border x:Name="EyedropperColorPreview" 
+                                                    Width="28" Height="28" 
+                                                    BorderBrush="#666666" 
+                                                    BorderThickness="1" 
+                                                    Margin="0,0,6,0"/>
+                                                <TextBlock x:Name="EyedropperHexText" 
+                                                   FontSize="11" 
+                                                   FontFamily="Consolas" 
+                                                   Foreground="White" 
+                                                   VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Canvas>
+                                </Grid>
+                            </ScrollViewer>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+
+                </TabControl>
+
+                <!-- STATUSBAR -->
+                <StatusBar Grid.Row="1" Padding="5">
+                    <StatusBar.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                            </Grid>
+                        </ItemsPanelTemplate>
+                    </StatusBar.ItemsPanel>
+
+                    <StatusBarItem Grid.Column="0">
+                        <TextBlock Text="{Binding StatusText}"/>
+                    </StatusBarItem>
+
+                    <StatusBarItem Grid.Column="1">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Scale:"/>
+                            <TextBlock Text="{Binding Zoom, StringFormat={}{0:P0}}"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center"/>
+                            <Slider Width="140"
+                                    Minimum="0.1"
+                                    Maximum="5"
+                                    SmallChange="0.1"
+                                    LargeChange="0.25"
+                                    Value="{Binding Zoom, Mode=TwoWay}"
+                                    VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StatusBarItem>
+                </StatusBar>
+            </Grid>
         </Grid>
-
     </DockPanel>
 </Window>

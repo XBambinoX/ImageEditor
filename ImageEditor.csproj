@@ -4,6 +4,8 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Deterministic>true</Deterministic>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ProjectGuid>{092D3210-DB41-4F10-A9F9-C34B23F939BB}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>ImageEditor</RootNamespace>
@@ -58,6 +60,8 @@
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
     <Compile Include="Models\ImageInfoModel.cs" />
+    <Compile Include="Models\ImageTab.cs" />
+    <Compile Include="Models\Tooltype.cs" />
     <Compile Include="Services\ImageInfoService.cs" />
     <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />
     <Compile Include="Services\ImageProcessing\GammaHelper.cs" />
@@ -68,7 +72,10 @@
     <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
     <Compile Include="Services\ImageProcessing\SobelHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
+    <Compile Include="Services\Logger.cs" />
     <Compile Include="Services\Math\Tools.cs" />
+    <Compile Include="Services\Toolbar\DrawingService.cs" />
+    <Compile Include="Services\Toolbar\SelectionService.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\BlurViewModel.cs" />
     <Compile Include="ViewModels\BrightnessViewModel.cs" />
@@ -78,17 +85,30 @@
     <Compile Include="ViewModels\PixelateViewModel.cs" />
     <Compile Include="ViewModels\SharpenViewModel.cs" />
     <Compile Include="ViewModels\SobelViewModel.cs" />
+    <Compile Include="Views\BindingProxy.cs" />
     <Compile Include="Views\BrightnessWindow.xaml.cs">
       <DependentUpon>BrightnessWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\BrushSettingsWindow.xaml.cs">
+      <DependentUpon>BrushSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ImageInfoWindow.xaml.cs">
       <DependentUpon>ImageInfoWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ToolbarView.xaml.cs">
+      <DependentUpon>ToolbarView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PixelateWindow.xaml.cs">
       <DependentUpon>PixelateWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\GammaWindow.xaml.cs">
       <DependentUpon>GammaWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\NewImageDialog.xaml.cs">
+      <DependentUpon>NewImageDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Unsavedchangesdialog.xaml.cs">
+      <DependentUpon>Unsavedchangesdialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\SobelWindow.xaml.cs">
       <DependentUpon>SobelWindow.xaml</DependentUpon>
@@ -109,7 +129,23 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Views\ExpandCanvasdialog.xaml.cs">
+      <DependentUpon>ExpandCanvasdialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LineSettingsWindow.xaml.cs">
+      <DependentUpon>LineSettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ColorPickerWindow.xaml.cs">
+      <DependentUpon>ColorPickerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\TextSettingsWindow.xaml.cs">
+      <DependentUpon>TextSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\BrightnessWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\BrushSettingsWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -117,11 +153,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\ToolbarView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\PixelateWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\GammaWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\NewImageDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Unsavedchangesdialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -142,6 +190,22 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ExpandCanvasdialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LineSettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ColorPickerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\TextSettingsWindow.xaml">
+      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
@@ -170,7 +234,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <Resource Include="Assets\MonoFrame.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

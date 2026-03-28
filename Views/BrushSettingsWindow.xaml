@@ -1,0 +1,195 @@
+﻿<Window x:Class="ImageEditor.Views.BrushSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="NoResize"
+        Background="#303030"
+        Width="220"
+        Height="120"
+        Title="MonoFrame"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Focusable="False"
+        ShowActivated="False"
+        WindowStartupLocation="Manual">
+
+    <Window.Resources>
+        <Style TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#3A5A8A" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="14" Height="14" Fill="#0078D7"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#555555" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="#555555" BorderThickness="1">
+        <DockPanel>
+
+            <!-- Titlebar -->
+            <Border DockPanel.Dock="Top"
+                    Background="#303030"
+                    Height="28"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    BorderBrush="#555555"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Brush"
+                               VerticalAlignment="Center"
+                               Margin="10,0"
+                               FontSize="12"
+                               FontFamily="Segoe UI"
+                               Foreground="#AAAAAA"/>
+
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Width="28" Height="28"
+                            FontSize="11"
+                            FontFamily="Segoe UI"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="Close_Click">
+                        <Button.Foreground>
+                            <SolidColorBrush Color="#AAAAAA"/>
+                        </Button.Foreground>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Border" Background="Transparent">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Settings -->
+            <StackPanel Margin="12,10,12,12">
+                <!-- Size row -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="38"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Size"
+                         VerticalAlignment="Center"
+                         FontSize="12"
+                         FontFamily="Segoe UI"
+                         Foreground="#CCCCCC"/>
+
+                    <Slider x:Name="SizeSlider"
+                         Grid.Column="1"
+                         Minimum="1"
+                         Maximum="100"
+                         Value="10"
+                         VerticalAlignment="Center"
+                         MouseWheel="SizeSlider_MouseWheel"
+                         ValueChanged="SizeSlider_ValueChanged"/>
+
+                    <TextBox x:Name="SizeLabel"
+                         Grid.Column="2"
+                         Height="22"
+                         Background="#3C3C3C"
+                         Foreground="White"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         FontSize="12"
+                         FontFamily="Consolas"
+                         Padding="2,2"  
+                         CaretBrush="White"
+                         MaxLength="3"
+                         Text="10"
+                         TextAlignment="Center"
+                         KeyDown="SizeInput_KeyDown"
+                         LostFocus="SizeInput_LostFocus"/>
+                </Grid>
+
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="38"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Hard"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       FontFamily="Segoe UI"
+                       Foreground="#CCCCCC"/>
+
+                    <Slider x:Name="HardnessSlider"
+                        Grid.Column="1"
+                        Minimum="0"
+                        Maximum="100"
+                        Value="100"
+                        VerticalAlignment="Center"
+                        MouseWheel="HardnessSlider_MouseWheel"
+                        ValueChanged="HardnessSlider_ValueChanged"/>
+
+                    <TextBox x:Name="HardnessLabel"
+                         Grid.Column="2"
+                         Height="22"
+                         Background="#3C3C3C"
+                         Foreground="White"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         FontSize="12"
+                         FontFamily="Consolas"
+                         Padding="2,2"
+                         CaretBrush="White"
+                         MaxLength="3"
+                         Text="100"
+                         TextAlignment="Center"
+                         KeyDown="HardnessInput_KeyDown"
+                         LostFocus="HardnessInput_LostFocus"/>
+                </Grid>
+
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</Window>
