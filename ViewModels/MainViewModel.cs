@@ -726,6 +726,12 @@ namespace ImageEditor.ViewModels
 
             CloseAllToolWindows();
             ActiveTool = ToolType.Text;
+            TextFontFamily = "Arial";
+            TextFontSize = 16;
+            TextBold = false;
+            TextItalic = false;
+            TextAlignment = TextAlignment.Left;
+
 
             _textSettingsWindow = new TextSettingsWindow
             {
