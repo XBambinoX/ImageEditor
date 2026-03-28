@@ -10,6 +10,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -257,7 +258,6 @@ namespace ImageEditor.ViewModels
             wb = null;
             #endregion
 
-
             OpenImageCommand = new RelayCommand(_ => OpenImage());
             CloseImageCommand = new RelayCommand(_ => CloseTab(SelectedTab), _ => HasImage);
             CloseTabCommand = new RelayCommand(tab => CloseTab(tab as ImageTab));
@@ -294,10 +294,20 @@ namespace ImageEditor.ViewModels
 
             InvertCommand = new RelayCommand(_ =>
             {
-                SaveState();
-                SelectedTab.Image = InvertHelper.ApplyInvert(SelectedTab.Image);
-                SelectedTab.IsModified = true;
-                OnPropertyChanged(nameof(CurrentImage));
+                try
+                {
+                    SaveState();
+                    SelectedTab.Image = InvertHelper.ApplyInvert(SelectedTab.Image);
+                    SelectedTab.IsModified = true;
+                    OnPropertyChanged(nameof(CurrentImage));
+
+                    Logger.Info("Invert filter applied");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Failed to apply invert: {ex.Message}");
+                    MessageBox.Show("Failed to apply invert. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }, _ => HasImage);
 
             MinimizeCommand = new RelayCommand(_ => Application.Current.MainWindow.WindowState = WindowState.Minimized);
@@ -352,98 +362,130 @@ namespace ImageEditor.ViewModels
 
             SelectEyedropperCommand = new RelayCommand(_ => ToggleEyedropperTool());
             SelectTextToolCommand = new RelayCommand(_ => ToggleTextTool());
+
+            Logger.Info("MonoFrame initialized successfully");
         }
 
         // ================= TABS =================
         private void OpenImage()
         {
-            var dialog = new OpenFileDialog
+            try
             {
-                Title = "Open Image",
-                Filter = "Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
-                Multiselect = true
-            };
-
-            if (dialog.ShowDialog() != true) return;
-
-            foreach (var file in dialog.FileNames)
-            {
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri(file);
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-
-                var tab = new ImageTab
+                var dialog = new OpenFileDialog
                 {
-                    Image = new WriteableBitmap(bitmap),
-                    Title = Path.GetFileName(file),
-                    FilePath = file
+                    Title = "Open Image",
+                    Filter = "Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
+                    Multiselect = true
                 };
 
-                Tabs.Add(tab);
-                SelectedTab = tab;
-            }
+                if (dialog.ShowDialog() != true) return;
 
-            ResetView();
+                foreach (var file in dialog.FileNames)
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(file);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+
+                    var tab = new ImageTab
+                    {
+                        Image = new WriteableBitmap(bitmap),
+                        Title = Path.GetFileName(file),
+                        FilePath = file
+                    };
+
+                    Tabs.Add(tab);
+                    SelectedTab = tab;
+
+                    Logger.Info($"Image opened: {file}");
+                }
+
+                ResetView();
+            }
+            catch(Exception ex)
+            {
+                Logger.Error($"Failed to open image: {ex.Message}");
+                MessageBox.Show("Failed to open image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void CloseTab(ImageTab tab)
         {
-            if (tab == null) return;
-
-            if (tab.IsModified)
+            try
             {
-                var dialog = new UnsavedChangesDialog(tab.Title)
+                if (tab == null) return;
+
+                if (tab.IsModified)
                 {
-                    Owner = Application.Current.MainWindow
-                };
-                dialog.ShowDialog();
+                    var dialog = new UnsavedChangesDialog(tab.Title)
+                    {
+                        Owner = Application.Current.MainWindow
+                    };
+                    dialog.ShowDialog();
 
-                if (dialog.Result == UnsavedChangesResult.Cancel) return;
-                if (dialog.Result == UnsavedChangesResult.Yes) SaveImage();
+                    if (dialog.Result == UnsavedChangesResult.Cancel) return;
+                    if (dialog.Result == UnsavedChangesResult.Yes) SaveImage();
+                }
+
+                int index = Tabs.IndexOf(tab);
+                Tabs.Remove(tab);
+
+                if (Tabs.Count > 0)
+                    SelectedTab = Tabs[Tools.Clamp(index, 0, Tabs.Count - 1)];
+                else
+                {
+                    SelectedTab = null;
+                    StatusText = "No image loaded";
+                    ResetView();
+                }
+
+                Logger.Info($"Tab closed: {tab.Title}");
             }
-
-            int index = Tabs.IndexOf(tab);
-            Tabs.Remove(tab);
-
-            if (Tabs.Count > 0)
-                SelectedTab = Tabs[Tools.Clamp(index, 0, Tabs.Count - 1)];
-            else
+            catch (Exception ex)
             {
-                SelectedTab = null;
-                StatusText = "No image loaded";
-                ResetView();
+                Logger.Error($"Failed to close tab: {ex.Message}");
+                MessageBox.Show("Failed to close tab. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void SaveImage()
         {
-            if (SelectedTab == null) return;
-
-            if (!string.IsNullOrEmpty(SelectedTab.FilePath))
+            try
             {
-                SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
+                if (SelectedTab == null) return;
+
+                if (!string.IsNullOrEmpty(SelectedTab.FilePath))
+                {
+                    SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
+                    SelectedTab.IsModified = false;
+                    StatusText = $"Saved: {SelectedTab.FilePath}";
+                    return;
+                }
+
+                var dialog = new SaveFileDialog
+                {
+                    Title = "Save Image",
+                    Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
+                    DefaultExt = ".png"
+                };
+
+                if (dialog.ShowDialog() != true) return;
+
+                SelectedTab.FilePath = dialog.FileName;
+                SelectedTab.Title = Path.GetFileName(dialog.FileName);
                 SelectedTab.IsModified = false;
+
+                SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
                 StatusText = $"Saved: {SelectedTab.FilePath}";
-                return;
+
+                Logger.Info($"Image saved: {SelectedTab.FilePath}");
             }
-
-            var dialog = new SaveFileDialog
+            catch(Exception ex)
             {
-                Title = "Save Image",
-                Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg",
-                DefaultExt = ".png"
-            };
-
-            if (dialog.ShowDialog() != true) return;
-
-            SelectedTab.FilePath = dialog.FileName;
-            SelectedTab.Title = Path.GetFileName(dialog.FileName);
-            SelectedTab.IsModified = false;
-
-            SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
-            StatusText = $"Saved: {SelectedTab.FilePath}";
+                Logger.Error($"Failed to save image: {ex.Message}");
+                MessageBox.Show("Failed to save image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void SaveImageAs()
@@ -466,80 +508,121 @@ namespace ImageEditor.ViewModels
 
             SaveImageHelper.SaveToFile(SelectedTab.FilePath, SelectedTab.Image);
             StatusText = $"Saved: {SelectedTab.FilePath}";
+
+            Logger.Info($"Image saved as: {SelectedTab.FilePath}");
         }
 
         private void NewImage()
         {
-            var dialog = new NewImageDialog { Owner = Application.Current.MainWindow };
-            dialog.ShowDialog();
-
-            if (!dialog.Confirmed) return;
-
-            var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgra32, null);
-            int stride = dialog.ImageWidth *4;
-            byte[] pixels = Enumerable.Repeat((byte)255, dialog.ImageHeight * stride).ToArray();
-            wb.WritePixels(new Int32Rect(0, 0, dialog.ImageWidth, dialog.ImageHeight), pixels, stride, 0);
-
-            var tab = new ImageTab
+            try
             {
-                Image = wb,
-                Title = $"New {dialog.ImageWidth}×{dialog.ImageHeight}",
-                FilePath = null
-            };
+                var dialog = new NewImageDialog { Owner = Application.Current.MainWindow };
+                dialog.ShowDialog();
 
-            Tabs.Add(tab);
-            SelectedTab = tab;
-            ResetView();
+                if (!dialog.Confirmed) return;
+
+                var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgra32, null);
+                int stride = dialog.ImageWidth * 4;
+                byte[] pixels = Enumerable.Repeat((byte)255, dialog.ImageHeight * stride).ToArray();
+                wb.WritePixels(new Int32Rect(0, 0, dialog.ImageWidth, dialog.ImageHeight), pixels, stride, 0);
+
+                var tab = new ImageTab
+                {
+                    Image = wb,
+                    Title = $"New {dialog.ImageWidth}×{dialog.ImageHeight}",
+                    FilePath = null
+                };
+
+                Tabs.Add(tab);
+                SelectedTab = tab;
+                ResetView();
+
+                Logger.Info($"New image created: {dialog.ImageWidth}×{dialog.ImageHeight}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to create new image: {ex.Message}");
+                MessageBox.Show("Failed to create new image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         // ================= TOOLS =================
         private void RotateImage(int angle, bool clockwise)
         {
-            SaveState();
-            int finalAngle = clockwise ? angle : -angle;
-            var transform = new RotateTransform(finalAngle);
-            SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
-            SelectedTab.IsModified = true;
-            OnPropertyChanged(nameof(CurrentImage));
+            try
+            {
+                SaveState();
+                int finalAngle = clockwise ? angle : -angle;
+                var transform = new RotateTransform(finalAngle);
+                SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
+                SelectedTab.IsModified = true;
+                OnPropertyChanged(nameof(CurrentImage));
+
+                Logger.Info($"Image rotated: {finalAngle} degrees");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to rotate image: {ex.Message}");
+                MessageBox.Show("Failed to rotate image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void FlipImage(bool horizontal)
         {
-            SaveState();
-            var transform = new ScaleTransform(horizontal ? -1 : 1, horizontal ? 1 : -1);
-            SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
-            SelectedTab.IsModified = true;
-            OnPropertyChanged(nameof(CurrentImage));
+            try
+            {
+                SaveState();
+                var transform = new ScaleTransform(horizontal ? -1 : 1, horizontal ? 1 : -1);
+                SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
+                SelectedTab.IsModified = true;
+                OnPropertyChanged(nameof(CurrentImage));
+
+                Logger.Info($"Image flipped: {(horizontal ? "horizontal" : "vertical")}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to flip image: {ex.Message}");
+                MessageBox.Show("Failed to flip image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void OpenFilterWindow<TWindow>(Func<WriteableBitmap, dynamic> viewModelFactory)
             where TWindow : Window, new()
         {
-            if (SelectedTab == null) return;
+            try {
+                if (SelectedTab == null) return;
 
-            var writeable = SelectedTab.Image as WriteableBitmap
-                            ?? new WriteableBitmap(SelectedTab.Image);
-            var vm = viewModelFactory(writeable);
+                var writeable = SelectedTab.Image as WriteableBitmap
+                                ?? new WriteableBitmap(SelectedTab.Image);
+                var vm = viewModelFactory(writeable);
 
-            var window = new TWindow
-            {
-                DataContext = vm,
-                Owner = Application.Current.MainWindow
-            };
-
-            vm.CloseAction = new Action<bool>(result =>
-            {
-                if (result)
+                var window = new TWindow
                 {
-                    SaveState();
-                    SelectedTab.Image = vm.ResultImage;
-                    SelectedTab.IsModified = true;
-                    OnPropertyChanged(nameof(CurrentImage));
-                }
-                window.Close();
-            });
+                    DataContext = vm,
+                    Owner = Application.Current.MainWindow
+                };
 
-            window.ShowDialog();
+                vm.CloseAction = new Action<bool>(result =>
+                {
+                    if (result)
+                    {
+                        SaveState();
+                        SelectedTab.Image = vm.ResultImage;
+                        SelectedTab.IsModified = true;
+                        OnPropertyChanged(nameof(CurrentImage));
+                    }
+                    window.Close();
+                });
+
+                window.ShowDialog();
+
+                Logger.Info($"Filter applied: {typeof(TWindow).Name.Replace("Window", "")}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to apply filter: {ex.Message}");
+                MessageBox.Show("Failed to apply filter. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void BrushStroke(Point imagePoint, Point? previousPoint)
@@ -797,85 +880,95 @@ namespace ImageEditor.ViewModels
 
         private void PasteClipboard()
         {
-            if (SelectedTab?.Image == null) return;
-
-            WriteableBitmap source = _clipboard;
-
-            if (source == null && Clipboard.ContainsImage())
+            try
             {
-                var img = Clipboard.GetImage();
-                if (img != null)
-                    source = new WriteableBitmap(img);
-            }
+                if (SelectedTab?.Image == null) return;
 
-            if (source == null) return;
+                WriteableBitmap source = _clipboard;
 
-            if (IsFloatingPaste) CommitFloatingPaste();
-
-            // If the pasted image is larger than the current canvas, we need to expand it first
-            var current = SelectedTab.Image;
-            if (source.PixelWidth > current.PixelWidth || source.PixelHeight > current.PixelHeight)
-            {
-                int newW = Math.Max(source.PixelWidth, current.PixelWidth);
-                int newH = Math.Max(source.PixelHeight, current.PixelHeight);
-
-                var dialog = new ExpandCanvasdialog(
-                    source.PixelWidth, source.PixelHeight,
-                    current.PixelWidth, current.PixelHeight)
+                if (source == null && Clipboard.ContainsImage())
                 {
-                    Owner = Application.Current.MainWindow
-                };
-                dialog.ShowDialog();
+                    var img = Clipboard.GetImage();
+                    if (img != null)
+                        source = new WriteableBitmap(img);
+                }
 
-                if (dialog.Confirmed)
+                if (source == null) return;
+
+                if (IsFloatingPaste) CommitFloatingPaste();
+
+                // If the pasted image is larger than the current canvas, we need to expand it first
+                var current = SelectedTab.Image;
+                if (source.PixelWidth > current.PixelWidth || source.PixelHeight > current.PixelHeight)
                 {
+                    int newW = Math.Max(source.PixelWidth, current.PixelWidth);
+                    int newH = Math.Max(source.PixelHeight, current.PixelHeight);
+
+                    var dialog = new ExpandCanvasdialog(
+                        source.PixelWidth, source.PixelHeight,
+                        current.PixelWidth, current.PixelHeight)
+                    {
+                        Owner = Application.Current.MainWindow
+                    };
+                    dialog.ShowDialog();
+
+                    if (dialog.Confirmed)
+                    {
+                        SaveState();
+
+                        var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgra32, null);
+                        int stride = newW * 4;
+                        byte[] white = Enumerable.Repeat((byte)255, newH * stride).ToArray();
+                        expanded.WritePixels(new Int32Rect(0, 0, newW, newH), white, stride, 0);
+                        SelectionService.Paste(expanded, new WriteableBitmap(current), 0, 0);
+
+                        SelectedTab.Image = expanded;
+                        OnPropertyChanged(nameof(CurrentImage));
+                    }
+
                     SaveState();
 
-                    var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgra32, null);
-                    int stride = newW * 4;
-                    byte[] white = Enumerable.Repeat((byte)255, newH * stride).ToArray();
-                    expanded.WritePixels(new Int32Rect(0, 0, newW, newH), white, stride, 0);
-                    SelectionService.Paste(expanded, new WriteableBitmap(current), 0, 0);
+                    var wbitmap = new WriteableBitmap(SelectedTab.Image);
 
-                    SelectedTab.Image = expanded;
+                    _pasteFloating = source;
+                    _pasteFloatingOriginal = source;
+                    _pasteX = 0;
+                    _pasteY = 0;
+
+                    _pasteBackground = CaptureBackground(wbitmap, 0, 0, source.PixelWidth, source.PixelHeight);
+
+                    SelectionService.Paste(wbitmap, source, _pasteX, _pasteY);
+                    SelectedTab.IsModified = true;
+                    Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
                     OnPropertyChanged(nameof(CurrentImage));
+                    OnPropertyChanged(nameof(IsFloatingPaste));
                 }
 
                 SaveState();
 
-                var wbitmap = new WriteableBitmap(SelectedTab.Image);
+                var wb = new WriteableBitmap(SelectedTab.Image);
+                SelectedTab.Image = wb;
 
                 _pasteFloating = source;
                 _pasteFloatingOriginal = source;
                 _pasteX = 0;
                 _pasteY = 0;
 
-                _pasteBackground = CaptureBackground(wbitmap, 0, 0, source.PixelWidth, source.PixelHeight);
+                _pasteBackground = CaptureBackground(wb, 0, 0, source.PixelWidth, source.PixelHeight);
 
-                SelectionService.Paste(wbitmap, source, _pasteX, _pasteY);
+                SelectionService.Paste(wb, source, _pasteX, _pasteY);
                 SelectedTab.IsModified = true;
-                Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
+                Selection = new Int32Rect(_pasteX, _pasteY, source.PixelWidth, source.PixelHeight);
                 OnPropertyChanged(nameof(CurrentImage));
                 OnPropertyChanged(nameof(IsFloatingPaste));
+
+                Logger.Info("Image pasted from clipboard");
             }
-
-            SaveState();
-
-            var wb = new WriteableBitmap(SelectedTab.Image);
-            SelectedTab.Image = wb;
-
-            _pasteFloating = source;
-            _pasteFloatingOriginal = source;
-            _pasteX = 0;
-            _pasteY = 0;
-
-            _pasteBackground = CaptureBackground(wb, 0, 0, source.PixelWidth, source.PixelHeight);
-
-            SelectionService.Paste(wb, source, _pasteX, _pasteY);
-            SelectedTab.IsModified = true;
-            Selection = new Int32Rect(_pasteX, _pasteY, source.PixelWidth, source.PixelHeight);
-            OnPropertyChanged(nameof(CurrentImage));
-            OnPropertyChanged(nameof(IsFloatingPaste));
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to paste image: {ex.Message}");
+                MessageBox.Show("Failed to paste image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void MoveFloatingPaste(int newX, int newY)
@@ -978,69 +1071,89 @@ namespace ImageEditor.ViewModels
 
         public void CommitLine(Point from, Point to, Point? cp1 = null, Point? cp2 = null)
         {
-            if (SelectedTab?.Image == null) return;
-
-            var wb = SelectedTab.Image as WriteableBitmap;
-            if (wb == null || wb.IsFrozen)
+            try
             {
-                wb = new WriteableBitmap(SelectedTab.Image);
-                SelectedTab.Image = wb;
-                OnPropertyChanged(nameof(CurrentImage));
+                if (SelectedTab?.Image == null) return;
+
+                var wb = SelectedTab.Image as WriteableBitmap;
+                if (wb == null || wb.IsFrozen)
+                {
+                    wb = new WriteableBitmap(SelectedTab.Image);
+                    SelectedTab.Image = wb;
+                    OnPropertyChanged(nameof(CurrentImage));
+                }
+
+                if (cp1.HasValue && cp2.HasValue)
+                    DrawingService.DrawBezier(wb, from, cp1.Value, cp2.Value, to, LineWidth, ActiveColor);
+                else
+                    DrawingService.DrawLine(wb, from, to, LineWidth, ActiveColor);
+
+                SelectedTab.IsModified = true;
+
+                LineStart = null;
+                LineEnd = null;
+                BezierControl1 = null;
+                BezierControl2 = null;
+                IsBezierSecondPhase = false;
+
+                Logger.Info($"Line drawn: from {from} to {to} with width {LineWidth}");
             }
-
-            if (cp1.HasValue && cp2.HasValue)
-                DrawingService.DrawBezier(wb, from, cp1.Value, cp2.Value, to, LineWidth, ActiveColor);
-            else
-                DrawingService.DrawLine(wb, from, to, LineWidth, ActiveColor);
-
-            SelectedTab.IsModified = true;
-
-            LineStart = null;
-            LineEnd = null;
-            BezierControl1 = null;
-            BezierControl2 = null;
-            IsBezierSecondPhase = false;
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to draw line: {ex.Message}");
+                MessageBox.Show("Failed to draw line. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void CommitText(string text, Point imagePosition)
         {
-            if (SelectedTab?.Image == null) return;
-            SaveState();
-
-            var wb = SelectedTab.Image as WriteableBitmap
-                     ?? new WriteableBitmap(SelectedTab.Image);
-
-            var visual = new DrawingVisual();
-            using (var ctx = visual.RenderOpen())
+            try
             {
-                // Existing image rendering
-                ctx.DrawImage(wb, new Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
+                if (SelectedTab?.Image == null) return;
+                SaveState();
 
-                // Text rendering
-                var formattedText = new FormattedText(
-                    text,
-                    System.Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    new Typeface(
-                        new FontFamily(TextFontFamily),
-                        TextItalic ? FontStyles.Italic : FontStyles.Normal,
-                        TextBold ? FontWeights.Bold : FontWeights.Normal,
-                        FontStretches.Normal),
-                    TextFontSize,
-                    new SolidColorBrush(ActiveColor),
-                    120);
+                var wb = SelectedTab.Image as WriteableBitmap
+                         ?? new WriteableBitmap(SelectedTab.Image);
 
-                formattedText.TextAlignment = TextAlignment;
-                ctx.DrawText(formattedText, imagePosition);
+                var visual = new DrawingVisual();
+                using (var ctx = visual.RenderOpen())
+                {
+                    // Existing image rendering
+                    ctx.DrawImage(wb, new Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
+
+                    // Text rendering
+                    var formattedText = new FormattedText(
+                        text,
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        new Typeface(
+                            new FontFamily(TextFontFamily),
+                            TextItalic ? FontStyles.Italic : FontStyles.Normal,
+                            TextBold ? FontWeights.Bold : FontWeights.Normal,
+                            FontStretches.Normal),
+                        TextFontSize,
+                        new SolidColorBrush(ActiveColor),
+                        120);
+
+                    formattedText.TextAlignment = TextAlignment;
+                    ctx.DrawText(formattedText, imagePosition);
+                }
+
+                var rtb = new RenderTargetBitmap(
+                    wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+                rtb.Render(visual);
+
+                SelectedTab.Image = new WriteableBitmap(rtb);
+                SelectedTab.IsModified = true;
+                OnPropertyChanged(nameof(CurrentImage));
+
+                Logger.Info($"Text drawn: \"{text}\" at {imagePosition} with font {TextFontFamily}, size {TextFontSize}");
             }
-
-            var rtb = new RenderTargetBitmap(
-                wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
-            rtb.Render(visual);
-
-            SelectedTab.Image = new WriteableBitmap(rtb);
-            SelectedTab.IsModified = true;
-            OnPropertyChanged(nameof(CurrentImage));
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to add text: {ex.Message}");
+                MessageBox.Show("Failed to add text. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void ResizeFloatingPaste(int newW, int newH, int newX, int newY)
@@ -1081,20 +1194,40 @@ namespace ImageEditor.ViewModels
 
         private void Undo()
         {
-            if (SelectedTab?.UndoStack.Count == 0) return;
-            SelectedTab.RedoStack.Push(new WriteableBitmap(SelectedTab.Image));
-            SelectedTab.Image = SelectedTab.UndoStack.Pop();
-            SelectedTab.IsModified = SelectedTab.UndoStack.Count > 0;
-            OnPropertyChanged(nameof(CurrentImage));
+            try
+            {
+                if (SelectedTab?.UndoStack.Count == 0) return;
+                SelectedTab.RedoStack.Push(new WriteableBitmap(SelectedTab.Image));
+                SelectedTab.Image = SelectedTab.UndoStack.Pop();
+                SelectedTab.IsModified = SelectedTab.UndoStack.Count > 0;
+                OnPropertyChanged(nameof(CurrentImage));
+
+                Logger.Info("Undo performed");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to undo: {ex.Message}");
+                MessageBox.Show("Failed to undo. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Redo()
         {
-            if (SelectedTab?.RedoStack.Count == 0) return;
-            SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
-            SelectedTab.Image = SelectedTab.RedoStack.Pop();
-            SelectedTab.IsModified = true;
-            OnPropertyChanged(nameof(CurrentImage));
+            try
+            {
+                if (SelectedTab?.RedoStack.Count == 0) return;
+                SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
+                SelectedTab.Image = SelectedTab.RedoStack.Pop();
+                SelectedTab.IsModified = true;
+                OnPropertyChanged(nameof(CurrentImage));
+
+                Logger.Info("Redo performed");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to redo: {ex.Message}");
+                MessageBox.Show("Failed to redo. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         // ================= HELPERS =================

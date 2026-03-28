@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ImageEditor.Services;
 using ImageEditor.Services.Math;
 
 public static class BrightnessHelper
