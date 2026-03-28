@@ -157,6 +157,8 @@ namespace ImageEditor.Views
                 return;
             }
 
+
+
             if (vm?.ActiveTool == ToolType.Line)
             {
                 var imgPoint = GetImagePixel(e, vm);
@@ -207,7 +209,7 @@ namespace ImageEditor.Views
             {
                 var imgPoint = GetImagePixel(e, vm);
                 vm.BeginBrushStroke();
-                vm.SaveState();
+                vm.BeginStrokeSnapshot();
                 vm.BrushStroke(imgPoint, null);
                 _lastBrushPoint = imgPoint;
                 (sender as FrameworkElement)?.CaptureMouse();
@@ -409,12 +411,21 @@ namespace ImageEditor.Views
         {
             _activeHandle = ResizeHandle.None;
             _resizeDragStart = null;
-
             _floatingDragStart = null;
 
             var vm = DataContext as MainViewModel;
             _selectionStart = null;
             _lastBrushPoint = null;
+
+            if (vm?.ActiveTool == ToolType.Brush)
+            {
+                vm.CommitStrokeSnapshot();
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    GC.Collect(1, GCCollectionMode.Optimized, blocking: false);
+                });
+            }
+
             if (!_isMiddleDragging)
                 (sender as FrameworkElement)?.ReleaseMouseCapture();
 
@@ -450,13 +461,28 @@ namespace ImageEditor.Views
 
         private void Image_MouseUp(object sender, MouseButtonEventArgs e)
         {
+            var vm = DataContext as MainViewModel;
             if (e.MiddleButton == MouseButtonState.Released && _isMiddleDragging)
             {
-                var vm = DataContext as MainViewModel;
                 _isMiddleDragging = false;
                 vm?.EndDrag();
                 (sender as FrameworkElement)?.ReleaseMouseCapture();
             }
+
+            _activeHandle = ResizeHandle.None;
+            _resizeDragStart = null;
+            _floatingDragStart = null;
+
+            _selectionStart = null;
+            _lastBrushPoint = null;
+
+            if (vm?.ActiveTool == ToolType.Brush)
+            {
+                vm.CommitStrokeSnapshot();
+            }
+
+            if (!_isMiddleDragging)
+                (sender as FrameworkElement)?.ReleaseMouseCapture();
         }
 
         private void Image_MouseLeave(object sender, MouseEventArgs e)

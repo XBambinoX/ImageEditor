@@ -35,7 +35,7 @@ namespace ImageEditor.Models
         public string DisplayTitle => IsModified ? $"{Title} *" : Title;
         public string FilePath { get; set; }
 
-        public LimitedStack<WriteableBitmap> UndoStack { get; } = new LimitedStack<WriteableBitmap>(6); // Limit undo history to 6 states
-        public Stack<WriteableBitmap> RedoStack { get; } = new Stack<WriteableBitmap>();
+        public LimitedStack<ImageSnapshot> UndoStack { get; } = new LimitedStack<ImageSnapshot>(10);
+        public Stack<ImageSnapshot> RedoStack { get; } = new Stack<ImageSnapshot>();
     }
 }

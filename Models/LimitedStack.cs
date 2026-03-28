@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace ImageEditor.Models
@@ -19,6 +20,7 @@ namespace ImageEditor.Models
             {
                 _list.RemoveLast();
                 _trimmed = true;
+                GC.Collect(0, GCCollectionMode.Optimized, blocking: false);
             }
         }
 
@@ -42,6 +44,6 @@ namespace ImageEditor.Models
         }
 
         public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _list.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
     }
 }
