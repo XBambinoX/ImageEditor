@@ -185,7 +185,8 @@ namespace ImageEditor.ViewModels
             set { _textAlignment = value; OnPropertyChanged(); }
         }
 
-        private TextSettingsWindow _textSettingsWindow; 
+        private TextSettingsWindow _textSettingsWindow;
+        public event Action TextOverlayShouldHide;
 
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
@@ -575,18 +576,6 @@ namespace ImageEditor.ViewModels
             }
         }
 
-        private void ToggleEyedropperTool()
-        {
-            if (ActiveTool == ToolType.Eyedropper)
-            {
-                ActiveTool = ToolType.None;
-                return;
-            }
-
-            CloseAllToolWindows();
-            ActiveTool = ToolType.Eyedropper;
-        }
-
         #region toggle tools methods
         private void ToggleBrushTool()
         {
@@ -645,12 +634,7 @@ namespace ImageEditor.ViewModels
                 return;
             }
 
-            if (ActiveTool == ToolType.Brush)
-            {
-                _brushSettingsWindow?.Close();
-                _brushSettingsWindow = null;
-            }
-
+            CloseAllToolWindows(ToolType.Line);
             ActiveTool = ToolType.Line;
             LineStart = null;
             LineEnd = null;
@@ -671,6 +655,18 @@ namespace ImageEditor.ViewModels
             _lineSettingsWindow.Left = main.Left + 50;
             _lineSettingsWindow.Top = main.Top + 80;
             _lineSettingsWindow.Show();
+        }
+
+        private void ToggleEyedropperTool()
+        {
+            if (ActiveTool == ToolType.Eyedropper)
+            {
+                ActiveTool = ToolType.None;
+                return;
+            }
+
+            CloseAllToolWindows();
+            ActiveTool = ToolType.Eyedropper;
         }
 
         private void ToggleColorPicker()

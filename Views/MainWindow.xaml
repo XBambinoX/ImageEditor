@@ -352,12 +352,6 @@
                                             <Rectangle x:Name="Handle_BL" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNESW"/>
                                             <Rectangle x:Name="Handle_BC" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNS"/>
                                             <Rectangle x:Name="Handle_BR" Width="8" Height="8" Fill="White" Stroke="#0078D7" StrokeThickness="1" Visibility="Collapsed" Cursor="SizeNWSE"/>
-                                            <Border x:Name="EyedropperPreview" Width="90" Height="40" Background="#2A2A2A" BorderBrush="#555555" BorderThickness="1" CornerRadius="4" Visibility="Collapsed" IsHitTestVisible="False">
-                                                <StackPanel Orientation="Horizontal" Margin="6,0">
-                                                    <Border x:Name="EyedropperColorPreview" Width="28" Height="28" BorderBrush="#666666" BorderThickness="1" Margin="0,0,6,0"/>
-                                                    <TextBlock x:Name="EyedropperHexText" FontSize="11" FontFamily="Consolas" Foreground="White" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
 
                                             <Border x:Name="TextOverlayBorder"
                                                 Visibility="Collapsed"
@@ -398,6 +392,29 @@
                                         </Canvas>
                                     </Grid>
 
+                                    <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False">
+                                        <Border x:Name="EyedropperPreview" 
+                                            Width="90" Height="40" 
+                                            Background="#2A2A2A" 
+                                            BorderBrush="#555555" 
+                                            BorderThickness="1" 
+                                            CornerRadius="4" 
+                                            Visibility="Collapsed" 
+                                            IsHitTestVisible="False">
+                                            <StackPanel Orientation="Horizontal" Margin="6,0">
+                                                <Border x:Name="EyedropperColorPreview" 
+                                                    Width="28" Height="28" 
+                                                    BorderBrush="#666666" 
+                                                    BorderThickness="1" 
+                                                    Margin="0,0,6,0"/>
+                                                <TextBlock x:Name="EyedropperHexText" 
+                                                   FontSize="11" 
+                                                   FontFamily="Consolas" 
+                                                   Foreground="White" 
+                                                   VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Canvas>
                                 </Grid>
                             </ScrollViewer>
                         </DataTemplate>

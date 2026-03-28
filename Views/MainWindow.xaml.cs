@@ -68,17 +68,12 @@ namespace ImageEditor.Views
                             UpdateSelectionOverlay(vm);
                             if (vm.ActiveTool != ToolType.Eyedropper)
                                 HideEyedropperPreview();
-                            else
-                            {
-                                var img2 = FindVisualChild<Image>(this, "MainImage");
-                                var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
-                                var bitmap = vm.SelectedTab?.Image as WriteableBitmap;
 
-                                if (img2 != null && canvas != null && bitmap != null)
-                                {
-                                    var imgPoint = GetImagePixelFromPoint(Mouse.GetPosition(img2), img2, vm);
-                                    UpdateEyedropperPreview(imgPoint, Mouse.GetPosition(canvas), bitmap);
-                                }
+                            if (vm.ActiveTool != ToolType.Text)
+                            {
+                                var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+                                if (border?.Visibility == Visibility.Visible)
+                                    HideTextOverlay();
                             }
                         }
 
@@ -86,6 +81,13 @@ namespace ImageEditor.Views
                         {
                             UpdateTextOverlayStyle(vm);
                         }
+                    };
+
+                    vm.TextOverlayShouldHide += () =>
+                    {
+                        var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+                        if (border?.Visibility == Visibility.Visible)
+                            HideTextOverlay();
                     };
                 }
             };
@@ -478,16 +480,6 @@ namespace ImageEditor.Views
             return new Point(pos.X * scaleX, pos.Y * scaleY);
         }
 
-        private Point GetImagePixelFromPoint(Point pos, Image img, MainViewModel vm)
-        {
-            var bitmap = vm.SelectedTab?.Image;
-            if (bitmap == null || img.ActualWidth <= 0) return pos;
-
-            double scaleX = bitmap.PixelWidth / img.ActualWidth;
-            double scaleY = bitmap.PixelHeight / img.ActualHeight;
-            return new Point(pos.X * scaleX, pos.Y * scaleY);
-        }
-
         private void UpdateSelectionOverlay(MainViewModel vm)
         {
             var rect = FindVisualChild<Rectangle>(this, "SelectionRect");
@@ -756,11 +748,17 @@ namespace ImageEditor.Views
             var preview = FindVisualChild<Border>(this, "EyedropperPreview");
             var colorBox = FindVisualChild<Border>(this, "EyedropperColorPreview");
             var hexText = FindVisualChild<TextBlock>(this, "EyedropperHexText");
+            var overlayCanvas = FindVisualChild<Canvas>(this, "OverlayCanvas");
 
-            if (preview == null) return;
+            if (preview == null || overlayCanvas == null) return;
 
-            Canvas.SetLeft(preview, canvasPoint.X + 15);
-            Canvas.SetTop(preview, canvasPoint.Y - 45);
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var selCanvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+            if (img == null || selCanvas == null) return;
+
+            var mousePos = Mouse.GetPosition(overlayCanvas);
+            Canvas.SetLeft(preview, mousePos.X + 15);
+            Canvas.SetTop(preview, mousePos.Y - 45);
 
             if (colorBox != null) colorBox.Background = new SolidColorBrush(color);
             if (hexText != null) hexText.Text = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
