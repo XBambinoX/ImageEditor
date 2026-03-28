@@ -41,6 +41,8 @@
     </Window.InputBindings>
 
     <Window.Resources>
+        <views:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+        
         <!-- Main colors -->
         <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="#303030"/>
         <SolidColorBrush x:Key="BorderBackgroundBrush" Color="#444444"/>
@@ -321,11 +323,11 @@
                                         <Grid.RenderTransform>
                                             <TransformGroup>
                                                 <ScaleTransform
-                                                    ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    ScaleY="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                    ScaleX="{Binding Data.Zoom, Source={StaticResource Proxy}}"
+                                                    ScaleY="{Binding Data.Zoom, Source={StaticResource Proxy}}"/>
                                                 <TranslateTransform
-                                                    X="{Binding DataContext.ImageOffsetX, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    Y="{Binding DataContext.ImageOffsetY, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                    X="{Binding Data.ImageOffsetX, Source={StaticResource Proxy}}"
+                                                    Y="{Binding Data.ImageOffsetY, Source={StaticResource Proxy}}"/>
                                             </TransformGroup>
                                         </Grid.RenderTransform>
 

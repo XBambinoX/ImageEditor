@@ -84,6 +84,7 @@
     <Compile Include="ViewModels\PixelateViewModel.cs" />
     <Compile Include="ViewModels\SharpenViewModel.cs" />
     <Compile Include="ViewModels\SobelViewModel.cs" />
+    <Compile Include="Views\BindingProxy.cs" />
     <Compile Include="Views\BrightnessWindow.xaml.cs">
       <DependentUpon>BrightnessWindow.xaml</DependentUpon>
     </Compile>
