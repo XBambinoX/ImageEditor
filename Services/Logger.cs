@@ -34,7 +34,6 @@ namespace ImageEditor.Services
             {
                 File.AppendAllText(LogPath, line + Environment.NewLine);
             }
-            System.Diagnostics.Debug.WriteLine(line);
         }
 
         private static void CleanOldLogs()

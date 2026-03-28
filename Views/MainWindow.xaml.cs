@@ -41,13 +41,13 @@ namespace ImageEditor.Views
         private bool _isDraggingText;
         private Point? _textDragStart;
         private Point _textDragOriginCanvas;
-        private Point _textDragOriginImage;
 
         private InputBindingCollection _savedBindings;
 
         public MainWindow()
         {
             InitializeComponent();
+            Closing += (s, e) => Logger.Info("MonoFrame closing");
 
             Loaded += (s, e) =>
             {
