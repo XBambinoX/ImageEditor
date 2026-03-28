@@ -339,17 +339,6 @@
                                         <Canvas x:Name="SelectionCanvas"
                                                 IsHitTestVisible="True">
 
-                                            <Canvas.RenderTransform>
-                                                <TransformGroup>
-                                                    <ScaleTransform
-                                                        ScaleX="{Binding Zoom}"
-                                                        ScaleY="{Binding Zoom}"/>
-                                                    <TranslateTransform
-                                                        X="{Binding ImageOffsetX}"
-                                                        Y="{Binding ImageOffsetY}"/>
-                                                </TransformGroup>
-                                            </Canvas.RenderTransform>
-
                                             <Rectangle x:Name="SelectionFill" Fill="#330078D7" Visibility="Collapsed"/>
                                             <Rectangle x:Name="SelectionRectBlack" Stroke="Black" StrokeThickness="1" StrokeDashArray="4,4" StrokeDashOffset="4" Fill="Transparent" Visibility="Collapsed"/>
                                             <Rectangle x:Name="SelectionRect" Stroke="White" StrokeThickness="1" StrokeDashArray="4,4" StrokeDashOffset="0" Fill="Transparent" Visibility="Collapsed"/>
@@ -375,7 +364,6 @@
                                                 Background="Transparent"
                                                 IsHitTestVisible="True">
                                                 <StackPanel>
-                                                    <!-- Drag handle -->
                                                     <Border x:Name="TextDragHandle"
                                                         Height="16"
                                                         Background="#0078D7"
@@ -383,10 +371,11 @@
                                                         MouseLeftButtonDown="TextDragHandle_MouseLeftButtonDown"
                                                         MouseMove="TextDragHandle_MouseMove"
                                                         MouseLeftButtonUp="TextDragHandle_MouseLeftButtonUp">
-                                                        <TextBlock Text="⠿" 
-                                                                   FontSize="10" 
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center" Foreground="White"/>
+                                                        <TextBlock Text="⠿"
+                                                           FontSize="10"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="White"/>
                                                     </Border>
 
                                                     <TextBox x:Name="TextOverlayBox"
@@ -394,7 +383,8 @@
                                                          Foreground="Black"
                                                          BorderThickness="0"
                                                          AcceptsReturn="True"
-                                                         TextWrapping="Wrap"
+                                                         TextWrapping="NoWrap"
+                                                         MinWidth="50"
                                                          FontSize="16"
                                                          CaretBrush="Black"
                                                          Padding="2"

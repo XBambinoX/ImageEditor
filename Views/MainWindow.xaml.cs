@@ -555,7 +555,7 @@ namespace ImageEditor.Views
             int selectionStart = box.SelectionStart;
             int selectionLength = box.SelectionLength;
 
-            box.FontSize = Math.Max(6, vm.TextFontSize / dpiScaleX * vm.Zoom);
+            box.FontSize = Math.Max(6, vm.TextFontSize / dpiScaleX);
             box.FontFamily = new FontFamily(vm.TextFontFamily);
             box.FontWeight = vm.TextBold ? FontWeights.Bold : FontWeights.Normal;
             box.FontStyle = vm.TextItalic ? FontStyles.Italic : FontStyles.Normal;
@@ -777,9 +777,6 @@ namespace ImageEditor.Views
 
             if (box == null || border == null || img == null || selCanvas == null) return;
 
-            _textPosition = canvasPoint;
-            _textImagePosition = imagePoint;
-
             box.Text = "";
 
             var bitmap = vm.SelectedTab?.Image;
@@ -788,16 +785,6 @@ namespace ImageEditor.Views
             double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
             double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
 
-            _textImagePosition = new Point(
-                _textImagePosition.Value.X + 3 * dpiScaleX,
-                _textImagePosition.Value.Y + 3 * dpiScaleY
-            );
-
-            double handleHeightInPixels = 16 * dpiScaleY; // reserve space for one line of text above the click point to avoid covering it
-            _textImagePosition = new Point(
-                _textImagePosition.Value.X,
-                _textImagePosition.Value.Y);
-
             var p = new Point(imagePoint.X / dpiScaleX, imagePoint.Y / dpiScaleY);
             var transform = img.TransformToVisual(selCanvas);
             var canvasPos = transform.Transform(p);
@@ -805,9 +792,12 @@ namespace ImageEditor.Views
             Canvas.SetLeft(border, canvasPos.X);
             Canvas.SetTop(border, canvasPos.Y);
 
+            double handleHeightPx = 16 * dpiScaleY;
+            _textImagePosition = new Point(imagePoint.X, imagePoint.Y + handleHeightPx);
+            _textPosition = canvasPos;
+
             border.Visibility = Visibility.Visible;
             UpdateTextOverlayStyle(vm);
-
             box.Focus();
             DisableHotkeys();
         }
@@ -921,9 +911,11 @@ namespace ImageEditor.Views
             var transform = canvas.TransformToVisual(img);
             var imgPoint = transform.Transform(new Point(newLeft, newTop));
 
+
+            double handleHeightPx = 16 * dpiScaleY;
             _textImagePosition = new Point(
                 imgPoint.X * dpiScaleX,
-                imgPoint.Y * dpiScaleY);
+                imgPoint.Y * dpiScaleY + handleHeightPx);
 
             e.Handled = true;
         }

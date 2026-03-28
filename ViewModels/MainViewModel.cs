@@ -1026,7 +1026,7 @@ namespace ImageEditor.ViewModels
                         FontStretches.Normal),
                     TextFontSize,
                     new SolidColorBrush(ActiveColor),
-                    96);
+                    120);
 
                 formattedText.TextAlignment = TextAlignment;
                 ctx.DrawText(formattedText, imagePosition);
