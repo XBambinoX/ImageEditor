@@ -1,5 +1,6 @@
 ﻿using ImageEditor.Models;
 using System.Windows;
+using System.Windows.Input;
 
 namespace ImageEditor.Views
 {
@@ -14,6 +15,11 @@ namespace ImageEditor.Views
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            DragMove();
         }
     }
 }
