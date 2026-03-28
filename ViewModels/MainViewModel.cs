@@ -257,6 +257,7 @@ namespace ImageEditor.ViewModels
             wb = null;
             #endregion
 
+            Logger.Info("MonoFrame initialized successfully");
 
             OpenImageCommand = new RelayCommand(_ => OpenImage());
             CloseImageCommand = new RelayCommand(_ => CloseTab(SelectedTab), _ => HasImage);

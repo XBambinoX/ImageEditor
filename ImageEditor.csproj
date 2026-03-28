@@ -72,6 +72,7 @@
     <Compile Include="Services\ImageProcessing\SharpenHelper.cs" />
     <Compile Include="Services\ImageProcessing\SobelHelper.cs" />
     <Compile Include="Services\ImageStatus\SaveImageHelper.cs" />
+    <Compile Include="Services\Logger.cs" />
     <Compile Include="Services\Math\Tools.cs" />
     <Compile Include="Services\Toolbar\DrawingService.cs" />
     <Compile Include="Services\Toolbar\SelectionService.cs" />
