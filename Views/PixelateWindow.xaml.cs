@@ -19,5 +19,11 @@ namespace ImageEditor.Views
                 e.Handled = true;
             }
         }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
+    
     }
 }

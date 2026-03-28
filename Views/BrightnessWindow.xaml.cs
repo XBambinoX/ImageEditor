@@ -26,5 +26,10 @@ namespace ImageEditor.Views
                 vm.Contrast += e.Delta > 0 ? 1 : -1;
             }
         }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
     }
 }

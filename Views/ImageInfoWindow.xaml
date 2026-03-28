@@ -17,32 +17,32 @@
         <Style TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
         </Style>
-
+        
         <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="#2D2D30"/>
-            <Setter Property="Width" Value="8"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid Background="{TemplateBinding Background}">
-                            <Track x:Name="PART_Track" IsDirectionReversed="True">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#555555"
+    <Setter Property="Background" Value="#2D2D30"/>
+    <Setter Property="Width" Value="8"/>
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="ScrollBar">
+                <Grid Background="{TemplateBinding Background}">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.Thumb>
+                            <Thumb>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="#555555"
                                                 CornerRadius="4"
                                                 Margin="2,0"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Track.Thumb>
+                    </Track>
+                </Grid>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
     </Window.Resources>
 
     <Border BorderBrush="#555555" BorderThickness="1">
@@ -50,30 +50,42 @@
 
             <!-- TITLEBAR -->
             <Border DockPanel.Dock="Top"
-                    Background="#303030"
-                    Height="28"
-                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
-                    BorderBrush="#555555"
-                    BorderThickness="0,0,0,1">
+                Background="#303030"
+                Height="28"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                BorderBrush="#555555"
+                BorderThickness="0,0,0,1">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="Image Info"
-                               VerticalAlignment="Center"
-                               Margin="10,0"
-                               FontFamily="Segoe UI"
-                               Foreground="#AAAAAA"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                        <Viewbox Width="18" Height="18" Margin="0,0,8,0">
+                            <Canvas Width="100" Height="100">
+                                <Rectangle Width="100" Height="100"
+                               Stroke="#AAAAAA" StrokeThickness="8"
+                               RadiusX="10" RadiusY="10"
+                               Fill="#303030"/>
+                                <Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85" Fill="White"/>
+                                <Ellipse Width="18" Height="18" Fill="White"
+                             Canvas.Left="65" Canvas.Top="20"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="Image Info"
+                       VerticalAlignment="Center"
+                       FontFamily="Segoe UI"
+                       Foreground="#AAAAAA"/>
+                    </StackPanel>
 
                     <Button Grid.Column="1"
-                            Content="✕"
-                            Width="28" Height="28"
-                            FontSize="11"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            Click="CloseButton_Click">
+                        Content="✕"
+                        Width="28" Height="28"
+                        FontSize="11"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="CloseButton_Click">
                         <Button.Foreground>
                             <SolidColorBrush Color="#AAAAAA"/>
                         </Button.Foreground>

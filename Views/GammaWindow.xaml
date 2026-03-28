@@ -4,88 +4,265 @@
         Title="Gamma Correction"
         Height="600"
         Width="900"
+        Focusable="False"
+        ShowActivated="False"
+        ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize"
-        Background="#2D2D30"
-        Icon="/Assets/MonoFrame.ico">
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="#2D2D30">
 
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Window.Resources>
+        <Style x:Key="DarkButton" TargetType="Button">
+            <Setter Property="Background" Value="#3C3C3C"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#505050"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#606060"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <!-- PREVIEW -->
-        <Border Grid.Row="0"
-                Background="#1E1E1E"
-                CornerRadius="4"
-                Padding="5">
-            <Image Source="{Binding PreviewImage}"
-                   Stretch="Uniform"/>
-        </Border>
+        <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource DarkButton}">
+            <Setter Property="Background" Value="#3A5A8A"/>
+            <Setter Property="BorderBrush" Value="#4A6A9A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#4A6A9A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2A4A7A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <!-- CONTROLS -->
-        <Grid Grid.Row="1" Margin="0,15,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <Style TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#3A5A8A" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="14" Height="14" Fill="#0078D7"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="4" Background="#555555" CornerRadius="2"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <StackPanel Grid.Column="0"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center">
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#3C3C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
 
-                <TextBlock Text="Gamma:"
-                           Foreground="White"
-                           VerticalAlignment="Center"
-                           Width="75"
-                           Margin="0,0,10,0"/>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+    </Window.Resources>
 
-                <Button Content="-"
-                        Width="30" Height="25"
-                        Margin="0,0,5,0"
-                        Command="{Binding DecreaseGammaCommand}"/>
+    <Border BorderBrush="#555555" BorderThickness="1">
+        <DockPanel>
 
-                <Slider Width="300"
-                        Minimum="{Binding MinGammaSlider}"
-                        Maximum="{Binding MaxGammaSlider}"
-                        Value="{Binding GammaSlider, Mode=TwoWay}"
-                        TickFrequency="1"
-                        IsSnapToTickEnabled="True"
-                        PreviewMouseWheel="Slider_MouseWheel"/>
+            <!-- TITLEBAR -->
+            <Border DockPanel.Dock="Top"
+                    Background="#303030"
+                    Height="28"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    BorderBrush="#555555"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <Button Content="+"
-                        Width="30" Height="25"
-                        Margin="5,0,10,0"
-                        Command="{Binding IncreaseGammaCommand}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                        <Viewbox Width="18" Height="18" Margin="0,0,8,0">
+                            <Canvas Width="100" Height="100">
+                                <Rectangle Width="100" Height="100"
+                                           Stroke="#AAAAAA" StrokeThickness="8"
+                                           RadiusX="10" RadiusY="10"
+                                           Fill="#303030"/>
+                                <Polygon Points="15,75 45,45 65,65 85,40 85,85 15,85" Fill="White"/>
+                                <Ellipse Width="18" Height="18" Fill="White"
+                                         Canvas.Left="65" Canvas.Top="20"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="Gamma Correction" VerticalAlignment="Center" Foreground="#AAAAAA"/>
+                    </StackPanel>
 
-                <TextBlock Text="{Binding GammaDisplay}"
-                           Foreground="White"
-                           VerticalAlignment="Center"
-                           Width="40"
-                           Margin="0,0,10,0"/>
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Width="28" Height="28"
+                            FontSize="11"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Command="{Binding CancelCommand}">
+                        <Button.Foreground>
+                            <SolidColorBrush Color="#AAAAAA"/>
+                        </Button.Foreground>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Border" Background="Transparent">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
 
-                <Button Content="Reset"
-                        Width="50" Height="25"
-                        Command="{Binding ResetGammaCommand}"/>
+            <!-- CONTENT -->
+            <Grid Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-            </StackPanel>
+                <!-- PREVIEW -->
+                <Border Grid.Row="0"
+                        Background="#1E1E1E"
+                        CornerRadius="4"
+                        Padding="5">
+                    <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
+                </Border>
 
-            <!-- OK / Cancel -->
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center">
+                <!-- CONTROLS -->
+                <Grid Grid.Row="1" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <Button Content="OK"
-                        Width="80"
-                        Margin="0,0,10,0"
-                        Command="{Binding ApplyCommand}"/>
+                    <!-- Gamma -->
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
 
-                <Button Content="Cancel"
-                        Width="80"
-                        Command="{Binding CancelCommand}"/>
+                        <TextBlock Text="Gamma:"
+                                   VerticalAlignment="Center"
+                                   Width="75"
+                                   Margin="0,0,10,0"/>
 
-            </StackPanel>
-        </Grid>
-    </Grid>
+                        <Button Content="-" Width="30" Height="25" Margin="0,0,5,0"
+                                Style="{StaticResource DarkButton}"
+                                Command="{Binding DecreaseGammaCommand}"/>
+
+                        <Slider Width="300"
+                                Minimum="{Binding MinGammaSlider}"
+                                Maximum="{Binding MaxGammaSlider}"
+                                Value="{Binding GammaSlider, Mode=TwoWay}"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"
+                                PreviewMouseWheel="Slider_MouseWheel"/>
+
+                        <Button Content="+" Width="30" Height="25" Margin="5,0,10,0"
+                                Style="{StaticResource DarkButton}"
+                                Command="{Binding IncreaseGammaCommand}"/>
+
+                        <TextBlock Text="{Binding GammaDisplay}"
+                                   VerticalAlignment="Center"
+                                   Width="40"
+                                   Margin="0,0,10,0"/>
+
+                        <Button Content="Reset" Width="60" Height="25"
+                                Style="{StaticResource DarkButton}"
+                                Command="{Binding ResetGammaCommand}"/>
+                    </StackPanel>
+
+                    <!-- OK / Cancel -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+
+                        <Button Content="OK" Width="80" Height="28" Margin="0,0,10,0"
+                                Style="{StaticResource AccentButton}"
+                                Command="{Binding ApplyCommand}"/>
+
+                        <Button Content="Cancel" Width="80" Height="28"
+                                Style="{StaticResource DarkButton}"
+                                Command="{Binding CancelCommand}"/>
+                    </StackPanel>
+
+                </Grid>
+            </Grid>
+
+        </DockPanel>
+    </Border>
 </Window>
