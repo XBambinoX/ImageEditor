@@ -790,13 +790,13 @@ namespace ImageEditor.Views
 
             _textImagePosition = new Point(
                 _textImagePosition.Value.X + 3 * dpiScaleX,
-                _textImagePosition.Value.Y + 3 * dpiScaleY + 16 * dpiScaleY // +16 for default font size, +3 for padding
+                _textImagePosition.Value.Y + 3 * dpiScaleY
             );
 
             double handleHeightInPixels = 16 * dpiScaleY; // reserve space for one line of text above the click point to avoid covering it
             _textImagePosition = new Point(
                 _textImagePosition.Value.X,
-                _textImagePosition.Value.Y + handleHeightInPixels);
+                _textImagePosition.Value.Y);
 
             var p = new Point(imagePoint.X / dpiScaleX, imagePoint.Y / dpiScaleY);
             var transform = img.TransformToVisual(selCanvas);
