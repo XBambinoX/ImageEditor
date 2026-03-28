@@ -35,6 +35,16 @@ namespace ImageEditor.Views
 
         private Color _eyedropperPreviewColor;
 
+        private Point? _textPosition; // canvas coordinates
+        private Point? _textImagePosition; // pixel coordinates
+
+        private bool _isDraggingText;
+        private Point? _textDragStart;
+        private Point _textDragOriginCanvas;
+        private Point _textDragOriginImage;
+
+        private InputBindingCollection _savedBindings;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -70,6 +80,11 @@ namespace ImageEditor.Views
                                     UpdateEyedropperPreview(imgPoint, Mouse.GetPosition(canvas), bitmap);
                                 }
                             }
+                        }
+
+                        if (args.PropertyName == nameof(MainViewModel.ActiveColor))
+                        {
+                            UpdateTextOverlayStyle(vm);
                         }
                     };
                 }
@@ -215,6 +230,39 @@ namespace ImageEditor.Views
                     }
                 }
 
+                e.Handled = true;
+                return;
+            }
+
+            if (vm?.ActiveTool == ToolType.Text)
+            {
+                var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+                var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+                if (border?.Visibility == Visibility.Visible)
+                {
+                    var clickOnCanvas = e.GetPosition(canvas);
+                    var borderLeft = Canvas.GetLeft(border);
+                    var borderTop = Canvas.GetTop(border);
+                    var borderRight = borderLeft + border.ActualWidth;
+                    var borderBottom = borderTop + border.ActualHeight;
+
+                    bool clickedInsideBorder = clickOnCanvas.X >= borderLeft && clickOnCanvas.X <= borderRight
+                                            && clickOnCanvas.Y >= borderTop && clickOnCanvas.Y <= borderBottom;
+
+                    if (clickedInsideBorder)
+                    {
+                        e.Handled = true;
+                        return; // do not commit text if clicking inside the text box
+                    }
+
+                    CommitText(vm);
+                    return;
+                }
+
+                var imgPoint = GetImagePixel(e, vm);
+                var canvasPoint = e.GetPosition(canvas);
+                ShowTextOverlay(canvasPoint, imgPoint, vm);
                 e.Handled = true;
                 return;
             }
@@ -490,6 +538,45 @@ namespace ImageEditor.Views
             }
         }
 
+        public void UpdateTextOverlayStyle(MainViewModel vm)
+        {
+            var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            if (box == null || border?.Visibility != Visibility.Visible) return;
+
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var bitmap = vm.SelectedTab?.Image;
+            if (img == null || bitmap == null || img.ActualWidth <= 0) return;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+
+            // cursor and selection state
+            int caretIndex = box.CaretIndex;
+            int selectionStart = box.SelectionStart;
+            int selectionLength = box.SelectionLength;
+
+            box.FontSize = Math.Max(6, vm.TextFontSize / dpiScaleX);
+            box.FontFamily = new FontFamily(vm.TextFontFamily);
+            box.FontWeight = vm.TextBold ? FontWeights.Bold : FontWeights.Normal;
+            box.FontStyle = vm.TextItalic ? FontStyles.Italic : FontStyles.Normal;
+            box.TextAlignment = vm.TextAlignment;
+            box.Foreground = new SolidColorBrush(vm.ActiveColor);
+            box.CaretBrush = new SolidColorBrush(vm.ActiveColor);
+
+            // Focus and selection restoration
+            box.CaretIndex = Math.Min(caretIndex, box.Text.Length);
+            box.Select(Math.Min(selectionStart, box.Text.Length),
+                       Math.Min(selectionLength, box.Text.Length - selectionStart));
+
+            // Focus the TextBox after style update to ensure caret visibility
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+                new Action(() =>
+                {
+                    box.Focus();
+                    box.CaretIndex = Math.Min(caretIndex, box.Text.Length);
+                }));
+        }
+
         private T FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -680,5 +767,166 @@ namespace ImageEditor.Views
 
             preview.Visibility = Visibility.Visible;
         }
+
+        private void ShowTextOverlay(Point canvasPoint, Point imagePoint, MainViewModel vm)
+        {
+            var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var selCanvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+            if (box == null || border == null || img == null || selCanvas == null) return;
+
+            box.Text = "";
+
+            var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null || img.ActualWidth <= 0) return;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            var p = new Point(imagePoint.X / dpiScaleX, imagePoint.Y / dpiScaleY);
+            var transform = img.TransformToVisual(selCanvas);
+            var canvasPos = transform.Transform(p);
+
+            Canvas.SetLeft(border, canvasPos.X);
+            Canvas.SetTop(border, canvasPos.Y);
+
+            double handleHeightPx = 16 * dpiScaleY;
+            _textImagePosition = new Point(imagePoint.X, imagePoint.Y + handleHeightPx);
+            _textPosition = canvasPos;
+
+            border.Visibility = Visibility.Visible;
+            UpdateTextOverlayStyle(vm);
+            box.Focus();
+            DisableHotkeys();
+        }
+
+        private void HideTextOverlay()
+        {
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            if (border != null) border.Visibility = Visibility.Collapsed;
+            _textPosition = null;
+            _textImagePosition = null;
+            RestoreHotkeys();
+        }
+
+        private void CommitText(MainViewModel vm)
+        {
+            var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
+            if (box == null || string.IsNullOrWhiteSpace(box.Text))
+            {
+                HideTextOverlay();
+                return;
+            }
+
+            if (_textImagePosition == null) return;
+
+            vm.CommitText(
+                box.Text,
+                _textImagePosition.Value);
+
+            HideTextOverlay();
+        }
+
+        private void TextOverlay_KeyDown(object sender, KeyEventArgs e)
+        {
+            var vm = DataContext as MainViewModel;
+            if (vm == null) return;
+
+            if (e.Key == Key.Escape)
+            {
+                HideTextOverlay();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Enter &&
+                     (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
+            {
+                CommitText(vm);
+                e.Handled = true;
+            }
+        }
+
+        private void TextOverlay_LostFocus(object sender, RoutedEventArgs e)
+        {
+        }
+
+        public void DisableHotkeys()
+        {
+            if (_savedBindings != null) return;
+            _savedBindings = new InputBindingCollection();
+            foreach (InputBinding b in InputBindings)
+                _savedBindings.Add(b);
+            InputBindings.Clear();
+        }
+
+        public void RestoreHotkeys()
+        {
+            if (_savedBindings == null) return;
+            InputBindings.Clear();
+            foreach (InputBinding b in _savedBindings)
+                InputBindings.Add(b);
+            _savedBindings = null;
+        }
+
+        #region text dragging methods
+        private void TextDragHandle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+
+            if (border == null || canvas == null) return;
+
+            _isDraggingText = true;
+            _textDragStart = e.GetPosition(canvas);
+            _textDragOriginCanvas = new Point(Canvas.GetLeft(border), Canvas.GetTop(border));
+
+            (sender as Border)?.CaptureMouse();
+            e.Handled = true;
+        }
+
+        private void TextDragHandle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isDraggingText || !_textDragStart.HasValue) return;
+
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var vm = DataContext as MainViewModel;
+            if (border == null || canvas == null || img == null || vm == null) return;
+
+            var current = e.GetPosition(canvas);
+            double newLeft = _textDragOriginCanvas.X + (current.X - _textDragStart.Value.X);
+            double newTop = _textDragOriginCanvas.Y + (current.Y - _textDragStart.Value.Y);
+
+            Canvas.SetLeft(border, newLeft);
+            Canvas.SetTop(border, newTop);
+
+            var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null || img.ActualWidth <= 0) return;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+            double dpiScaleY = bitmap.PixelHeight / img.ActualHeight;
+
+            var transform = canvas.TransformToVisual(img);
+            var imgPoint = transform.Transform(new Point(newLeft, newTop));
+
+
+            double handleHeightPx = 16 * dpiScaleY;
+            _textImagePosition = new Point(
+                imgPoint.X * dpiScaleX,
+                imgPoint.Y * dpiScaleY + handleHeightPx);
+
+            e.Handled = true;
+        }
+
+        private void TextDragHandle_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            _isDraggingText = false;
+            _textDragStart = null;
+            (sender as Border)?.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+        #endregion
     }
 }

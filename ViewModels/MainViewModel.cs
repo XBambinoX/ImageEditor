@@ -149,6 +149,44 @@ namespace ImageEditor.ViewModels
             set { _activeColor = value; OnPropertyChanged(); }
         }
 
+        //Text tool properties
+        private string _textFontFamily = "Arial";
+        public string TextFontFamily
+        {
+            get => _textFontFamily;
+            set { _textFontFamily = value; OnPropertyChanged(); }
+        }
+
+        private double _textFontSize = 16;
+        public double TextFontSize
+        {
+            get => _textFontSize;
+            set { _textFontSize = value; OnPropertyChanged(); }
+        }
+
+        private bool _textBold;
+        public bool TextBold
+        {
+            get => _textBold;
+            set { _textBold = value; OnPropertyChanged(); }
+        }
+
+        private bool _textItalic;
+        public bool TextItalic
+        {
+            get => _textItalic;
+            set { _textItalic = value; OnPropertyChanged(); }
+        }
+
+        private TextAlignment _textAlignment = TextAlignment.Left;
+        public TextAlignment TextAlignment
+        {
+            get => _textAlignment;
+            set { _textAlignment = value; OnPropertyChanged(); }
+        }
+
+        private TextSettingsWindow _textSettingsWindow; 
+
         // ================= COMMANDS =================
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
@@ -192,6 +230,7 @@ namespace ImageEditor.ViewModels
         public ICommand SelectLineToolCommand { get; }
         public ICommand ToggleColorPickerCommand { get; }
         public ICommand SelectEyedropperCommand { get; }
+        public ICommand SelectTextToolCommand { get; }
 
 
         // ================= CONSTRUCTOR =================
@@ -311,6 +350,7 @@ namespace ImageEditor.ViewModels
             ToggleColorPickerCommand = new RelayCommand(_ => ToggleColorPicker());
 
             SelectEyedropperCommand = new RelayCommand(_ => ToggleEyedropperTool());
+            SelectTextToolCommand = new RelayCommand(_ => ToggleTextTool());
         }
 
         // ================= TABS =================
@@ -670,6 +710,56 @@ namespace ImageEditor.ViewModels
                 _lineSettingsWindow?.Close();
                 _lineSettingsWindow = null;
             }
+
+            if (except != ToolType.Text)
+            {
+                _textSettingsWindow?.Close();
+                _textSettingsWindow = null;
+            }
+        }
+
+        private void ToggleTextTool()
+        {
+            if (ActiveTool == ToolType.Text)
+            {
+                ActiveTool = ToolType.None;
+                _textSettingsWindow?.Close();
+                _textSettingsWindow = null;
+                return;
+            }
+
+            CloseAllToolWindows();
+            ActiveTool = ToolType.Text;
+
+            _textSettingsWindow = new TextSettingsWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            _textSettingsWindow.SettingsChanged += () =>
+            {
+                TextFontFamily = _textSettingsWindow.SelectedFont;
+                TextFontSize = _textSettingsWindow.FontSize;
+                TextBold = _textSettingsWindow.IsBold;
+                TextItalic = _textSettingsWindow.IsItalic;
+                TextAlignment = _textSettingsWindow.Alignment;
+
+                // update text overlay if open
+                var mainWindow = Application.Current.MainWindow as MainWindow;
+                mainWindow?.UpdateTextOverlayStyle(this);
+            };
+
+            _textSettingsWindow.Closed += (s, e) =>
+            {
+                if (ActiveTool == ToolType.Text)
+                    ActiveTool = ToolType.None;
+                _textSettingsWindow = null;
+            };
+
+            var main = Application.Current.MainWindow;
+            _textSettingsWindow.Left = main.Left + 50;
+            _textSettingsWindow.Top = main.Top + 80;
+            _textSettingsWindow.Show();
         }
         #endregion
 
@@ -908,6 +998,47 @@ namespace ImageEditor.ViewModels
             BezierControl1 = null;
             BezierControl2 = null;
             IsBezierSecondPhase = false;
+        }
+
+        public void CommitText(string text, Point imagePosition)
+        {
+            if (SelectedTab?.Image == null) return;
+            SaveState();
+
+            var wb = SelectedTab.Image as WriteableBitmap
+                     ?? new WriteableBitmap(SelectedTab.Image);
+
+            var visual = new DrawingVisual();
+            using (var ctx = visual.RenderOpen())
+            {
+                // Existing image rendering
+                ctx.DrawImage(wb, new Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
+
+                // Text rendering
+                var formattedText = new FormattedText(
+                    text,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(
+                        new FontFamily(TextFontFamily),
+                        TextItalic ? FontStyles.Italic : FontStyles.Normal,
+                        TextBold ? FontWeights.Bold : FontWeights.Normal,
+                        FontStretches.Normal),
+                    TextFontSize,
+                    new SolidColorBrush(ActiveColor),
+                    120);
+
+                formattedText.TextAlignment = TextAlignment;
+                ctx.DrawText(formattedText, imagePosition);
+            }
+
+            var rtb = new RenderTargetBitmap(
+                wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(visual);
+
+            SelectedTab.Image = new WriteableBitmap(rtb);
+            SelectedTab.IsModified = true;
+            OnPropertyChanged(nameof(CurrentImage));
         }
 
         public void ResizeFloatingPaste(int newW, int newH, int newX, int newY)
