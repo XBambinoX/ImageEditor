@@ -1190,6 +1190,12 @@ namespace ImageEditor.ViewModels
             var copy = new WriteableBitmap(SelectedTab.Image);
             SelectedTab.UndoStack.Push(copy);
             SelectedTab.RedoStack.Clear();
+
+            if (SelectedTab.UndoStack.ShouldCollect())
+            {
+                GC.Collect(2, GCCollectionMode.Optimized, blocking: false);
+                GC.WaitForPendingFinalizers();
+            }
         }
 
         private void Undo()
