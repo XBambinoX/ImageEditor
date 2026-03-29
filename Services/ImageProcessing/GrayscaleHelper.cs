@@ -1,12 +1,8 @@
-﻿using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-
-namespace ImageEditor.Services.ImageProcessing
+﻿namespace ImageEditor.Services.ImageProcessing
 {
     public static class GrayscaleHelper
     {
-        public static WriteableBitmap ApplyGrayscale(byte[] src, int w, int h, int stride, double dpiX, double dpiY, int mode = 0, int intensity = 50)
+        public static byte[] ApplyGrayscale(byte[] src, int w, int h, int stride, int mode = 0, int intensity = 50)
         {
             byte[] dst = new byte[src.Length];
             float blend = intensity / 100f;
@@ -16,6 +12,7 @@ namespace ImageEditor.Services.ImageProcessing
                 byte b = src[i];
                 byte g = src[i + 1];
                 byte r = src[i + 2];
+
 
                 byte gray;
                 switch (mode)
@@ -39,10 +36,7 @@ namespace ImageEditor.Services.ImageProcessing
                 dst[i + 2] = (byte)(r + (gray - r) * blend);
             }
 
-            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
-            result.WritePixels(new Int32Rect(0, 0, w, h), dst, stride, 0);
-            result.Freeze();
-            return result;
+            return dst;
         }
 
         public static byte[] ApplyGrayscaleBytes(byte[] src, int mode = 0)

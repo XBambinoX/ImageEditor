@@ -1,13 +1,10 @@
 ﻿using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace ImageEditor.Services.ImageProcessing
 {
     public static class SobelHelper
     {
-        public static WriteableBitmap ApplySobel(byte[] src, int w, int h, int stride, double dpiX, double dpiY, int threshold, bool colorize)
+        public static byte[] ApplySobel(byte[] src, int w, int h, int stride, int threshold, bool colorize)
         {
             byte[] gray = GrayscaleHelper.ApplyGrayscaleBytes(src);
             byte[] dst = new byte[src.Length];
@@ -63,10 +60,7 @@ namespace ImageEditor.Services.ImageProcessing
                 }
             });
 
-            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
-            result.WritePixels(new Int32Rect(0, 0, w, h), dst, stride, 0);
-            result.Freeze();
-            return result;
+            return dst;
         }
 
         private static void HsvToRgb(double h, double s, double v, out byte r, out byte g, out byte b)

@@ -1,13 +1,10 @@
 ﻿using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace ImageEditor.Services.ImageProcessing
 {
     public static class GammaHelper
     {
-        public static WriteableBitmap ApplyGamma(byte[] src, int w, int h, int stride, double dpiX, double dpiY, double gamma)
+        public static byte[] ApplyGamma(byte[] src, int w, int h, int stride, double gamma)
         {
             byte[] dst = new byte[src.Length];
             byte[] lut = BuildLut(gamma);
@@ -18,16 +15,13 @@ namespace ImageEditor.Services.ImageProcessing
                 for (int x = 0; x < w; x++)
                 {
                     int i = offset + x * 3;
-                    dst[i] = lut[src[i]];     // B
-                    dst[i + 1] = lut[src[i + 1]]; // G
-                    dst[i + 2] = lut[src[i + 2]]; // R
+                    dst[i] = lut[src[i]];         //B
+                    dst[i + 1] = lut[src[i + 1]]; //G
+                    dst[i + 2] = lut[src[i + 2]]; //R
                 }
             });
 
-            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
-            result.WritePixels(new Int32Rect(0, 0, w, h), dst, result.BackBufferStride, 0);
-            result.Freeze();
-            return result;
+            return dst;
         }
 
         private static byte[] BuildLut(double gamma)

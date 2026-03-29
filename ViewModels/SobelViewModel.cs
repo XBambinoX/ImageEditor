@@ -4,7 +4,9 @@ using ImageEditor.Services.Math;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
@@ -95,20 +97,23 @@ namespace ImageEditor.ViewModels
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
-                int stride = w * 3;
+                int stride = _original.BackBufferStride;
 
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);
 
-                var result = await Task.Run(() =>
+                byte[] resultBytes = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-                    return SobelHelper.ApplySobel(pixels, w, h, stride, dpiX, dpiY, threshold, colorize);
+                    return SobelHelper.ApplySobel(pixels, w, h, stride, threshold, colorize);
                 }, token);
 
-                if (token.IsCancellationRequested || result == null) return;
+                if (token.IsCancellationRequested || resultBytes == null) return;
 
-                PreviewImage = result;
+                var wb = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
+                wb.WritePixels(new Int32Rect(0, 0, w, h), resultBytes, wb.BackBufferStride, 0);
+
+                PreviewImage = wb;
             }
             catch (TaskCanceledException) { }
         }

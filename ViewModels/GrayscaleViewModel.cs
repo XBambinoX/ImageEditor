@@ -1,11 +1,13 @@
-﻿using System;
-using ImageEditor.Commands;
+﻿using ImageEditor.Commands;
+using ImageEditor.Services.ImageProcessing;
+using ImageEditor.Services.Math;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ImageEditor.Services.Math;
-using ImageEditor.Services.ImageProcessing;
 
 namespace ImageEditor.ViewModels
 {
@@ -114,20 +116,22 @@ namespace ImageEditor.ViewModels
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
-                int stride = w * 3;
+                int stride = _original.BackBufferStride;
 
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);
 
-                var result = await Task.Run(() =>
+                byte[] resultBytes = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-                    return GrayscaleHelper.ApplyGrayscale(pixels, w, h, stride, dpiX, dpiY, mode, intensity);
+                    return GrayscaleHelper.ApplyGrayscale(pixels, w, h, stride, mode, intensity);
                 }, token);
 
-                if (token.IsCancellationRequested || result == null) return;
+                if (token.IsCancellationRequested || resultBytes == null) return;
+                var wb = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
+                wb.WritePixels(new Int32Rect(0, 0, w, h), resultBytes, wb.BackBufferStride, 0);
 
-                PreviewImage = result;
+                PreviewImage = wb;
             }
             catch (TaskCanceledException) { }
         }
