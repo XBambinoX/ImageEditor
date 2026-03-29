@@ -712,13 +712,18 @@ namespace ImageEditor.ViewModels
 
         private void ExpandDirtyRegion(Point p)
         {
+            if (SelectedTab?.Image == null) return;
+
+            int bmpW = SelectedTab.Image.PixelWidth;
+            int bmpH = SelectedTab.Image.PixelHeight;
             int r = BrushSize;
 
-            var rect = new Int32Rect(
-                (int)p.X - r,
-                (int)p.Y - r,
-                r * 2,
-                r * 2);
+            int x = Math.Max(0, (int)p.X - r);
+            int y = Math.Max(0, (int)p.Y - r);
+            int x2 = Math.Min(bmpW, (int)p.X + r);
+            int y2 = Math.Min(bmpH, (int)p.Y + r);
+
+            var rect = new Int32Rect(x, y, x2 - x, y2 - y);
 
             if (_strokeDirtyRegion.IsEmpty)
             {
@@ -726,13 +731,12 @@ namespace ImageEditor.ViewModels
             }
             else
             {
-                int x1 = Math.Min(_strokeDirtyRegion.X, rect.X);
-                int y1 = Math.Min(_strokeDirtyRegion.Y, rect.Y);
+                int rx1 = Math.Min(_strokeDirtyRegion.X, rect.X);
+                int ry1 = Math.Min(_strokeDirtyRegion.Y, rect.Y);
+                int rx2 = Math.Max(_strokeDirtyRegion.X + _strokeDirtyRegion.Width, rect.X + rect.Width);
+                int ry2 = Math.Max(_strokeDirtyRegion.Y + _strokeDirtyRegion.Height, rect.Y + rect.Height);
 
-                int x2 = Math.Max(_strokeDirtyRegion.X + _strokeDirtyRegion.Width, rect.X + rect.Width);
-                int y2 = Math.Max(_strokeDirtyRegion.Y + _strokeDirtyRegion.Height, rect.Y + rect.Height);
-
-                _strokeDirtyRegion = new Int32Rect(x1, y1, x2 - x1, y2 - y1);
+                _strokeDirtyRegion = new Int32Rect(rx1, ry1, rx2 - rx1, ry2 - ry1);
             }
         }
 
