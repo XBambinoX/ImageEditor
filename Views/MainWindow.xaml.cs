@@ -209,7 +209,7 @@ namespace ImageEditor.Views
             {
                 var imgPoint = GetImagePixel(e, vm);
                 vm.BeginBrushStroke();
-                vm.BeginStrokeSnapshot();
+                vm.BeginStrokeSnapshot(imgPoint);
                 vm.BrushStroke(imgPoint, null);
                 _lastBrushPoint = imgPoint;
                 (sender as FrameworkElement)?.CaptureMouse();

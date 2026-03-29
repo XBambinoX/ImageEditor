@@ -655,12 +655,12 @@ namespace ImageEditor.ViewModels
             else
                 DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, radius, ActiveColor, BrushHardness);
 
+            ExpandDirtyRegion(imagePoint);
+            if (previousPoint.HasValue)
+                ExpandDirtyRegion(previousPoint.Value);
+
             SelectedTab.IsModified = true;
         }
-
-        private ImageSnapshot _strokeSnapshot;
-        private Int32Rect _strokeDirtyRegion;
-        private bool _strokeInProgress;
 
         public void BeginBrushStroke()
         {
@@ -671,33 +671,96 @@ namespace ImageEditor.ViewModels
             }
         }
 
-        public void BeginStrokeSnapshot()
+        private Int32Rect? _strokeDirtyRect;
+        private bool _strokeStarted;
+        private bool _strokeInProgress;
+        private Int32Rect _strokeDirtyRegion;
+        private WriteableBitmap _strokeBefore;
+
+        private Int32Rect GetBrushDirtyRect(Point from, Point to)
+        {
+            int r = BrushSize;
+
+            int x = (int)Math.Min(from.X, to.X) - r;
+            int y = (int)Math.Min(from.Y, to.Y) - r;
+
+            int w = (int)Math.Abs(from.X - to.X) + r * 2;
+            int h = (int)Math.Abs(from.Y - to.Y) + r * 2;
+
+            x = Math.Max(0, x);
+            y = Math.Max(0, y);
+
+            var img = SelectedTab.Image;
+
+            w = Math.Min(w, img.PixelWidth - x);
+            h = Math.Min(h, img.PixelHeight - y);
+
+            return new Int32Rect(x, y, w, h);
+        }
+
+        private Int32Rect Union(Int32Rect a, Int32Rect b)
+        {
+            int x1 = Math.Min(a.X, b.X);
+            int y1 = Math.Min(a.Y, b.Y);
+
+            int x2 = Math.Max(a.X + a.Width, b.X + b.Width);
+            int y2 = Math.Max(a.Y + a.Height, b.Y + b.Height);
+
+            return new Int32Rect(x1, y1, x2 - x1, y2 - y1);
+        }
+
+        public void BeginStrokeSnapshot(Point startPoint)
         {
             if (SelectedTab?.Image == null) return;
+
             _strokeInProgress = true;
+            _strokeBefore = new WriteableBitmap(SelectedTab.Image);
 
-            var bmp = SelectedTab.Image as WriteableBitmap;
-            if (bmp == null) return;
-
-            int w = bmp.PixelWidth, h = bmp.PixelHeight;
-            int stride = w * 4;
-            byte[] pixels = new byte[h * stride];
-            bmp.CopyPixels(pixels, stride, 0);
-
-            _strokeSnapshot = new ImageSnapshot(pixels, 0, 0, w, h, stride);
+            _strokeDirtyRegion = Int32Rect.Empty;
+            ExpandDirtyRegion(startPoint);
         }
 
         public void CommitStrokeSnapshot()
         {
-            if (_strokeSnapshot == null || SelectedTab == null) return;
-            SelectedTab.UndoStack.Push(_strokeSnapshot);
-            SelectedTab.RedoStack.Clear();
-            _strokeSnapshot = null;
+            if (!_strokeInProgress || SelectedTab == null) return;
 
-            if (SelectedTab.UndoStack.ShouldCollect())
+            _strokeInProgress = false;
+
+            if (_strokeDirtyRegion.Width <= 0 || _strokeDirtyRegion.Height <= 0)
+                return;
+
+            var snapshot = new ImageSnapshot(_strokeBefore, _strokeDirtyRegion);
+
+            SelectedTab.UndoStack.Push(snapshot);
+            SelectedTab.RedoStack.Clear();
+
+            _strokeBefore = null;
+            _strokeDirtyRegion = Int32Rect.Empty;
+        }
+
+        private void ExpandDirtyRegion(Point p)
+        {
+            int r = BrushSize;
+
+            var rect = new Int32Rect(
+                (int)p.X - r,
+                (int)p.Y - r,
+                r * 2,
+                r * 2);
+
+            if (_strokeDirtyRegion.IsEmpty)
             {
-                GC.Collect(2, GCCollectionMode.Optimized, blocking: false);
-                GC.WaitForPendingFinalizers();
+                _strokeDirtyRegion = rect;
+            }
+            else
+            {
+                int x1 = Math.Min(_strokeDirtyRegion.X, rect.X);
+                int y1 = Math.Min(_strokeDirtyRegion.Y, rect.Y);
+
+                int x2 = Math.Max(_strokeDirtyRegion.X + _strokeDirtyRegion.Width, rect.X + rect.Width);
+                int y2 = Math.Max(_strokeDirtyRegion.Y + _strokeDirtyRegion.Height, rect.Y + rect.Height);
+
+                _strokeDirtyRegion = new Int32Rect(x1, y1, x2 - x1, y2 - y1);
             }
         }
 
