@@ -33,8 +33,6 @@ namespace ImageEditor.Views
         private const double HandleSize = 8;
         private const double HandleHitRadius = 10;
 
-        private Color _eyedropperPreviewColor;
-
         private Point? _textPosition; // canvas coordinates
         private Point? _textImagePosition; // pixel coordinates
 
@@ -228,8 +226,8 @@ namespace ImageEditor.Views
 
                     if (px >= 0 && px < bitmap.PixelWidth && py >= 0 && py < bitmap.PixelHeight)
                     {
-                        byte[] pixel = new byte[4];
-                        bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 4, 0);
+                        byte[] pixel = new byte[3];
+                        bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 3, 0);
                         vm.ActiveColor = Color.FromRgb(pixel[2], pixel[1], pixel[0]);
                     }
                 }
@@ -767,8 +765,8 @@ namespace ImageEditor.Views
                 return;
             }
 
-            byte[] pixel = new byte[4];
-            bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 4, 0);
+            byte[] pixel = new byte[3];
+            bitmap.CopyPixels(new Int32Rect(px, py, 1, 1), pixel, 3, 0);
             var color = Color.FromRgb(pixel[2], pixel[1], pixel[0]);
 
             var preview = FindVisualChild<Border>(this, "EyedropperPreview");

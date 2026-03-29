@@ -239,9 +239,8 @@ namespace ImageEditor.ViewModels
         public MainViewModel()
         {
             #region White Tab Initialization
-            var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgra32, null);
-
-            int stride = 800 * 4;
+            var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgr24, null);
+            int stride = 800 * 3;
             byte[] pixels = Enumerable.Repeat((byte)255, 600 * stride).ToArray();
 
             wb.WritePixels(new Int32Rect(0, 0, 800, 600), pixels, stride, 0);
@@ -388,9 +387,10 @@ namespace ImageEditor.ViewModels
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
 
+                    var converted = new FormatConvertedBitmap(bitmap, PixelFormats.Bgr24, null, 0);
                     var tab = new ImageTab
                     {
-                        Image = new WriteableBitmap(bitmap),
+                        Image = new WriteableBitmap(converted),
                         Title = Path.GetFileName(file),
                         FilePath = file
                     };
@@ -529,8 +529,8 @@ namespace ImageEditor.ViewModels
 
                 if (!dialog.Confirmed) return;
 
-                var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgra32, null);
-                int stride = dialog.ImageWidth * 4;
+                var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgr24, null);
+                int stride = dialog.ImageWidth * 3;
                 byte[] pixels = Enumerable.Repeat((byte)255, dialog.ImageHeight * stride).ToArray();
                 wb.WritePixels(new Int32Rect(0, 0, dialog.ImageWidth, dialog.ImageHeight), pixels, stride, 0);
 
@@ -671,43 +671,9 @@ namespace ImageEditor.ViewModels
             }
         }
 
-        private Int32Rect? _strokeDirtyRect;
-        private bool _strokeStarted;
         private bool _strokeInProgress;
         private Int32Rect _strokeDirtyRegion;
         private WriteableBitmap _strokeBefore;
-
-        private Int32Rect GetBrushDirtyRect(Point from, Point to)
-        {
-            int r = BrushSize;
-
-            int x = (int)Math.Min(from.X, to.X) - r;
-            int y = (int)Math.Min(from.Y, to.Y) - r;
-
-            int w = (int)Math.Abs(from.X - to.X) + r * 2;
-            int h = (int)Math.Abs(from.Y - to.Y) + r * 2;
-
-            x = Math.Max(0, x);
-            y = Math.Max(0, y);
-
-            var img = SelectedTab.Image;
-
-            w = Math.Min(w, img.PixelWidth - x);
-            h = Math.Min(h, img.PixelHeight - y);
-
-            return new Int32Rect(x, y, w, h);
-        }
-
-        private Int32Rect Union(Int32Rect a, Int32Rect b)
-        {
-            int x1 = Math.Min(a.X, b.X);
-            int y1 = Math.Min(a.Y, b.Y);
-
-            int x2 = Math.Max(a.X + a.Width, b.X + b.Width);
-            int y2 = Math.Max(a.Y + a.Height, b.Y + b.Height);
-
-            return new Int32Rect(x1, y1, x2 - x1, y2 - y1);
-        }
 
         public void BeginStrokeSnapshot(Point startPoint)
         {
@@ -762,17 +728,6 @@ namespace ImageEditor.ViewModels
 
                 _strokeDirtyRegion = new Int32Rect(x1, y1, x2 - x1, y2 - y1);
             }
-        }
-
-        public void CommitRegion(WriteableBitmap bmp, Int32Rect region)
-        {
-            if (SelectedTab?.Image == null || region.Width <= 0 || region.Height <= 0)
-                return;
-
-            var snapshot = new ImageSnapshot(bmp, region);
-            SelectedTab.UndoStack.Push(snapshot);
-            SelectedTab.RedoStack.Clear();
-            SelectedTab.IsModified = true;
         }
 
         #region toggle tools methods
@@ -1032,8 +987,8 @@ namespace ImageEditor.ViewModels
                     {
                         SaveState();
 
-                        var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgra32, null);
-                        int stride = newW * 4;
+                        var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgr24, null);
+                        int stride = newW * 3;
                         byte[] white = Enumerable.Repeat((byte)255, newH * stride).ToArray();
                         expanded.WritePixels(new Int32Rect(0, 0, newW, newH), white, stride, 0);
                         SelectionService.Paste(expanded, new WriteableBitmap(current), 0, 0);
@@ -1111,8 +1066,8 @@ namespace ImageEditor.ViewModels
 
         private WriteableBitmap CaptureBackground(WriteableBitmap wb, int x, int y, int w, int h)
         {
-            var bg = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
-            int stride = w * 4;
+            var bg = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgr24, null);
+            int stride = w * 3;
             byte[] white = Enumerable.Repeat((byte)255, h * stride).ToArray();
             bg.WritePixels(new Int32Rect(0, 0, w, h), white, stride, 0);
 
@@ -1123,7 +1078,7 @@ namespace ImageEditor.ViewModels
 
             if (clampedW <= 0 || clampedH <= 0) return bg;
 
-            int bpp = 4;
+            int bpp = 3;
             int srcStride = clampedW * bpp;
             byte[] pixels = new byte[clampedH * srcStride];
             wb.CopyPixels(new Int32Rect(clampedX, clampedY, clampedW, clampedH), pixels, srcStride, 0);
@@ -1259,7 +1214,8 @@ namespace ImageEditor.ViewModels
                     wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
                 rtb.Render(visual);
 
-                SelectedTab.Image = new WriteableBitmap(rtb);
+                var converted = new FormatConvertedBitmap(rtb, PixelFormats.Bgr24, null, 0);
+                SelectedTab.Image = new WriteableBitmap(converted);
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
 

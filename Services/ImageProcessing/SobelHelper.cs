@@ -11,6 +11,7 @@ namespace ImageEditor.Services.ImageProcessing
         {
             byte[] gray = GrayscaleHelper.ApplyGrayscaleBytes(src);
             byte[] dst = new byte[src.Length];
+
             Parallel.For(0, h, y =>
             {
                 int rowOffset = y * stride;
@@ -19,7 +20,6 @@ namespace ImageEditor.Services.ImageProcessing
                 {
                     int yPrev = y == 0 ? 0 : y - 1;
                     int yNext = y == h - 1 ? h - 1 : y + 1;
-
                     int xPrev = x == 0 ? 0 : x - 1;
                     int xNext = x == w - 1 ? w - 1 : x + 1;
 
@@ -27,29 +27,24 @@ namespace ImageEditor.Services.ImageProcessing
                     int offMid = y * stride;
                     int offBot = yNext * stride;
 
-                    int tl = gray[offTop + xPrev * 4];
-                    int tc = gray[offTop + x * 4];
-                    int tr = gray[offTop + xNext * 4];
-                    int ml = gray[offMid + xPrev * 4];
-                    int mr = gray[offMid + xNext * 4];
-                    int bl = gray[offBot + xPrev * 4];
-                    int bc = gray[offBot + x * 4];
-                    int br = gray[offBot + xNext * 4];
+                    int tl = gray[offTop + xPrev * 3];
+                    int tc = gray[offTop + x * 3];
+                    int tr = gray[offTop + xNext * 3];
+                    int ml = gray[offMid + xPrev * 3];
+                    int mr = gray[offMid + xNext * 3];
+                    int bl = gray[offBot + xPrev * 3];
+                    int bc = gray[offBot + x * 3];
+                    int br = gray[offBot + xNext * 3];
 
                     int gx = (tr + 2 * mr + br) - (tl + 2 * ml + bl);
-
                     int gy = (bl + 2 * bc + br) - (tl + 2 * tc + tr);
 
-                    int magnitude = System.Math.Abs(gx) + System.Math.Abs(gy);
-                    if (magnitude > 255) magnitude = 255;
-
-                    int i = rowOffset + x * 4;
+                    int magnitude = System.Math.Min(255, System.Math.Abs(gx) + System.Math.Abs(gy));
+                    int i = rowOffset + x * 3;
 
                     if (magnitude < threshold)
                     {
-                        dst[i] = 0;
-                        dst[i + 1] = 0;
-                        dst[i + 2] = 0;
+                        dst[i] = dst[i + 1] = dst[i + 2] = 0;
                     }
                     else if (colorize)
                     {
@@ -63,23 +58,18 @@ namespace ImageEditor.Services.ImageProcessing
                     else
                     {
                         byte m = (byte)magnitude;
-                        dst[i] = m;
-                        dst[i + 1] = m;
-                        dst[i + 2] = m;
+                        dst[i] = dst[i + 1] = dst[i + 2] = m;
                     }
-
-                    dst[i + 3] = src[i + 3];
                 }
             });
 
-            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgra32, null);
+            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
             result.WritePixels(new Int32Rect(0, 0, w, h), dst, stride, 0);
             result.Freeze();
             return result;
         }
 
-        private static void HsvToRgb(double h, double s, double v,
-            out byte r, out byte g, out byte b)
+        private static void HsvToRgb(double h, double s, double v, out byte r, out byte g, out byte b)
         {
             int hi = (int)(h / 60) % 6;
             double f = h / 60 - System.Math.Floor(h / 60);

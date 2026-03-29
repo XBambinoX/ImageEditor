@@ -90,7 +90,7 @@ namespace ImageEditor.ViewModels
 
                 int w = _original.PixelWidth;
                 int h = _original.PixelHeight;
-                int stride = w * 4;
+                int stride = w * 3;
 
                 byte[] src = new byte[h * stride];
                 _original.CopyPixels(src, stride, 0);
@@ -110,7 +110,7 @@ namespace ImageEditor.ViewModels
                     w, h,
                     _original.DpiX,
                     _original.DpiY,
-                    PixelFormats.Bgra32,
+                    PixelFormats.Bgr24,
                     null);
 
                 wb.WritePixels(

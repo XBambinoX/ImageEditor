@@ -16,15 +16,14 @@ namespace ImageEditor.Services.ImageProcessing
                 int offset = y * stride;
                 for (int x = 0; x < w; x++)
                 {
-                    int i = offset + x * 4;
-                    dst[i] = (byte)(255 - src[i]);         // B
+                    int i = offset + x * 3;
+                    dst[i] = (byte)(255 - src[i]);          // B
                     dst[i + 1] = (byte)(255 - src[i + 1]); // G
                     dst[i + 2] = (byte)(255 - src[i + 2]); // R
-                    dst[i + 3] = src[i + 3];               // A
                 }
             });
 
-            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgra32, null);
+            var result = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
             result.WritePixels(new Int32Rect(0, 0, w, h), dst, stride, 0);
             result.Freeze();
             return result;
@@ -34,7 +33,7 @@ namespace ImageEditor.Services.ImageProcessing
         {
             int w = image.PixelWidth;
             int h = image.PixelHeight;
-            int stride = w * 4;
+            int stride = w * 3;
             double dpiX = image.DpiX;
             double dpiY = image.DpiY;
 

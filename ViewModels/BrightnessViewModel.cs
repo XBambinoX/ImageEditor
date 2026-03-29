@@ -98,7 +98,7 @@ namespace ImageEditor.ViewModels
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
-                int stride = w * 4;
+                int stride = w * 3;
 
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);

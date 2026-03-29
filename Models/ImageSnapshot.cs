@@ -12,7 +12,7 @@ namespace ImageEditor.Models
         public ImageSnapshot(WriteableBitmap bmp, Int32Rect region)
         {
             Region = region;
-            Stride = region.Width * 4;
+            Stride = region.Width * 3;
             Pixels = new byte[region.Height * Stride];
             bmp.CopyPixels(region, Pixels, Stride, 0);
         }
@@ -24,7 +24,7 @@ namespace ImageEditor.Models
 
         public static ImageSnapshot CreateDiff(WriteableBitmap bmp, Int32Rect region, byte[] previousPixels)
         {
-            int stride = region.Width * 4;
+            int stride = region.Width * 3;
             byte[] currentPixels = new byte[region.Height * stride];
             bmp.CopyPixels(region, currentPixels, stride, 0);
 
