@@ -11,18 +11,8 @@ using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class GammaViewModel : BaseViewModel
+    public class GammaViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         private double _gamma = 1.0;
         public double Gamma
         {
@@ -51,15 +41,11 @@ namespace ImageEditor.ViewModels
         public int MinGammaSlider => 10;  // 0.10
         public int MaxGammaSlider => 500; // 5.00
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseGammaCommand { get; }
         public ICommand DecreaseGammaCommand { get; }
         public ICommand ResetGammaCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public GammaViewModel(WriteableBitmap source)
         {

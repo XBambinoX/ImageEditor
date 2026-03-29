@@ -10,18 +10,8 @@ using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class BrightnessViewModel : BaseViewModel
+    public class BrightnessViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         private int _brightness = 0;
         public int Brightness
         {
@@ -51,16 +41,12 @@ namespace ImageEditor.ViewModels
         public int MinContrast => -100;
         public int MaxContrast => 100;
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseBrightnessCommand { get; }
         public ICommand DecreaseBrightnessCommand { get; }
         public ICommand IncreaseContrastCommand { get; }
         public ICommand DecreaseContrastCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public BrightnessViewModel(WriteableBitmap source)
         {

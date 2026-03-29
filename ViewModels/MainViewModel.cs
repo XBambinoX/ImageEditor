@@ -620,6 +620,12 @@ namespace ImageEditor.ViewModels
                         OnPropertyChanged(nameof(CurrentImage));
                     }
                     window.Close();
+
+                    vm.Cleanup();
+
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
                 });
 
                 window.ShowDialog();

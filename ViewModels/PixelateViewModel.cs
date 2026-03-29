@@ -11,18 +11,8 @@ using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class PixelateViewModel : BaseViewModel
+    public class PixelateViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         private int _blockSize = 10;
         public int BlockSize
         {
@@ -38,14 +28,10 @@ namespace ImageEditor.ViewModels
         public int MinBlockSize => 2;
         public int MaxBlockSize => 100;
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseBlockSizeCommand { get; }
         public ICommand DecreaseBlockSizeCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public PixelateViewModel(WriteableBitmap source)
         {

@@ -11,18 +11,8 @@ using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class GrayscaleViewModel : BaseViewModel
+    public class GrayscaleViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         // 0 = Luminance, 1 = Average, 2 = Lightness
         private int _mode = 0;
         public int Mode
@@ -69,14 +59,10 @@ namespace ImageEditor.ViewModels
         public int MinIntensity => 0;
         public int MaxIntensity => 100;
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseIntensityCommand { get; }
         public ICommand DecreaseIntensityCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public GrayscaleViewModel(WriteableBitmap source)
         {

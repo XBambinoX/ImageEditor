@@ -11,12 +11,8 @@ using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class SharpenViewModel : BaseViewModel
+    public class SharpenViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-
-        private WriteableBitmap _preview;
         private int _strength = 1;
 
         public int MinStrength => 0;
@@ -25,16 +21,6 @@ namespace ImageEditor.ViewModels
         private int _radius = 1;
         public int MinRadius => 1;
         public int MaxRadius => 100;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set
-            {
-                _preview = value;
-                OnPropertyChanged();
-            }
-        }
 
         public int Strength
         {
@@ -64,8 +50,6 @@ namespace ImageEditor.ViewModels
             }
         }
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseStrengthCommand { get; }
@@ -73,8 +57,6 @@ namespace ImageEditor.ViewModels
 
         public ICommand IncreaseRadiusCommand { get; }
         public ICommand DecreaseRadiusCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public SharpenViewModel(WriteableBitmap source)
         {

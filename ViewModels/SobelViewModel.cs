@@ -11,18 +11,8 @@ using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class SobelViewModel : BaseViewModel
+    public class SobelViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         private int _threshold = 30;
         public int Threshold
         {
@@ -50,14 +40,10 @@ namespace ImageEditor.ViewModels
         public int MinThreshold => 0;
         public int MaxThreshold => 255;
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseThresholdCommand { get; }
         public ICommand DecreaseThresholdCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public SobelViewModel(WriteableBitmap source)
         {
