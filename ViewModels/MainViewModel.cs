@@ -529,15 +529,26 @@ namespace ImageEditor.ViewModels
 
                 if (!dialog.Confirmed) return;
 
-                var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgr24, null);
-                int stride = dialog.ImageWidth * 3;
-                byte[] pixels = Enumerable.Repeat((byte)255, dialog.ImageHeight * stride).ToArray();
-                wb.WritePixels(new Int32Rect(0, 0, dialog.ImageWidth, dialog.ImageHeight), pixels, stride, 0);
+                int w = dialog.ImageWidth;
+                int h = dialog.ImageHeight;
+
+                var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgr24, null);
+                wb.Lock();
+                unsafe
+                {
+                    byte* ptr = (byte*)wb.BackBuffer;
+                    int stride = wb.BackBufferStride;
+                    long totalBytes = (long)stride * h;
+                    for (long i = 0; i < totalBytes; i++)
+                        ptr[i] = 255;
+                }
+                wb.AddDirtyRect(new Int32Rect(0, 0, w, h));
+                wb.Unlock();
 
                 var tab = new ImageTab
                 {
                     Image = wb,
-                    Title = $"New {dialog.ImageWidth}×{dialog.ImageHeight}",
+                    Title = $"New {w}×{h}",
                     FilePath = null
                 };
 
@@ -545,7 +556,7 @@ namespace ImageEditor.ViewModels
                 SelectedTab = tab;
                 ResetView();
 
-                Logger.Info($"New image created: {dialog.ImageWidth}×{dialog.ImageHeight}");
+                Logger.Info($"New image created: {w}×{h}");
             }
             catch (Exception ex)
             {
@@ -995,8 +1006,6 @@ namespace ImageEditor.ViewModels
 
                     if (dialog.Confirmed)
                     {
-                        SaveState();
-
                         var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgr24, null);
                         int stride = newW * 3;
                         byte[] white = Enumerable.Repeat((byte)255, newH * stride).ToArray();
@@ -1023,6 +1032,9 @@ namespace ImageEditor.ViewModels
                     Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
                     OnPropertyChanged(nameof(CurrentImage));
                     OnPropertyChanged(nameof(IsFloatingPaste));
+
+                    
+                    return;
                 }
 
                 SaveState();

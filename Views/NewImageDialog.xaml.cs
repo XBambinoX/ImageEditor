@@ -28,6 +28,18 @@ namespace ImageEditor.Views
             ImageWidth = w;
             ImageHeight = h;
             Confirmed = true;
+
+            long estimatedMB = (long)w * h * 3 / 1024 / 1024;
+            if (estimatedMB > 100)
+            {
+                var result = MessageBox.Show(
+                    $"This image will use approximately {estimatedMB} MB of memory.\nContinue?",
+                    "Large Image",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.No) return;
+            }
             Close();
         }
 
