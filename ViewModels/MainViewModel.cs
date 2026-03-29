@@ -948,7 +948,8 @@ namespace ImageEditor.ViewModels
 
             if (_clipboard != null)
             {
-                Clipboard.SetImage(_clipboard);
+                var forClipboard = new FormatConvertedBitmap(_clipboard, PixelFormats.Bgra32, null, 0);
+                Clipboard.SetImage(forClipboard);
             }
         }
 
@@ -986,6 +987,11 @@ namespace ImageEditor.ViewModels
                 }
 
                 if (source == null) return;
+                if (source.Format != PixelFormats.Bgr24)
+                {
+                    var converted = new FormatConvertedBitmap(source, PixelFormats.Bgr24, null, 0);
+                    source = new WriteableBitmap(converted);
+                }
 
                 if (IsFloatingPaste) CommitFloatingPaste();
 
