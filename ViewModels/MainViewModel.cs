@@ -764,6 +764,17 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        public void CommitRegion(WriteableBitmap bmp, Int32Rect region)
+        {
+            if (SelectedTab?.Image == null || region.Width <= 0 || region.Height <= 0)
+                return;
+
+            var snapshot = new ImageSnapshot(bmp, region);
+            SelectedTab.UndoStack.Push(snapshot);
+            SelectedTab.RedoStack.Clear();
+            SelectedTab.IsModified = true;
+        }
+
         #region toggle tools methods
         private void ToggleBrushTool()
         {
@@ -1317,15 +1328,14 @@ namespace ImageEditor.ViewModels
             {
                 if (SelectedTab?.UndoStack.Count == 0) return;
 
-                var wb = SelectedTab.Image as WriteableBitmap;
-                if (wb == null || wb.IsFrozen)
-                {
-                    wb = new WriteableBitmap(SelectedTab.Image);
-                    SelectedTab.Image = wb;
-                }
+                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+                SelectedTab.Image = wb;
+
                 var undo = SelectedTab.UndoStack.Pop();
-                var redoRegion = new Int32Rect(undo.X, undo.Y, undo.Width, undo.Height);
-                SelectedTab.RedoStack.Push(new ImageSnapshot(wb, redoRegion));
+
+                var redoSnapshot = ImageSnapshot.CreateDiff(wb, undo.Region, undo.Pixels);
+                if (redoSnapshot != null)
+                    SelectedTab.RedoStack.Push(redoSnapshot);
 
                 undo.Restore(wb);
 
@@ -1347,16 +1357,14 @@ namespace ImageEditor.ViewModels
             {
                 if (SelectedTab?.RedoStack.Count == 0) return;
 
-                var wb = SelectedTab.Image as WriteableBitmap;
-                if (wb == null || wb.IsFrozen)
-                {
-                    wb = new WriteableBitmap(SelectedTab.Image);
-                    SelectedTab.Image = wb;
-                }
+                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+                SelectedTab.Image = wb;
 
                 var redo = SelectedTab.RedoStack.Pop();
-                var undoRegion = new Int32Rect(redo.X, redo.Y, redo.Width, redo.Height);
-                SelectedTab.UndoStack.Push(new ImageSnapshot(wb, undoRegion));
+
+                var undoSnapshot = ImageSnapshot.CreateDiff(wb, redo.Region, redo.Pixels);
+                if (undoSnapshot != null)
+                    SelectedTab.UndoStack.Push(undoSnapshot);
 
                 redo.Restore(wb);
 

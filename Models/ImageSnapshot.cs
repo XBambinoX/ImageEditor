@@ -6,34 +6,48 @@ namespace ImageEditor.Models
     public class ImageSnapshot
     {
         public byte[] Pixels { get; }
-        public int X { get; }
-        public int Y { get; }
-        public int Width { get; }
-        public int Height { get; }
+        public Int32Rect Region { get; }
         public int Stride { get; }
 
         public ImageSnapshot(WriteableBitmap bmp, Int32Rect region)
         {
-            X = region.X;
-            Y = region.Y;
-            Width = region.Width;
-            Height = region.Height;
-            Stride = Width * 4;
-            Pixels = new byte[Height * Stride];
+            Region = region;
+            Stride = region.Width * 4;
+            Pixels = new byte[region.Height * Stride];
             bmp.CopyPixels(region, Pixels, Stride, 0);
+        }
+
+        public void Restore(WriteableBitmap bmp)
+        {
+            bmp.WritePixels(Region, Pixels, Stride, 0);
+        }
+
+        public static ImageSnapshot CreateDiff(WriteableBitmap bmp, Int32Rect region, byte[] previousPixels)
+        {
+            int stride = region.Width * 4;
+            byte[] currentPixels = new byte[region.Height * stride];
+            bmp.CopyPixels(region, currentPixels, stride, 0);
+
+            bool hasChange = false;
+            for (int i = 0; i < currentPixels.Length; i++)
+            {
+                if (currentPixels[i] != previousPixels[i])
+                {
+                    hasChange = true;
+                    break;
+                }
+            }
+
+            if (!hasChange) return null;
+
+            return new ImageSnapshot(currentPixels, region.X, region.Y, region.Width, region.Height, stride);
         }
 
         public ImageSnapshot(byte[] pixels, int x, int y, int width, int height, int stride)
         {
             Pixels = pixels;
-            X = x; Y = y;
-            Width = width; Height = height;
+            Region = new Int32Rect(x, y, width, height);
             Stride = stride;
-        }
-
-        public void Restore(WriteableBitmap bmp)
-        {
-            bmp.WritePixels(new Int32Rect(X, Y, Width, Height), Pixels, Stride, 0);
         }
     }
 }
