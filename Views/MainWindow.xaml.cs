@@ -42,6 +42,8 @@ namespace ImageEditor.Views
 
         private InputBindingCollection _savedBindings;
 
+        private WriteableBitmap _linePreviewCurrent;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -271,7 +273,7 @@ namespace ImageEditor.Views
         }
 
         private void Image_MouseMove(object sender, MouseEventArgs e)
-        {           
+        {
             var vm = DataContext as MainViewModel;
 
             if (_isMiddleDragging && e.MiddleButton == MouseButtonState.Pressed)
@@ -297,60 +299,64 @@ namespace ImageEditor.Views
             // Floating paste drag
             if (vm?.IsFloatingPaste == true && _floatingDragStart.HasValue && e.LeftButton == MouseButtonState.Pressed)
             {
-                var img = sender as Image;
                 var current = GetImagePixel(e, vm);
-
                 int dx = (int)(current.X - _floatingDragStart.Value.X);
                 int dy = (int)(current.Y - _floatingDragStart.Value.Y);
-
                 vm.MoveFloatingPaste(_floatingDragOriginX + dx, _floatingDragOriginY + dy);
                 UpdateSelectionOverlay(vm);
                 e.Handled = true;
                 return;
             }
 
-            if (vm?.ActiveTool == ToolType.Line && _linePreviewStart.HasValue)
+            if (vm?.ActiveTool == ToolType.Line && _linePreviewStart.HasValue && _linePreviewBackup != null && vm.SelectedTab != null)
             {
-                var img = sender as Image;
                 var current = GetImagePixel(e, vm);
 
-                // Recover the image state before drawing the preview
-                if (_linePreviewBackup != null && vm.SelectedTab != null)
+                if (_linePreviewCurrent == null ||
+                    _linePreviewCurrent.PixelWidth != _linePreviewBackup.PixelWidth ||
+                    _linePreviewCurrent.PixelHeight != _linePreviewBackup.PixelHeight)
                 {
-                    var preview = new WriteableBitmap(_linePreviewBackup);
-                    vm.SelectedTab.Image = preview;
-
-                    if (!vm.IsLineBezierMode && e.LeftButton == MouseButtonState.Pressed)
-                    {
-                        DrawingService.DrawLine(preview, _linePreviewStart.Value, current,
-                                                        vm.LineWidth, vm.ActiveColor);
-                    }
-                    else if (vm.IsBezierSecondPhase && vm.BezierControl1.HasValue && vm.BezierControl2.HasValue)
-                    {
-                        var cp1 = vm.BezierControl1.Value;
-                        var cp2 = vm.BezierControl2.Value;
-                        double d1 = Math.Sqrt(Math.Pow(current.X - cp1.X, 2) + Math.Pow(current.Y - cp1.Y, 2));
-                        double d2 = Math.Sqrt(Math.Pow(current.X - cp2.X, 2) + Math.Pow(current.Y - cp2.Y, 2));
-
-                        if (d1 < d2)
-                            vm.BezierControl1 = current;
-                        else
-                            vm.BezierControl2 = current;
-
-                        DrawingService.DrawBezier(preview,
-                            vm.LineStart.Value, vm.BezierControl1.Value,
-                            vm.BezierControl2.Value, vm.LineEnd.Value,
-                            vm.LineWidth, vm.ActiveColor);
-                    }
-
-                    vm.OnPropertyChangedPublic(nameof(vm.CurrentImage));
+                    _linePreviewCurrent = new WriteableBitmap(_linePreviewBackup);
                 }
+                else
+                {
+                    int w = _linePreviewBackup.PixelWidth;
+                    int h = _linePreviewBackup.PixelHeight;
+                    int stride = w * (_linePreviewBackup.Format.BitsPerPixel / 8);
+                    byte[] pixels = new byte[h * stride];
+                    _linePreviewBackup.CopyPixels(pixels, stride, 0);
+                    _linePreviewCurrent.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+                }
+
+                vm.SelectedTab.Image = _linePreviewCurrent;
+
+                if (!vm.IsLineBezierMode && e.LeftButton == MouseButtonState.Pressed)
+                {
+                    DrawingService.DrawLine(_linePreviewCurrent, _linePreviewStart.Value, current,
+                                            vm.LineWidth, vm.ActiveColor);
+                }
+                else if (vm.IsBezierSecondPhase && vm.BezierControl1.HasValue && vm.BezierControl2.HasValue)
+                {
+                    var cp1 = vm.BezierControl1.Value;
+                    var cp2 = vm.BezierControl2.Value;
+                    double d1 = Math.Sqrt(Math.Pow(current.X - cp1.X, 2) + Math.Pow(current.Y - cp1.Y, 2));
+                    double d2 = Math.Sqrt(Math.Pow(current.X - cp2.X, 2) + Math.Pow(current.Y - cp2.Y, 2));
+
+                    if (d1 < d2) vm.BezierControl1 = current;
+                    else vm.BezierControl2 = current;
+
+                    DrawingService.DrawBezier(_linePreviewCurrent,
+                        vm.LineStart.Value, vm.BezierControl1.Value,
+                        vm.BezierControl2.Value, vm.LineEnd.Value,
+                        vm.LineWidth, vm.ActiveColor);
+                }
+
+                vm.OnPropertyChangedPublic(nameof(vm.CurrentImage));
                 return;
             }
 
             if (vm?.ActiveTool == ToolType.Selection && e.LeftButton == MouseButtonState.Pressed && _selectionStart.HasValue)
             {
-                var img = sender as Image;
                 var current = GetImagePixel(e, vm);
                 var bitmap = vm.SelectedTab?.Image;
 
@@ -377,7 +383,6 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Brush && e.LeftButton == MouseButtonState.Pressed)
             {
-                var img = sender as Image;
                 var imgPoint = GetImagePixel(e, vm);
                 vm.BrushStroke(imgPoint, _lastBrushPoint);
                 _lastBrushPoint = imgPoint;
@@ -387,22 +392,16 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Eyedropper)
             {
-                var img = sender as Image;
                 var imgPoint = GetImagePixel(e, vm);
                 var bitmap = vm.SelectedTab?.Image as WriteableBitmap;
                 var canvas = FindVisualChild<Canvas>(this, "SelectionCanvas");
-
                 if (bitmap != null && canvas != null)
-                {
-                    UpdateEyedropperPreview(imgPoint, GetCanvasPoint(e, img, vm), bitmap);
-                }
+                    UpdateEyedropperPreview(imgPoint, GetCanvasPoint(e, null, vm), bitmap);
                 return;
             }
-            else
-            {
-                var preview = FindVisualChild<Border>(this, "EyedropperPreview");
-                if (preview != null) preview.Visibility = Visibility.Collapsed;
-            }
+
+            var eyePreview = FindVisualChild<Border>(this, "EyedropperPreview");
+            if (eyePreview != null) eyePreview.Visibility = Visibility.Collapsed;
         }
 
         private void Image_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -420,7 +419,9 @@ namespace ImageEditor.Views
                 vm.CommitStrokeSnapshot();
                 System.Threading.Tasks.Task.Run(() =>
                 {
-                    GC.Collect(1, GCCollectionMode.Optimized, blocking: false);
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: false);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: false);
                 });
             }
 
