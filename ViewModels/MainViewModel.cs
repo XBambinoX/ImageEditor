@@ -1312,20 +1312,38 @@ namespace ImageEditor.ViewModels
             {
                 if (SelectedTab?.UndoStack.Count == 0) return;
 
-                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
-                SelectedTab.Image = wb;
-
                 var undo = SelectedTab.UndoStack.Pop();
 
-                var redoSnapshot = ImageSnapshot.CreateDiff(wb, undo.Region, undo.Pixels);
-                if (redoSnapshot != null)
+                var wb = SelectedTab.Image as WriteableBitmap;
+
+                bool sizeChanged = wb == null ||
+                                   wb.PixelWidth != undo.OriginalWidth ||
+                                   wb.PixelHeight != undo.OriginalHeight;
+
+                if (sizeChanged)
+                {
+                    var redoWb = wb ?? new WriteableBitmap(SelectedTab.Image);
+                    var redoSnapshot = new ImageSnapshot(redoWb,
+                        new Int32Rect(0, 0, redoWb.PixelWidth, redoWb.PixelHeight));
                     SelectedTab.RedoStack.Push(redoSnapshot);
 
-                undo.Restore(wb);
+                    var restored = undo.RestoreFull();
+                    SelectedTab.Image = restored;
+                }
+                else
+                {
+                    if (wb == null) wb = new WriteableBitmap(SelectedTab.Image);
+                    SelectedTab.Image = wb;
+
+                    var redoSnapshot = ImageSnapshot.CreateDiff(wb, undo.Region, undo.Pixels);
+                    if (redoSnapshot != null)
+                        SelectedTab.RedoStack.Push(redoSnapshot);
+
+                    undo.Restore(wb);
+                }
 
                 SelectedTab.IsModified = SelectedTab.UndoStack.Count > 0;
                 OnPropertyChanged(nameof(CurrentImage));
-
                 Logger.Info("Undo performed");
             }
             catch (Exception ex)
