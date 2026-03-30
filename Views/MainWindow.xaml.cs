@@ -444,8 +444,20 @@ namespace ImageEditor.Views
         {
             if (DataContext is MainViewModel vm)
             {
-                var pos = e.GetPosition((IInputElement)sender);
-                vm.ZoomAt(pos, e.Delta);
+                var scrollViewer = FindVisualParent<ScrollViewer>(sender as DependencyObject);
+
+                if (scrollViewer != null)
+                {
+                    var pos = e.GetPosition(scrollViewer);
+                    pos = new Point(
+                        pos.X + scrollViewer.HorizontalOffset,
+                        pos.Y + scrollViewer.VerticalOffset);
+                    vm.ZoomAt(pos, e.Delta);
+                }
+                else
+                {
+                    vm.ZoomAt(e.GetPosition(sender as IInputElement), e.Delta);
+                }
             }
         }
 
@@ -605,6 +617,17 @@ namespace ImageEditor.Views
                 if (child is T fe && fe.Name == name) return fe;
                 var result = FindVisualChild<T>(child, name);
                 if (result != null) return result;
+            }
+            return null;
+        }
+
+        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            var parent = VisualTreeHelper.GetParent(child);
+            while (parent != null)
+            {
+                if (parent is T typed) return typed;
+                parent = VisualTreeHelper.GetParent(parent);
             }
             return null;
         }

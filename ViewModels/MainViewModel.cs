@@ -1364,16 +1364,23 @@ namespace ImageEditor.ViewModels
 
         public void ZoomAt(Point mousePos, int delta)
         {
+            if (SelectedTab?.Image == null) return;
+
             double zoomFactor = delta > 0 ? 1.1 : 0.9;
 
             double oldZoom = Zoom;
-            double newZoom = Tools.Clamp(Zoom * zoomFactor, 0.1, 20);
+            double newZoom = Tools.Clamp(Zoom * zoomFactor, 0.1, 5.0);
 
             if (Math.Abs(newZoom - oldZoom) < 0.0001)
                 return;
 
-            double relX = (mousePos.X - ImageOffsetX) / oldZoom;
-            double relY = (mousePos.Y - ImageOffsetY) / oldZoom;
+            double imageX = (mousePos.X - ImageOffsetX);
+            double imageY = (mousePos.Y - ImageOffsetY);
+
+            double relX = imageX / oldZoom;
+            double relY = imageY / oldZoom;
+
+
 
             Zoom = newZoom;
 
