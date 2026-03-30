@@ -443,7 +443,10 @@ namespace ImageEditor.Views
         private void Image_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (DataContext is MainViewModel vm)
-                vm.MouseWheelCommand.Execute(e);
+            {
+                var pos = e.GetPosition((IInputElement)sender);
+                vm.ZoomAt(pos, e.Delta);
+            }
         }
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)

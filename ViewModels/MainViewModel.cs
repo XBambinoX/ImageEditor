@@ -319,28 +319,6 @@ namespace ImageEditor.ViewModels
             });
             CloseCommand = new RelayCommand(_ => Application.Current.MainWindow.Close());
 
-            MouseWheelCommand = new RelayCommand(parameter =>
-            {
-                var args = parameter as MouseWheelEventArgs;
-                if (args == null)
-                    return;
-
-                var element = args.Source as FrameworkElement;
-                if (element == null)
-                    return;
-
-                var mousePos = args.GetPosition(element);
-                double factor = args.Delta > 0 ? 1.1 : 0.9;
-                double oldZoom = Zoom;
-                double newZoom = Tools.Clamp(oldZoom * factor, 0.1, 5.0);
-
-                ImageOffsetX = mousePos.X - (mousePos.X - ImageOffsetX) * (newZoom / oldZoom);
-                ImageOffsetY = mousePos.Y - (mousePos.Y - ImageOffsetY) * (newZoom / oldZoom);
-
-                Zoom = newZoom;
-            });
-
-
             SelectBrushCommand = new RelayCommand(_ => ToggleBrushTool());
             SelectSelectionToolCommand = new RelayCommand(_ => ToggleSelectionTool());
             ClearSelectionCommand = new RelayCommand(_ => Selection = null);
@@ -1383,6 +1361,26 @@ namespace ImageEditor.ViewModels
         }
 
         // ================= HELPERS =================
+
+        public void ZoomAt(Point mousePos, int delta)
+        {
+            double zoomFactor = delta > 0 ? 1.1 : 0.9;
+
+            double oldZoom = Zoom;
+            double newZoom = Tools.Clamp(Zoom * zoomFactor, 0.1, 20);
+
+            if (Math.Abs(newZoom - oldZoom) < 0.0001)
+                return;
+
+            double relX = (mousePos.X - ImageOffsetX) / oldZoom;
+            double relY = (mousePos.Y - ImageOffsetY) / oldZoom;
+
+            Zoom = newZoom;
+
+            ImageOffsetX = mousePos.X - relX * newZoom;
+            ImageOffsetY = mousePos.Y - relY * newZoom;
+        }
+
         private void ResetView()
         {
             Zoom = 1.0;
