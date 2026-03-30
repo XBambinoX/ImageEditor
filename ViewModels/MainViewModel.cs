@@ -359,29 +359,60 @@ namespace ImageEditor.ViewModels
 
                 foreach (var file in dialog.FileNames)
                 {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(file);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
+                    BitmapDecoder decoder = null;
+                    WriteableBitmap wb = null;
+                    try
+                    {
+                        using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
+                        {
+                            decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                            var frame = decoder.Frames[0];
 
-                    var converted = new FormatConvertedBitmap(bitmap, PixelFormats.Bgr24, null, 0);
+                            BitmapSource converted;
+                            if (frame.Format == PixelFormats.Bgr24)
+                            {
+                                converted = frame;
+                            }
+                            else
+                            {
+                                converted = new FormatConvertedBitmap(frame, PixelFormats.Bgr24, null, 0);
+                            }
+
+                            wb = new WriteableBitmap(converted.PixelWidth, converted.PixelHeight, 96, 96, PixelFormats.Bgr24, null);
+                            int stride = wb.PixelWidth * 3;
+                            byte[] pixels = new byte[wb.PixelHeight * stride];
+                            converted.CopyPixels(pixels, stride, 0);
+                            wb.WritePixels(new Int32Rect(0, 0, wb.PixelWidth, wb.PixelHeight), pixels, stride, 0);
+                        }
+                    }
+                    finally
+                    {
+                        decoder = null;
+                    }
+
                     var tab = new ImageTab
                     {
-                        Image = new WriteableBitmap(converted),
+                        Image = wb,
                         Title = Path.GetFileName(file),
                         FilePath = file
                     };
 
                     Tabs.Add(tab);
                     SelectedTab = tab;
-
+                    
                     Logger.Info($"Image opened: {file}");
                 }
 
                 ResetView();
+
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+                });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Failed to open image: {ex.Message}");
                 MessageBox.Show("Failed to open image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -413,6 +444,8 @@ namespace ImageEditor.ViewModels
                 int index = Tabs.IndexOf(tab);
                 Tabs.Remove(tab);
 
+                
+
                 if (Tabs.Count > 0)
                     SelectedTab = Tabs[Tools.Clamp(index, 0, Tabs.Count - 1)];
                 else
@@ -427,6 +460,8 @@ namespace ImageEditor.ViewModels
                 GC.Collect(2, GCCollectionMode.Forced, blocking: true);
 
                 Logger.Info($"Tab closed: {tab.Title}");
+
+                tab = null;
             }
             catch (Exception ex)
             {
