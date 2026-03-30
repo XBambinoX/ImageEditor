@@ -628,6 +628,9 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private bool _strokeInProgress;
+        private Int32Rect _strokeDirtyRegion;
+        private WriteableBitmap _strokeBefore;
         public void BrushStroke(Point imagePoint, Point? previousPoint)
         {
             if (ActiveTool != ToolType.Brush) return;
@@ -665,10 +668,6 @@ namespace ImageEditor.ViewModels
                 BrushHardness = _brushSettingsWindow.BrushHardness;
             }
         }
-
-        private bool _strokeInProgress;
-        private Int32Rect _strokeDirtyRegion;
-        private WriteableBitmap _strokeBefore;
 
         public void BeginStrokeSnapshot(Point startPoint)
         {
@@ -727,6 +726,63 @@ namespace ImageEditor.ViewModels
 
                 _strokeDirtyRegion = new Int32Rect(rx1, ry1, rx2 - rx1, ry2 - ry1);
             }
+        }
+
+        private WriteableBitmap _lineBefore;
+        private Int32Rect _lineDirtyRegion;
+
+        public void BeginLineSnapshot()
+        {
+            if (SelectedTab?.Image == null) return;
+            _lineBefore = new WriteableBitmap(SelectedTab.Image);
+            _lineDirtyRegion = Int32Rect.Empty;
+        }
+
+        public void ExpandLineDirtyRegion(Point from, Point to)
+        {
+            if (SelectedTab?.Image == null) return;
+
+            int bmpW = SelectedTab.Image.PixelWidth;
+            int bmpH = SelectedTab.Image.PixelHeight;
+            int pad = LineWidth + 1;
+
+            int x = Math.Max(0, (int)Math.Min(from.X, to.X) - pad);
+            int y = Math.Max(0, (int)Math.Min(from.Y, to.Y) - pad);
+            int x2 = Math.Min(bmpW, (int)Math.Max(from.X, to.X) + pad);
+            int y2 = Math.Min(bmpH, (int)Math.Max(from.Y, to.Y) + pad);
+
+            var rect = new Int32Rect(x, y, x2 - x, y2 - y);
+
+            if (_lineDirtyRegion.IsEmpty)
+            {
+                _lineDirtyRegion = rect;
+            }
+            else
+            {
+                int rx1 = Math.Min(_lineDirtyRegion.X, rect.X);
+                int ry1 = Math.Min(_lineDirtyRegion.Y, rect.Y);
+                int rx2 = Math.Max(_lineDirtyRegion.X + _lineDirtyRegion.Width, rect.X + rect.Width);
+                int ry2 = Math.Max(_lineDirtyRegion.Y + _lineDirtyRegion.Height, rect.Y + rect.Height);
+                _lineDirtyRegion = new Int32Rect(rx1, ry1, rx2 - rx1, ry2 - ry1);
+            }
+        }
+
+        public void CommitLineSnapshot()
+        {
+            if (_lineBefore == null || SelectedTab == null) return;
+
+            if (_lineDirtyRegion.IsEmpty || _lineDirtyRegion.Width <= 0 || _lineDirtyRegion.Height <= 0)
+            {
+                _lineBefore = null;
+                return;
+            }
+
+            var snapshot = new ImageSnapshot(_lineBefore, _lineDirtyRegion);
+            SelectedTab.UndoStack.Push(snapshot);
+            SelectedTab.RedoStack.Clear();
+
+            _lineBefore = null;
+            _lineDirtyRegion = Int32Rect.Empty;
         }
 
         #region toggle tools methods

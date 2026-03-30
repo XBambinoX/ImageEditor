@@ -44,6 +44,9 @@ namespace ImageEditor.Views
 
         private WriteableBitmap _linePreviewCurrent;
 
+        private Int32Rect? _previousLineRect;
+        private byte[] _regionBuffer;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -157,8 +160,6 @@ namespace ImageEditor.Views
                 return;
             }
 
-
-
             if (vm?.ActiveTool == ToolType.Line)
             {
                 var imgPoint = GetImagePixel(e, vm);
@@ -169,18 +170,17 @@ namespace ImageEditor.Views
                     vm.LineStart = imgPoint;
                     _linePreviewStart = imgPoint;
                     _linePreviewBackup = new WriteableBitmap(vm.SelectedTab.Image);
-                    vm.SaveState();
+                    vm.BeginLineSnapshot();
                     (sender as FrameworkElement)?.CaptureMouse();
                 }
                 else
                 {
                     if (!vm.LineStart.HasValue)
                     {
-                        // First click — set the start point
                         vm.LineStart = imgPoint;
                         _linePreviewStart = imgPoint;
                         _linePreviewBackup = new WriteableBitmap(vm.SelectedTab.Image);
-                        vm.SaveState();
+                        vm.BeginLineSnapshot();
                         (sender as FrameworkElement)?.CaptureMouse();
                     }
                     else if (!vm.IsBezierSecondPhase)
@@ -194,9 +194,10 @@ namespace ImageEditor.Views
                     }
                     else
                     {
-                        // Third click — commit the line with the specified control points
+                        vm.ExpandLineDirtyRegion(vm.LineStart.Value, vm.LineEnd.Value);
                         vm.CommitLine(vm.LineStart.Value, vm.LineEnd.Value,
                                       vm.BezierControl1, vm.BezierControl2);
+                        vm.CommitLineSnapshot(); // push the line action to undo stack
                         _linePreviewBackup = null;
                     }
                 }
@@ -308,27 +309,30 @@ namespace ImageEditor.Views
                 return;
             }
 
-            if (vm?.ActiveTool == ToolType.Line && _linePreviewStart.HasValue && _linePreviewBackup != null && vm.SelectedTab != null)
+            if (vm?.ActiveTool == ToolType.Line && _linePreviewStart.HasValue && _linePreviewBackup != null)
             {
                 var current = GetImagePixel(e, vm);
 
-                if (_linePreviewCurrent == null ||
-                    _linePreviewCurrent.PixelWidth != _linePreviewBackup.PixelWidth ||
-                    _linePreviewCurrent.PixelHeight != _linePreviewBackup.PixelHeight)
+                // Ensure preview bitmap exists
+                int w = _linePreviewBackup.PixelWidth;
+                int h = _linePreviewBackup.PixelHeight;
+                if (_linePreviewCurrent == null || _linePreviewCurrent.PixelWidth != w || _linePreviewCurrent.PixelHeight != h)
                 {
                     _linePreviewCurrent = new WriteableBitmap(_linePreviewBackup);
-                }
-                else
-                {
-                    int w = _linePreviewBackup.PixelWidth;
-                    int h = _linePreviewBackup.PixelHeight;
-                    int stride = w * (_linePreviewBackup.Format.BitsPerPixel / 8);
-                    byte[] pixels = new byte[h * stride];
-                    _linePreviewBackup.CopyPixels(pixels, stride, 0);
-                    _linePreviewCurrent.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+                    _previousLineRect = null;
                 }
 
-                vm.SelectedTab.Image = _linePreviewCurrent;
+                if (_previousLineRect.HasValue && _previousLineRect.Value.Width > 0 && _previousLineRect.Value.Height > 0)
+                {
+                    var rect = _previousLineRect.Value;
+                    int stride = rect.Width * 3;
+                    int bufferSize = rect.Height * stride;
+                    if (_regionBuffer == null || _regionBuffer.Length < bufferSize)
+                        _regionBuffer = new byte[bufferSize];
+
+                    _linePreviewBackup.CopyPixels(rect, _regionBuffer, stride, 0);
+                    _linePreviewCurrent.WritePixels(rect, _regionBuffer, stride, 0);
+                }
 
                 if (!vm.IsLineBezierMode && e.LeftButton == MouseButtonState.Pressed)
                 {
@@ -351,6 +355,10 @@ namespace ImageEditor.Views
                         vm.LineWidth, vm.ActiveColor);
                 }
 
+                var newRect = ComputeLineBoundingBox(_linePreviewStart.Value, current, vm.LineWidth);
+                _previousLineRect = newRect;
+
+                vm.SelectedTab.Image = _linePreviewCurrent;
                 vm.OnPropertyChangedPublic(nameof(vm.CurrentImage));
                 return;
             }
@@ -423,6 +431,7 @@ namespace ImageEditor.Views
                     GC.WaitForPendingFinalizers();
                     GC.Collect(2, GCCollectionMode.Forced, blocking: false);
                 });
+                return;
             }
 
             if (!_isMiddleDragging)
@@ -430,12 +439,20 @@ namespace ImageEditor.Views
 
             if (vm?.ActiveTool == ToolType.Line && !vm.IsLineBezierMode && vm.LineStart.HasValue)
             {
-                var img = sender as Image;
                 var imgPoint = GetImagePixel(e, vm);
+                vm.ExpandLineDirtyRegion(vm.LineStart.Value, imgPoint);
                 vm.CommitLine(vm.LineStart.Value, imgPoint);
+                vm.CommitLineSnapshot();
                 _linePreviewBackup = null;
                 _linePreviewStart = null;
+                _previousLineRect = null;
                 (sender as FrameworkElement)?.ReleaseMouseCapture();
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: false);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: false);
+                });
                 return;
             }
         }
@@ -773,6 +790,22 @@ namespace ImageEditor.Views
             }
 
             return (new Int32Rect(x, y, w, h), x, y);
+        }
+
+        private Int32Rect ComputeLineBoundingBox(Point from, Point to, int lineWidth)
+        {
+            int pad = lineWidth + 2;
+            int x1 = (int)Math.Min(from.X, to.X) - pad;
+            int y1 = (int)Math.Min(from.Y, to.Y) - pad;
+            int x2 = (int)Math.Max(from.X, to.X) + pad;
+            int y2 = (int)Math.Max(from.Y, to.Y) + pad;
+
+            x1 = Math.Max(0, x1);
+            y1 = Math.Max(0, y1);
+            x2 = Math.Min(_linePreviewBackup.PixelWidth, x2);
+            y2 = Math.Min(_linePreviewBackup.PixelHeight, y2);
+
+            return new Int32Rect(x1, y1, x2 - x1, y2 - y1);
         }
 
         private void HideEyedropperPreview()
