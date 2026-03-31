@@ -42,6 +42,10 @@ namespace ImageEditor.ViewModels
                         ? $"Loaded: {_selectedTab.FilePath}"
                         : _selectedTab.Title)
                     : "No image loaded";
+
+                ImageSize = _selectedTab?.Image != null
+                    ? $"{_selectedTab.Image.PixelWidth} × {_selectedTab.Image.PixelHeight} px"
+                    : "";
             }
         }
 
@@ -68,6 +72,13 @@ namespace ImageEditor.ViewModels
         {
             get => _selectionSize;
             set { _selectionSize = value; OnPropertyChanged(); }
+        }
+
+        private string _imageSize = "";
+        public string ImageSize
+        {
+            get => _imageSize;
+            set { _imageSize = value; OnPropertyChanged(); }
         }
 
         private double _zoom = 1.0;
@@ -602,7 +613,11 @@ namespace ImageEditor.ViewModels
 
                 Tabs.Add(tab);
                 SelectedTab = tab;
+                ImageSize = $"{dialog.ImageWidth} x {dialog.ImageHeight} px";
+
                 ResetView();
+
+                
 
                 Logger.Info($"New image created: {w}×{h}");
             }
@@ -624,6 +639,9 @@ namespace ImageEditor.ViewModels
                 SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
+                ImageSize = SelectedTab?.Image != null
+                    ? $"{SelectedTab.Image.PixelWidth} x {SelectedTab.Image.PixelHeight} px"
+                    : "";
 
                 Logger.Info($"Image rotated: {finalAngle} degrees");
             }
@@ -1486,6 +1504,10 @@ namespace ImageEditor.ViewModels
 
                 SelectedTab.IsModified = SelectedTab.UndoStack.Count > 0;
                 OnPropertyChanged(nameof(CurrentImage));
+                ImageSize = SelectedTab?.Image != null
+                    ? $"{SelectedTab.Image.PixelWidth} x {SelectedTab.Image.PixelHeight} px"
+                    : "";
+
                 Logger.Info("Undo performed");
             }
             catch (Exception ex)
@@ -1528,6 +1550,9 @@ namespace ImageEditor.ViewModels
 
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
+                ImageSize = SelectedTab?.Image != null
+                    ? $"{SelectedTab.Image.PixelWidth} x {SelectedTab.Image.PixelHeight} px"
+                    : "";
 
                 Logger.Info("Redo performed");
             }
