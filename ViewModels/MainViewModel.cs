@@ -38,7 +38,9 @@ namespace ImageEditor.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasImage));
                 StatusText = _selectedTab != null
-                    ? $"Loaded: {_selectedTab.FilePath ?? _selectedTab.Title}"
+                    ? (_selectedTab.FilePath != null
+                        ? $"Loaded: {_selectedTab.FilePath}"
+                        : _selectedTab.Title)
                     : "No image loaded";
             }
         }
@@ -249,7 +251,7 @@ namespace ImageEditor.ViewModels
             {
                 Image = wb,
                 Title = "White",
-                FilePath = "No image loaded"
+                FilePath = null
             };
 
             Tabs.Add(whiteTab);
