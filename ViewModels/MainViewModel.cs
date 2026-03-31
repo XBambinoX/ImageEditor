@@ -1478,16 +1478,30 @@ namespace ImageEditor.ViewModels
             {
                 if (SelectedTab?.RedoStack.Count == 0) return;
 
-                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
-                SelectedTab.Image = wb;
-
                 var redo = SelectedTab.RedoStack.Pop();
 
-                var undoSnapshot = ImageSnapshot.CreateDiff(wb, redo.Region, redo.Pixels);
-                if (undoSnapshot != null)
+                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+
+                bool sizeChanged = wb.PixelWidth != redo.OriginalWidth || wb.PixelHeight != redo.OriginalHeight;
+
+                if (sizeChanged)
+                {
+                    var undoSnapshot = new ImageSnapshot(wb,new Int32Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
                     SelectedTab.UndoStack.Push(undoSnapshot);
 
-                redo.Restore(wb);
+                    var restored = redo.RestoreFull();
+                    SelectedTab.Image = restored;
+                }
+                else
+                {
+                    SelectedTab.Image = wb;
+
+                    var undoSnapshot = ImageSnapshot.CreateDiff(wb, redo.Region, redo.Pixels);
+                    if (undoSnapshot != null)
+                        SelectedTab.UndoStack.Push(undoSnapshot);
+
+                    redo.Restore(wb);
+                }
 
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
