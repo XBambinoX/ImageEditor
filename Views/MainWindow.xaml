@@ -470,6 +470,7 @@
                                     <ColumnDefinition/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                             </Grid>
                         </ItemsPanelTemplate>
@@ -487,6 +488,13 @@
                     </StatusBarItem>
 
                     <StatusBarItem Grid.Column="2">
+                        <TextBlock Text="{Binding SelectionSize}"
+                           FontFamily="Consolas"
+                           MinWidth="140"
+                           Margin="20,0,0,0"/>
+                    </StatusBarItem>
+
+                    <StatusBarItem Grid.Column="3">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Scale:"/>
                             <TextBlock Text="{Binding Zoom, StringFormat={}{0:P0}}"

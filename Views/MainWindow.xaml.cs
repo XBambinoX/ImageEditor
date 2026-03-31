@@ -285,7 +285,7 @@ namespace ImageEditor.Views
                 int py = (int)imgPoint.Y;
 
                 if (bitmap != null && px >= 0 && px < bitmap.PixelWidth && py >= 0 && py < bitmap.PixelHeight)
-                    vm.MouseCoordinates = $"({px}, {py})";
+                    vm.MouseCoordinates = $"Mouse:({px}, {py})";
                 else
                     vm.MouseCoordinates = "";
             }

@@ -63,6 +63,13 @@ namespace ImageEditor.ViewModels
             set { _mouseCoordinates = value; OnPropertyChanged(); }
         }
 
+        private string _selectionSize = "Selection:none";
+        public string SelectionSize
+        {
+            get => _selectionSize;
+            set { _selectionSize = value; OnPropertyChanged(); }
+        }
+
         private double _zoom = 1.0;
         public double Zoom
         {
@@ -116,7 +123,14 @@ namespace ImageEditor.ViewModels
         public Int32Rect? Selection
         {
             get => _selection;
-            set { _selection = value; OnPropertyChanged(); }
+            set
+            {
+                _selection = value;
+                OnPropertyChanged();
+                SelectionSize = value.HasValue
+                    ? $"Selection:({value.Value.Width}, {value.Value.Height})"
+                    : "Selection:none";
+            }
         }
 
         private ColorPickerWindow _colorPickerWindow;
