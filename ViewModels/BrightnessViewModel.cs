@@ -1,25 +1,17 @@
 ﻿using ImageEditor.Commands;
+using ImageEditor.Services.Math;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ImageEditor.Services.Math;
 
 namespace ImageEditor.ViewModels
 {
-    public class BrightnessViewModel : BaseViewModel
+    public class BrightnessViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         private int _brightness = 0;
         public int Brightness
         {
@@ -49,16 +41,12 @@ namespace ImageEditor.ViewModels
         public int MinContrast => -100;
         public int MaxContrast => 100;
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseBrightnessCommand { get; }
         public ICommand DecreaseBrightnessCommand { get; }
         public ICommand IncreaseContrastCommand { get; }
         public ICommand DecreaseContrastCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public BrightnessViewModel(WriteableBitmap source)
         {
@@ -98,23 +86,23 @@ namespace ImageEditor.ViewModels
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
-                int stride = w * 4;
+                int stride = _original.BackBufferStride;
 
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);
 
-                var result = await Task.Run(() =>
+                byte[] resultBytes = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-
                     byte[] tmp = BrightnessHelper.ApplyBrightnessBytes(pixels, w, h, stride, brightness);
-                    return BrightnessHelper.ApplyContrastBytes(tmp, w, h, stride, dpiX, dpiY, contrast);
-
+                    return BrightnessHelper.ApplyContrastBytes(tmp, w, h, stride, contrast);
                 }, token);
 
-                if (token.IsCancellationRequested || result == null) return;
+                if (token.IsCancellationRequested || resultBytes == null) return;
+                var wb = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
+                wb.WritePixels(new Int32Rect(0, 0, w, h), resultBytes, wb.BackBufferStride, 0);
 
-                PreviewImage = result;
+                PreviewImage = wb;
             }
             catch (TaskCanceledException) { }
         }

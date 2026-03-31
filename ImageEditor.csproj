@@ -60,7 +60,9 @@
     <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="Models\ImageDocument.cs" />
     <Compile Include="Models\ImageInfoModel.cs" />
+    <Compile Include="Models\ImageSnapshot.cs" />
     <Compile Include="Models\ImageTab.cs" />
+    <Compile Include="Models\LimitedStack.cs" />
     <Compile Include="Models\Tooltype.cs" />
     <Compile Include="Services\ImageInfoService.cs" />
     <Compile Include="Services\ImageProcessing\BrightnessHelper.cs" />

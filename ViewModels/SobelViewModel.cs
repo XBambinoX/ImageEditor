@@ -4,23 +4,15 @@ using ImageEditor.Services.Math;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ImageEditor.ViewModels
 {
-    public class SobelViewModel : BaseViewModel
+    public class SobelViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-        private WriteableBitmap _preview;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set { _preview = value; OnPropertyChanged(); }
-        }
-
         private int _threshold = 30;
         public int Threshold
         {
@@ -48,14 +40,10 @@ namespace ImageEditor.ViewModels
         public int MinThreshold => 0;
         public int MaxThreshold => 255;
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseThresholdCommand { get; }
         public ICommand DecreaseThresholdCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public SobelViewModel(WriteableBitmap source)
         {
@@ -95,20 +83,23 @@ namespace ImageEditor.ViewModels
                 int h = _original.PixelHeight;
                 double dpiX = _original.DpiX;
                 double dpiY = _original.DpiY;
-                int stride = w * 4;
+                int stride = _original.BackBufferStride;
 
                 byte[] pixels = new byte[h * stride];
                 _original.CopyPixels(pixels, stride, 0);
 
-                var result = await Task.Run(() =>
+                byte[] resultBytes = await Task.Run(() =>
                 {
                     if (token.IsCancellationRequested) return null;
-                    return SobelHelper.ApplySobel(pixels, w, h, stride, dpiX, dpiY, threshold, colorize);
+                    return SobelHelper.ApplySobel(pixels, w, h, stride, threshold, colorize);
                 }, token);
 
-                if (token.IsCancellationRequested || result == null) return;
+                if (token.IsCancellationRequested || resultBytes == null) return;
 
-                PreviewImage = result;
+                var wb = new WriteableBitmap(w, h, dpiX, dpiY, PixelFormats.Bgr24, null);
+                wb.WritePixels(new Int32Rect(0, 0, w, h), resultBytes, wb.BackBufferStride, 0);
+
+                PreviewImage = wb;
             }
             catch (TaskCanceledException) { }
         }

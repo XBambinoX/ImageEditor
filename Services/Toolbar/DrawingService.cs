@@ -47,19 +47,11 @@ namespace ImageEditor.Services
 
                         alpha = System.Math.Max(0, System.Math.Min(1, alpha));
 
-                        byte* pixel = buffer + y * stride + x * 4;
+                        byte* pixel = buffer + y * stride + x * 3;
 
-                        double srcA = color.A / 255.0 * alpha;
-                        double dstA = pixel[3] / 255.0;
-                        double outA = srcA + dstA * (1.0 - srcA);
-
-                        if (outA > 0)
-                        {
-                            pixel[0] = (byte)((color.B * srcA + pixel[0] * dstA * (1.0 - srcA)) / outA);
-                            pixel[1] = (byte)((color.G * srcA + pixel[1] * dstA * (1.0 - srcA)) / outA);
-                            pixel[2] = (byte)((color.R * srcA + pixel[2] * dstA * (1.0 - srcA)) / outA);
-                            pixel[3] = (byte)(outA * 255);
-                        }
+                        pixel[0] = (byte)(color.B * alpha + pixel[0] * (1.0 - alpha)); // B
+                        pixel[1] = (byte)(color.G * alpha + pixel[1] * (1.0 - alpha)); // G
+                        pixel[2] = (byte)(color.R * alpha + pixel[2] * (1.0 - alpha)); // R
                     }
                 }
             }

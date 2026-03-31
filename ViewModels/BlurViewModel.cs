@@ -11,26 +11,12 @@ using ImageEditor.Services.Math;
 
 namespace ImageEditor.ViewModels
 {
-    public class BlurViewModel : BaseViewModel
+    public class BlurViewModel : BaseFilterViewModel
     {
-        private readonly WriteableBitmap _original;
-        private CancellationTokenSource _cts;
-
-        private WriteableBitmap _preview;
         private int _radius = 1;
 
         public int MinRadius => 0;
         public int MaxRadius => 100;
-
-        public WriteableBitmap PreviewImage
-        {
-            get => _preview;
-            set
-            {
-                _preview = value;
-                OnPropertyChanged();
-            }
-        }
 
         public int Radius
         {
@@ -47,14 +33,10 @@ namespace ImageEditor.ViewModels
             }
         }
 
-        public WriteableBitmap ResultImage { get; private set; }
-
         public ICommand ApplyCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand IncreaseRadiusCommand { get; }
         public ICommand DecreaseRadiusCommand { get; }
-
-        public Action<bool> CloseAction;
 
         public BlurViewModel(WriteableBitmap source)
         {
@@ -90,7 +72,7 @@ namespace ImageEditor.ViewModels
 
                 int w = _original.PixelWidth;
                 int h = _original.PixelHeight;
-                int stride = w * 4;
+                int stride = w * 3;
 
                 byte[] src = new byte[h * stride];
                 _original.CopyPixels(src, stride, 0);
@@ -110,7 +92,7 @@ namespace ImageEditor.ViewModels
                     w, h,
                     _original.DpiX,
                     _original.DpiY,
-                    PixelFormats.Bgra32,
+                    PixelFormats.Bgr24,
                     null);
 
                 wb.WritePixels(

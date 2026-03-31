@@ -38,8 +38,14 @@ namespace ImageEditor.ViewModels
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasImage));
                 StatusText = _selectedTab != null
-                    ? $"Loaded: {_selectedTab.FilePath ?? _selectedTab.Title}"
+                    ? (_selectedTab.FilePath != null
+                        ? $"Loaded: {_selectedTab.FilePath}"
+                        : _selectedTab.Title)
                     : "No image loaded";
+
+                ImageSize = _selectedTab?.Image != null
+                    ? $"{_selectedTab.Image.PixelWidth} × {_selectedTab.Image.PixelHeight} px"
+                    : "";
             }
         }
 
@@ -52,6 +58,27 @@ namespace ImageEditor.ViewModels
         {
             get => _statusText;
             set { _statusText = value; OnPropertyChanged(); }
+        }
+
+        private string _mouseCoordinates = "";
+        public string MouseCoordinates
+        {
+            get => _mouseCoordinates;
+            set { _mouseCoordinates = value; OnPropertyChanged(); }
+        }
+
+        private string _selectionSize = "Selection:none";
+        public string SelectionSize
+        {
+            get => _selectionSize;
+            set { _selectionSize = value; OnPropertyChanged(); }
+        }
+
+        private string _imageSize = "";
+        public string ImageSize
+        {
+            get => _imageSize;
+            set { _imageSize = value; OnPropertyChanged(); }
         }
 
         private double _zoom = 1.0;
@@ -107,7 +134,14 @@ namespace ImageEditor.ViewModels
         public Int32Rect? Selection
         {
             get => _selection;
-            set { _selection = value; OnPropertyChanged(); }
+            set
+            {
+                _selection = value;
+                OnPropertyChanged();
+                SelectionSize = value.HasValue
+                    ? $"Selection:({value.Value.Width}, {value.Value.Height})"
+                    : "Selection:none";
+            }
         }
 
         private ColorPickerWindow _colorPickerWindow;
@@ -239,9 +273,8 @@ namespace ImageEditor.ViewModels
         public MainViewModel()
         {
             #region White Tab Initialization
-            var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgra32, null);
-
-            int stride = 800 * 4;
+            var wb = new WriteableBitmap(800, 600, 96, 96, PixelFormats.Bgr24, null);
+            int stride = 800 * 3;
             byte[] pixels = Enumerable.Repeat((byte)255, 600 * stride).ToArray();
 
             wb.WritePixels(new Int32Rect(0, 0, 800, 600), pixels, stride, 0);
@@ -250,7 +283,7 @@ namespace ImageEditor.ViewModels
             {
                 Image = wb,
                 Title = "White",
-                FilePath = "No image loaded"
+                FilePath = null
             };
 
             Tabs.Add(whiteTab);
@@ -320,28 +353,6 @@ namespace ImageEditor.ViewModels
             });
             CloseCommand = new RelayCommand(_ => Application.Current.MainWindow.Close());
 
-            MouseWheelCommand = new RelayCommand(parameter =>
-            {
-                var args = parameter as MouseWheelEventArgs;
-                if (args == null)
-                    return;
-
-                var element = args.Source as FrameworkElement;
-                if (element == null)
-                    return;
-
-                var mousePos = args.GetPosition(element);
-                double factor = args.Delta > 0 ? 1.1 : 0.9;
-                double oldZoom = Zoom;
-                double newZoom = Tools.Clamp(oldZoom * factor, 0.1, 5.0);
-
-                ImageOffsetX = mousePos.X - (mousePos.X - ImageOffsetX) * (newZoom / oldZoom);
-                ImageOffsetY = mousePos.Y - (mousePos.Y - ImageOffsetY) * (newZoom / oldZoom);
-
-                Zoom = newZoom;
-            });
-
-
             SelectBrushCommand = new RelayCommand(_ => ToggleBrushTool());
             SelectSelectionToolCommand = new RelayCommand(_ => ToggleSelectionTool());
             ClearSelectionCommand = new RelayCommand(_ => Selection = null);
@@ -382,28 +393,60 @@ namespace ImageEditor.ViewModels
 
                 foreach (var file in dialog.FileNames)
                 {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(file);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
+                    BitmapDecoder decoder = null;
+                    WriteableBitmap wb = null;
+                    try
+                    {
+                        using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
+                        {
+                            decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                            var frame = decoder.Frames[0];
+
+                            BitmapSource converted;
+                            if (frame.Format == PixelFormats.Bgr24)
+                            {
+                                converted = frame;
+                            }
+                            else
+                            {
+                                converted = new FormatConvertedBitmap(frame, PixelFormats.Bgr24, null, 0);
+                            }
+
+                            wb = new WriteableBitmap(converted.PixelWidth, converted.PixelHeight, 96, 96, PixelFormats.Bgr24, null);
+                            int stride = wb.PixelWidth * 3;
+                            byte[] pixels = new byte[wb.PixelHeight * stride];
+                            converted.CopyPixels(pixels, stride, 0);
+                            wb.WritePixels(new Int32Rect(0, 0, wb.PixelWidth, wb.PixelHeight), pixels, stride, 0);
+                        }
+                    }
+                    finally
+                    {
+                        decoder = null;
+                    }
 
                     var tab = new ImageTab
                     {
-                        Image = new WriteableBitmap(bitmap),
+                        Image = wb,
                         Title = Path.GetFileName(file),
                         FilePath = file
                     };
 
                     Tabs.Add(tab);
                     SelectedTab = tab;
-
+                    
                     Logger.Info($"Image opened: {file}");
                 }
 
                 ResetView();
+
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+                });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error($"Failed to open image: {ex.Message}");
                 MessageBox.Show("Failed to open image. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -440,13 +483,37 @@ namespace ImageEditor.ViewModels
                     ResetView();
                 }
 
-                Logger.Info($"Tab closed: {tab.Title}");
+                CleanupTab(tab);
+                Logger.Info($"Tab closed");
             }
             catch (Exception ex)
             {
                 Logger.Error($"Failed to close tab: {ex.Message}");
                 MessageBox.Show("Failed to close tab. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void CleanupTab(ImageTab tab)
+        {
+            if (tab == null) return;
+
+            if (SelectedTab == tab)
+            {
+                tab = null;
+            }
+
+            tab.Image = null;
+
+            tab.UndoStack.Clear();
+            tab.RedoStack.Clear();
+            _strokeBefore = null;
+            _lineBefore = null;
+            _pasteFloating = null;
+            _pasteBackground = null;
+            _pasteFloatingOriginal = null;
+            _clipboard = null;
+
+            Selection = null;
         }
 
         private void SaveImage()
@@ -521,23 +588,38 @@ namespace ImageEditor.ViewModels
 
                 if (!dialog.Confirmed) return;
 
-                var wb = new WriteableBitmap(dialog.ImageWidth, dialog.ImageHeight, 96, 96, PixelFormats.Bgra32, null);
-                int stride = dialog.ImageWidth * 4;
-                byte[] pixels = Enumerable.Repeat((byte)255, dialog.ImageHeight * stride).ToArray();
-                wb.WritePixels(new Int32Rect(0, 0, dialog.ImageWidth, dialog.ImageHeight), pixels, stride, 0);
+                int w = dialog.ImageWidth;
+                int h = dialog.ImageHeight;
+
+                var wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgr24, null);
+                wb.Lock();
+                unsafe
+                {
+                    byte* ptr = (byte*)wb.BackBuffer;
+                    int stride = wb.BackBufferStride;
+                    long totalBytes = (long)stride * h;
+                    for (long i = 0; i < totalBytes; i++)
+                        ptr[i] = 255;
+                }
+                wb.AddDirtyRect(new Int32Rect(0, 0, w, h));
+                wb.Unlock();
 
                 var tab = new ImageTab
                 {
                     Image = wb,
-                    Title = $"New {dialog.ImageWidth}×{dialog.ImageHeight}",
+                    Title = $"New {w}×{h}",
                     FilePath = null
                 };
 
                 Tabs.Add(tab);
                 SelectedTab = tab;
+                ImageSize = $"{dialog.ImageWidth} x {dialog.ImageHeight} px";
+
                 ResetView();
 
-                Logger.Info($"New image created: {dialog.ImageWidth}×{dialog.ImageHeight}");
+                
+
+                Logger.Info($"New image created: {w}×{h}");
             }
             catch (Exception ex)
             {
@@ -557,6 +639,9 @@ namespace ImageEditor.ViewModels
                 SelectedTab.Image = new WriteableBitmap(new TransformedBitmap(SelectedTab.Image, transform));
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
+                ImageSize = SelectedTab?.Image != null
+                    ? $"{SelectedTab.Image.PixelWidth} x {SelectedTab.Image.PixelHeight} px"
+                    : "";
 
                 Logger.Info($"Image rotated: {finalAngle} degrees");
             }
@@ -612,6 +697,12 @@ namespace ImageEditor.ViewModels
                         OnPropertyChanged(nameof(CurrentImage));
                     }
                     window.Close();
+
+                    vm.Cleanup();
+
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect(2, GCCollectionMode.Forced, blocking: true);
                 });
 
                 window.ShowDialog();
@@ -625,6 +716,9 @@ namespace ImageEditor.ViewModels
             }
         }
 
+        private bool _strokeInProgress;
+        private Int32Rect _strokeDirtyRegion;
+        private WriteableBitmap _strokeBefore;
         public void BrushStroke(Point imagePoint, Point? previousPoint)
         {
             if (ActiveTool != ToolType.Brush) return;
@@ -647,6 +741,10 @@ namespace ImageEditor.ViewModels
             else
                 DrawingService.DrawCircle(wb, (int)imagePoint.X, (int)imagePoint.Y, radius, ActiveColor, BrushHardness);
 
+            ExpandDirtyRegion(imagePoint);
+            if (previousPoint.HasValue)
+                ExpandDirtyRegion(previousPoint.Value);
+
             SelectedTab.IsModified = true;
         }
 
@@ -657,6 +755,122 @@ namespace ImageEditor.ViewModels
                 BrushSize = _brushSettingsWindow.BrushSize;
                 BrushHardness = _brushSettingsWindow.BrushHardness;
             }
+        }
+
+        public void BeginStrokeSnapshot(Point startPoint)
+        {
+            if (SelectedTab?.Image == null) return;
+
+            _strokeInProgress = true;
+            _strokeBefore = new WriteableBitmap(SelectedTab.Image);
+
+            _strokeDirtyRegion = Int32Rect.Empty;
+            ExpandDirtyRegion(startPoint);
+        }
+
+        public void CommitStrokeSnapshot()
+        {
+            if (!_strokeInProgress || SelectedTab == null) return;
+
+            _strokeInProgress = false;
+
+            if (_strokeDirtyRegion.Width <= 0 || _strokeDirtyRegion.Height <= 0)
+                return;
+
+            var snapshot = new ImageSnapshot(_strokeBefore, _strokeDirtyRegion);
+
+            SelectedTab.UndoStack.Push(snapshot);
+            SelectedTab.RedoStack.Clear();
+
+            _strokeBefore = null;
+            _strokeDirtyRegion = Int32Rect.Empty;
+        }
+
+        private void ExpandDirtyRegion(Point p)
+        {
+            if (SelectedTab?.Image == null) return;
+
+            int bmpW = SelectedTab.Image.PixelWidth;
+            int bmpH = SelectedTab.Image.PixelHeight;
+            int r = BrushSize;
+
+            int x = Math.Max(0, (int)p.X - r);
+            int y = Math.Max(0, (int)p.Y - r);
+            int x2 = Math.Min(bmpW, (int)p.X + r);
+            int y2 = Math.Min(bmpH, (int)p.Y + r);
+
+            var rect = new Int32Rect(x, y, x2 - x, y2 - y);
+
+            if (_strokeDirtyRegion.IsEmpty)
+            {
+                _strokeDirtyRegion = rect;
+            }
+            else
+            {
+                int rx1 = Math.Min(_strokeDirtyRegion.X, rect.X);
+                int ry1 = Math.Min(_strokeDirtyRegion.Y, rect.Y);
+                int rx2 = Math.Max(_strokeDirtyRegion.X + _strokeDirtyRegion.Width, rect.X + rect.Width);
+                int ry2 = Math.Max(_strokeDirtyRegion.Y + _strokeDirtyRegion.Height, rect.Y + rect.Height);
+
+                _strokeDirtyRegion = new Int32Rect(rx1, ry1, rx2 - rx1, ry2 - ry1);
+            }
+        }
+
+        private WriteableBitmap _lineBefore;
+        private Int32Rect _lineDirtyRegion;
+
+        public void BeginLineSnapshot()
+        {
+            if (SelectedTab?.Image == null) return;
+            _lineBefore = new WriteableBitmap(SelectedTab.Image);
+            _lineDirtyRegion = Int32Rect.Empty;
+        }
+
+        public void ExpandLineDirtyRegion(Point from, Point to)
+        {
+            if (SelectedTab?.Image == null) return;
+
+            int bmpW = SelectedTab.Image.PixelWidth;
+            int bmpH = SelectedTab.Image.PixelHeight;
+            int pad = LineWidth + 1;
+
+            int x = Math.Max(0, (int)Math.Min(from.X, to.X) - pad);
+            int y = Math.Max(0, (int)Math.Min(from.Y, to.Y) - pad);
+            int x2 = Math.Min(bmpW, (int)Math.Max(from.X, to.X) + pad);
+            int y2 = Math.Min(bmpH, (int)Math.Max(from.Y, to.Y) + pad);
+
+            var rect = new Int32Rect(x, y, x2 - x, y2 - y);
+
+            if (_lineDirtyRegion.IsEmpty)
+            {
+                _lineDirtyRegion = rect;
+            }
+            else
+            {
+                int rx1 = Math.Min(_lineDirtyRegion.X, rect.X);
+                int ry1 = Math.Min(_lineDirtyRegion.Y, rect.Y);
+                int rx2 = Math.Max(_lineDirtyRegion.X + _lineDirtyRegion.Width, rect.X + rect.Width);
+                int ry2 = Math.Max(_lineDirtyRegion.Y + _lineDirtyRegion.Height, rect.Y + rect.Height);
+                _lineDirtyRegion = new Int32Rect(rx1, ry1, rx2 - rx1, ry2 - ry1);
+            }
+        }
+
+        public void CommitLineSnapshot()
+        {
+            if (_lineBefore == null || SelectedTab == null) return;
+
+            if (_lineDirtyRegion.IsEmpty || _lineDirtyRegion.Width <= 0 || _lineDirtyRegion.Height <= 0)
+            {
+                _lineBefore = null;
+                return;
+            }
+
+            var snapshot = new ImageSnapshot(_lineBefore, _lineDirtyRegion);
+            SelectedTab.UndoStack.Push(snapshot);
+            SelectedTab.RedoStack.Clear();
+
+            _lineBefore = null;
+            _lineDirtyRegion = Int32Rect.Empty;
         }
 
         #region toggle tools methods
@@ -856,7 +1070,8 @@ namespace ImageEditor.ViewModels
 
             if (_clipboard != null)
             {
-                Clipboard.SetImage(_clipboard);
+                var forClipboard = new FormatConvertedBitmap(_clipboard, PixelFormats.Bgra32, null, 0);
+                Clipboard.SetImage(forClipboard);
             }
         }
 
@@ -894,6 +1109,11 @@ namespace ImageEditor.ViewModels
                 }
 
                 if (source == null) return;
+                if (source.Format != PixelFormats.Bgr24)
+                {
+                    var converted = new FormatConvertedBitmap(source, PixelFormats.Bgr24, null, 0);
+                    source = new WriteableBitmap(converted);
+                }
 
                 if (IsFloatingPaste) CommitFloatingPaste();
 
@@ -914,10 +1134,8 @@ namespace ImageEditor.ViewModels
 
                     if (dialog.Confirmed)
                     {
-                        SaveState();
-
-                        var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgra32, null);
-                        int stride = newW * 4;
+                        var expanded = new WriteableBitmap(newW, newH, 96, 96, PixelFormats.Bgr24, null);
+                        int stride = newW * 3;
                         byte[] white = Enumerable.Repeat((byte)255, newH * stride).ToArray();
                         expanded.WritePixels(new Int32Rect(0, 0, newW, newH), white, stride, 0);
                         SelectionService.Paste(expanded, new WriteableBitmap(current), 0, 0);
@@ -942,6 +1160,9 @@ namespace ImageEditor.ViewModels
                     Selection = new Int32Rect(0, 0, source.PixelWidth, source.PixelHeight);
                     OnPropertyChanged(nameof(CurrentImage));
                     OnPropertyChanged(nameof(IsFloatingPaste));
+
+                    
+                    return;
                 }
 
                 SaveState();
@@ -995,8 +1216,8 @@ namespace ImageEditor.ViewModels
 
         private WriteableBitmap CaptureBackground(WriteableBitmap wb, int x, int y, int w, int h)
         {
-            var bg = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
-            int stride = w * 4;
+            var bg = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgr24, null);
+            int stride = w * 3;
             byte[] white = Enumerable.Repeat((byte)255, h * stride).ToArray();
             bg.WritePixels(new Int32Rect(0, 0, w, h), white, stride, 0);
 
@@ -1007,7 +1228,7 @@ namespace ImageEditor.ViewModels
 
             if (clampedW <= 0 || clampedH <= 0) return bg;
 
-            int bpp = 4;
+            int bpp = 3;
             int srcStride = clampedW * bpp;
             byte[] pixels = new byte[clampedH * srcStride];
             wb.CopyPixels(new Int32Rect(clampedX, clampedY, clampedW, clampedH), pixels, srcStride, 0);
@@ -1110,40 +1331,79 @@ namespace ImageEditor.ViewModels
             try
             {
                 if (SelectedTab?.Image == null) return;
-                SaveState();
+
+                var typeface = new Typeface(
+                    new FontFamily(TextFontFamily),
+                    TextItalic ? FontStyles.Italic : FontStyles.Normal,
+                    TextBold ? FontWeights.Bold : FontWeights.Normal,
+                    FontStretches.Normal);
+
+                var formattedText = new FormattedText(
+                    text,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    typeface,
+                    TextFontSize,
+                    new SolidColorBrush(ActiveColor),
+                    120);
+
+                formattedText.TextAlignment = TextAlignment;
+
+                int bmpW = SelectedTab.Image.PixelWidth;
+                int bmpH = SelectedTab.Image.PixelHeight;
+
+                int rx = TextAlignment == TextAlignment.Right
+                    ? Math.Max(0, (int)(imagePosition.X - formattedText.Width) - 4)
+                    : TextAlignment == TextAlignment.Center
+                        ? Math.Max(0, (int)(imagePosition.X - formattedText.Width / 2) - 4)
+                        : Math.Max(0, (int)imagePosition.X - 4);
+
+                int ry = Math.Max(0, (int)imagePosition.Y - 4);
+                int rx2 = Math.Min(bmpW, rx + (int)formattedText.Width + 8);
+                int ry2 = Math.Min(bmpH, (int)(imagePosition.Y + formattedText.Height) + 4);
+
+                int regionW = Math.Max(1, rx2 - rx);
+                int regionH = Math.Max(1, ry2 - ry);
+
+                var region = new Int32Rect(rx, ry, regionW, regionH);
+                SaveState(region);
 
                 var wb = SelectedTab.Image as WriteableBitmap
                          ?? new WriteableBitmap(SelectedTab.Image);
 
+                int bgStride = regionW * 3;
+                byte[] bgPixels = new byte[regionH * bgStride];
+                wb.CopyPixels(region, bgPixels, bgStride, 0);
+
+                byte[] bgPbgra = new byte[regionW * regionH * 4];
+                for (int i = 0; i < regionW * regionH; i++)
+                {
+                    bgPbgra[i * 4 + 0] = bgPixels[i * 3 + 0];  // B
+                    bgPbgra[i * 4 + 1] = bgPixels[i * 3 + 1];  // G
+                    bgPbgra[i * 4 + 2] = bgPixels[i * 3 + 2];  // R
+                    bgPbgra[i * 4 + 3] = 255;                  // A
+                }
+
+                var bgTile = new WriteableBitmap(regionW, regionH, 96, 96, PixelFormats.Pbgra32, null);
+                bgTile.WritePixels(new Int32Rect(0, 0, regionW, regionH), bgPbgra, regionW * 4, 0);
+                var localPos = new Point(imagePosition.X - rx, imagePosition.Y - ry);
+
                 var visual = new DrawingVisual();
                 using (var ctx = visual.RenderOpen())
                 {
-                    // Existing image rendering
-                    ctx.DrawImage(wb, new Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
-
-                    // Text rendering
-                    var formattedText = new FormattedText(
-                        text,
-                        System.Globalization.CultureInfo.CurrentCulture,
-                        FlowDirection.LeftToRight,
-                        new Typeface(
-                            new FontFamily(TextFontFamily),
-                            TextItalic ? FontStyles.Italic : FontStyles.Normal,
-                            TextBold ? FontWeights.Bold : FontWeights.Normal,
-                            FontStretches.Normal),
-                        TextFontSize,
-                        new SolidColorBrush(ActiveColor),
-                        120);
-
-                    formattedText.TextAlignment = TextAlignment;
-                    ctx.DrawText(formattedText, imagePosition);
+                    ctx.DrawImage(bgTile, new Rect(0, 0, regionW, regionH));
+                    ctx.DrawText(formattedText, localPos);
                 }
-
-                var rtb = new RenderTargetBitmap(
-                    wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+                var rtb = new RenderTargetBitmap(regionW, regionH, 96, 96, PixelFormats.Pbgra32);
                 rtb.Render(visual);
 
-                SelectedTab.Image = new WriteableBitmap(rtb);
+                var converted = new FormatConvertedBitmap(rtb, PixelFormats.Bgr24, null, 0);
+                byte[] resultPixels = new byte[regionH * bgStride];
+                converted.CopyPixels(resultPixels, bgStride, 0);
+
+                wb.WritePixels(region, resultPixels, bgStride, 0);
+
+                SelectedTab.Image = wb;
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
 
@@ -1187,9 +1447,23 @@ namespace ImageEditor.ViewModels
         public void SaveState()
         {
             if (SelectedTab?.Image == null) return;
-            var copy = new WriteableBitmap(SelectedTab.Image);
-            SelectedTab.UndoStack.Push(copy);
+            var region = new Int32Rect(0, 0, SelectedTab.Image.PixelWidth, SelectedTab.Image.PixelHeight);
+            SaveState(region);
+        }
+
+        public void SaveState(Int32Rect region) // partial save state for selection-based edits
+        {
+            if (SelectedTab?.Image == null) return;
+
+            var snapshot = new ImageSnapshot(SelectedTab.Image, region);
+            SelectedTab.UndoStack.Push(snapshot);
             SelectedTab.RedoStack.Clear();
+
+            if (SelectedTab.UndoStack.ShouldCollect())
+            {
+                GC.Collect(2, GCCollectionMode.Optimized, blocking: false);
+                GC.WaitForPendingFinalizers();
+            }
         }
 
         private void Undo()
@@ -1197,10 +1471,42 @@ namespace ImageEditor.ViewModels
             try
             {
                 if (SelectedTab?.UndoStack.Count == 0) return;
-                SelectedTab.RedoStack.Push(new WriteableBitmap(SelectedTab.Image));
-                SelectedTab.Image = SelectedTab.UndoStack.Pop();
+
+                var undo = SelectedTab.UndoStack.Pop();
+
+                var wb = SelectedTab.Image as WriteableBitmap;
+
+                bool sizeChanged = wb == null ||
+                                   wb.PixelWidth != undo.OriginalWidth ||
+                                   wb.PixelHeight != undo.OriginalHeight;
+
+                if (sizeChanged)
+                {
+                    var redoWb = wb ?? new WriteableBitmap(SelectedTab.Image);
+                    var redoSnapshot = new ImageSnapshot(redoWb,
+                        new Int32Rect(0, 0, redoWb.PixelWidth, redoWb.PixelHeight));
+                    SelectedTab.RedoStack.Push(redoSnapshot);
+
+                    var restored = undo.RestoreFull();
+                    SelectedTab.Image = restored;
+                }
+                else
+                {
+                    if (wb == null) wb = new WriteableBitmap(SelectedTab.Image);
+                    SelectedTab.Image = wb;
+
+                    var redoSnapshot = ImageSnapshot.CreateDiff(wb, undo.Region, undo.Pixels);
+                    if (redoSnapshot != null)
+                        SelectedTab.RedoStack.Push(redoSnapshot);
+
+                    undo.Restore(wb);
+                }
+
                 SelectedTab.IsModified = SelectedTab.UndoStack.Count > 0;
                 OnPropertyChanged(nameof(CurrentImage));
+                ImageSize = SelectedTab?.Image != null
+                    ? $"{SelectedTab.Image.PixelWidth} x {SelectedTab.Image.PixelHeight} px"
+                    : "";
 
                 Logger.Info("Undo performed");
             }
@@ -1216,10 +1522,37 @@ namespace ImageEditor.ViewModels
             try
             {
                 if (SelectedTab?.RedoStack.Count == 0) return;
-                SelectedTab.UndoStack.Push(new WriteableBitmap(SelectedTab.Image));
-                SelectedTab.Image = SelectedTab.RedoStack.Pop();
+
+                var redo = SelectedTab.RedoStack.Pop();
+
+                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
+
+                bool sizeChanged = wb.PixelWidth != redo.OriginalWidth || wb.PixelHeight != redo.OriginalHeight;
+
+                if (sizeChanged)
+                {
+                    var undoSnapshot = new ImageSnapshot(wb,new Int32Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
+                    SelectedTab.UndoStack.Push(undoSnapshot);
+
+                    var restored = redo.RestoreFull();
+                    SelectedTab.Image = restored;
+                }
+                else
+                {
+                    SelectedTab.Image = wb;
+
+                    var undoSnapshot = ImageSnapshot.CreateDiff(wb, redo.Region, redo.Pixels);
+                    if (undoSnapshot != null)
+                        SelectedTab.UndoStack.Push(undoSnapshot);
+
+                    redo.Restore(wb);
+                }
+
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
+                ImageSize = SelectedTab?.Image != null
+                    ? $"{SelectedTab.Image.PixelWidth} x {SelectedTab.Image.PixelHeight} px"
+                    : "";
 
                 Logger.Info("Redo performed");
             }
@@ -1231,6 +1564,33 @@ namespace ImageEditor.ViewModels
         }
 
         // ================= HELPERS =================
+
+        public void ZoomAt(Point mousePos, int delta)
+        {
+            if (SelectedTab?.Image == null) return;
+
+            double zoomFactor = delta > 0 ? 1.1 : 0.9;
+
+            double oldZoom = Zoom;
+            double newZoom = Tools.Clamp(Zoom * zoomFactor, 0.1, 5.0);
+
+            if (Math.Abs(newZoom - oldZoom) < 0.0001)
+                return;
+
+            double imageX = (mousePos.X - ImageOffsetX);
+            double imageY = (mousePos.Y - ImageOffsetY);
+
+            double relX = imageX / oldZoom;
+            double relY = imageY / oldZoom;
+
+
+
+            Zoom = newZoom;
+
+            ImageOffsetX = mousePos.X - relX * newZoom;
+            ImageOffsetY = mousePos.Y - relY * newZoom;
+        }
+
         private void ResetView()
         {
             Zoom = 1.0;
