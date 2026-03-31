@@ -277,6 +277,19 @@ namespace ImageEditor.Views
         {
             var vm = DataContext as MainViewModel;
 
+            if (vm?.HasImage == true)
+            {
+                var imgPoint = GetImagePixel(e, vm);
+                var bitmap = vm.SelectedTab?.Image;
+                int px = (int)imgPoint.X;
+                int py = (int)imgPoint.Y;
+
+                if (bitmap != null && px >= 0 && px < bitmap.PixelWidth && py >= 0 && py < bitmap.PixelHeight)
+                    vm.MouseCoordinates = $"({px}, {py})";
+                else
+                    vm.MouseCoordinates = "";
+            }
+
             if (_isMiddleDragging && e.MiddleButton == MouseButtonState.Pressed)
             {
                 vm?.DragTo(e.GetPosition(Application.Current.MainWindow));
@@ -519,6 +532,8 @@ namespace ImageEditor.Views
         private void Image_MouseLeave(object sender, MouseEventArgs e)
         {
             HideEyedropperPreview();
+            if (DataContext is MainViewModel vm)
+                vm.MouseCoordinates = "";
         }
 
         private Point GetImagePixel(MouseEventArgs e, MainViewModel vm)

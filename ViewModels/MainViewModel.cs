@@ -56,6 +56,13 @@ namespace ImageEditor.ViewModels
             set { _statusText = value; OnPropertyChanged(); }
         }
 
+        private string _mouseCoordinates = "";
+        public string MouseCoordinates
+        {
+            get => _mouseCoordinates;
+            set { _mouseCoordinates = value; OnPropertyChanged(); }
+        }
+
         private double _zoom = 1.0;
         public double Zoom
         {
