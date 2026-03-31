@@ -437,14 +437,8 @@ namespace ImageEditor.ViewModels
                     if (dialog.Result == UnsavedChangesResult.Yes) SaveImage();
                 }
 
-                tab.UndoStack.Clear();
-                tab.RedoStack.Clear();
-                tab.Image = null;
-
                 int index = Tabs.IndexOf(tab);
                 Tabs.Remove(tab);
-
-                
 
                 if (Tabs.Count > 0)
                     SelectedTab = Tabs[Tools.Clamp(index, 0, Tabs.Count - 1)];
@@ -455,19 +449,37 @@ namespace ImageEditor.ViewModels
                     ResetView();
                 }
 
-                GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-                GC.WaitForPendingFinalizers();
-                GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-
-                Logger.Info($"Tab closed: {tab.Title}");
-
-                tab = null;
+                CleanupTab(tab);
+                Logger.Info($"Tab closed");
             }
             catch (Exception ex)
             {
                 Logger.Error($"Failed to close tab: {ex.Message}");
                 MessageBox.Show("Failed to close tab. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void CleanupTab(ImageTab tab)
+        {
+            if (tab == null) return;
+
+            if (SelectedTab == tab)
+            {
+                tab = null;
+            }
+
+            tab.Image = null;
+
+            tab.UndoStack.Clear();
+            tab.RedoStack.Clear();
+            _strokeBefore = null;
+            _lineBefore = null;
+            _pasteFloating = null;
+            _pasteBackground = null;
+            _pasteFloatingOriginal = null;
+            _clipboard = null;
+
+            Selection = null;
         }
 
         private void SaveImage()
