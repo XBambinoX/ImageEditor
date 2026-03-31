@@ -1290,41 +1290,79 @@ namespace ImageEditor.ViewModels
             try
             {
                 if (SelectedTab?.Image == null) return;
-                SaveState();
+
+                var typeface = new Typeface(
+                    new FontFamily(TextFontFamily),
+                    TextItalic ? FontStyles.Italic : FontStyles.Normal,
+                    TextBold ? FontWeights.Bold : FontWeights.Normal,
+                    FontStretches.Normal);
+
+                var formattedText = new FormattedText(
+                    text,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    typeface,
+                    TextFontSize,
+                    new SolidColorBrush(ActiveColor),
+                    120);
+
+                formattedText.TextAlignment = TextAlignment;
+
+                int bmpW = SelectedTab.Image.PixelWidth;
+                int bmpH = SelectedTab.Image.PixelHeight;
+
+                int rx = TextAlignment == TextAlignment.Right
+                    ? Math.Max(0, (int)(imagePosition.X - formattedText.Width) - 4)
+                    : TextAlignment == TextAlignment.Center
+                        ? Math.Max(0, (int)(imagePosition.X - formattedText.Width / 2) - 4)
+                        : Math.Max(0, (int)imagePosition.X - 4);
+
+                int ry = Math.Max(0, (int)imagePosition.Y - 4);
+                int rx2 = Math.Min(bmpW, rx + (int)formattedText.Width + 8);
+                int ry2 = Math.Min(bmpH, (int)(imagePosition.Y + formattedText.Height) + 4);
+
+                int regionW = Math.Max(1, rx2 - rx);
+                int regionH = Math.Max(1, ry2 - ry);
+
+                var region = new Int32Rect(rx, ry, regionW, regionH);
+                SaveState(region);
 
                 var wb = SelectedTab.Image as WriteableBitmap
                          ?? new WriteableBitmap(SelectedTab.Image);
 
+                int bgStride = regionW * 3;
+                byte[] bgPixels = new byte[regionH * bgStride];
+                wb.CopyPixels(region, bgPixels, bgStride, 0);
+
+                byte[] bgPbgra = new byte[regionW * regionH * 4];
+                for (int i = 0; i < regionW * regionH; i++)
+                {
+                    bgPbgra[i * 4 + 0] = bgPixels[i * 3 + 0];  // B
+                    bgPbgra[i * 4 + 1] = bgPixels[i * 3 + 1];  // G
+                    bgPbgra[i * 4 + 2] = bgPixels[i * 3 + 2];  // R
+                    bgPbgra[i * 4 + 3] = 255;                  // A
+                }
+
+                var bgTile = new WriteableBitmap(regionW, regionH, 96, 96, PixelFormats.Pbgra32, null);
+                bgTile.WritePixels(new Int32Rect(0, 0, regionW, regionH), bgPbgra, regionW * 4, 0);
+                var localPos = new Point(imagePosition.X - rx, imagePosition.Y - ry);
+
                 var visual = new DrawingVisual();
                 using (var ctx = visual.RenderOpen())
                 {
-                    // Existing image rendering
-                    ctx.DrawImage(wb, new Rect(0, 0, wb.PixelWidth, wb.PixelHeight));
-
-                    // Text rendering
-                    var formattedText = new FormattedText(
-                        text,
-                        System.Globalization.CultureInfo.CurrentCulture,
-                        FlowDirection.LeftToRight,
-                        new Typeface(
-                            new FontFamily(TextFontFamily),
-                            TextItalic ? FontStyles.Italic : FontStyles.Normal,
-                            TextBold ? FontWeights.Bold : FontWeights.Normal,
-                            FontStretches.Normal),
-                        TextFontSize,
-                        new SolidColorBrush(ActiveColor),
-                        120);
-
-                    formattedText.TextAlignment = TextAlignment;
-                    ctx.DrawText(formattedText, imagePosition);
+                    ctx.DrawImage(bgTile, new Rect(0, 0, regionW, regionH));
+                    ctx.DrawText(formattedText, localPos);
                 }
-
-                var rtb = new RenderTargetBitmap(
-                    wb.PixelWidth, wb.PixelHeight, 96, 96, PixelFormats.Pbgra32);
+                var rtb = new RenderTargetBitmap(regionW, regionH, 96, 96, PixelFormats.Pbgra32);
                 rtb.Render(visual);
 
                 var converted = new FormatConvertedBitmap(rtb, PixelFormats.Bgr24, null, 0);
-                SelectedTab.Image = new WriteableBitmap(converted);
+                byte[] resultPixels = new byte[regionH * bgStride];
+                converted.CopyPixels(resultPixels, bgStride, 0);
+
+                wb.WritePixels(region, resultPixels, bgStride, 0);
+
+                SelectedTab.Image = wb;
                 SelectedTab.IsModified = true;
                 OnPropertyChanged(nameof(CurrentImage));
 
