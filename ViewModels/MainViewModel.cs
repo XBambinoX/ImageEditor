@@ -234,6 +234,7 @@ namespace ImageEditor.ViewModels
         public ICommand ExitCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
+        public ICommand KeyboardShortcutsCommand { get; }
         public ICommand AboutCommand { get; }
 
         public ICommand Rotate90Clockwise { get; }
@@ -310,6 +311,14 @@ namespace ImageEditor.ViewModels
             UndoCommand = new RelayCommand(_ => Undo(), _ => SelectedTab?.UndoStack.Count > 0);
             RedoCommand = new RelayCommand(_ => Redo(), _ => SelectedTab?.RedoStack.Count > 0);
             AboutCommand = new RelayCommand(_ => About());
+            KeyboardShortcutsCommand = new RelayCommand(_ =>
+            {
+                var window = new KeyboardShortcutsWindow
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                window.ShowDialog();
+            });
 
             Rotate90Clockwise = new RelayCommand(_ => RotateImage(90, true), _ => HasImage);
             Rotate90CounterClockwise = new RelayCommand(_ => RotateImage(90, false), _ => HasImage);

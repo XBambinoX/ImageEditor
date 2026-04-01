@@ -58,6 +58,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
+    <Compile Include="Models\ShortcutItem.cs" />
     <Compile Include="Models\ImageDocument.cs" />
     <Compile Include="Models\ImageInfoModel.cs" />
     <Compile Include="Models\ImageSnapshot.cs" />
@@ -96,6 +97,9 @@
     </Compile>
     <Compile Include="Views\ImageInfoWindow.xaml.cs">
       <DependentUpon>ImageInfoWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\KeyboardShortcutsWindow.xaml.cs">
+      <DependentUpon>KeyboardShortcutsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ToolbarView.xaml.cs">
       <DependentUpon>ToolbarView.xaml</DependentUpon>
@@ -152,6 +156,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ImageInfoWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\KeyboardShortcutsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

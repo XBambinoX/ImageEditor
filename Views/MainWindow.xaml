@@ -300,6 +300,8 @@
             </MenuItem>
 
             <MenuItem Header="_Help">
+                <MenuItem Header="_Keyboard Shortcuts" Command="{Binding KeyboardShortcutsCommand}"/>
+                <Separator Margin="-40,0"/>
                 <MenuItem Header="_About" Command="{Binding AboutCommand}"/>
             </MenuItem>
         </Menu>
