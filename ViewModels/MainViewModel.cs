@@ -1355,15 +1355,21 @@ namespace ImageEditor.ViewModels
                     TextFontSize,
                     new SolidColorBrush(ActiveColor),
                     96);
+                formattedText.TextAlignment = TextAlignment;
 
                 int bmpW = SelectedTab.Image.PixelWidth;
                 int bmpH = SelectedTab.Image.PixelHeight;
                 const int pad = 8;
 
+                
                 double drawX = imagePosition.X + 5; // 5px is the distance from the border text
+                if (TextAlignment == TextAlignment.Center)
+                    drawX += formattedText.Width / 2;
+                else if (TextAlignment == TextAlignment.Right)
+                    drawX += formattedText.Width;
 
-                int rx = Math.Max(0, (int)drawX - pad);
-                int rx2 = Math.Min(bmpW, (int)(drawX + formattedText.Width) + pad);
+                int rx = Math.Max(0, (int)imagePosition.X + 5 - pad);
+                int rx2 = Math.Min(bmpW, (int)(imagePosition.X + 5 + formattedText.Width) + pad);
                 int ry = Math.Max(0, (int)imagePosition.Y - pad);
                 int ry2 = Math.Min(bmpH, (int)(imagePosition.Y + formattedText.Height) + pad);
 
@@ -1375,8 +1381,7 @@ namespace ImageEditor.ViewModels
 
                 SaveState(region);
 
-                var wb = SelectedTab.Image as WriteableBitmap
-                         ?? new WriteableBitmap(SelectedTab.Image);
+                var wb = SelectedTab.Image as WriteableBitmap ?? new WriteableBitmap(SelectedTab.Image);
 
                 int bgStride = regionW * 3;
                 byte[] bgPixels = new byte[regionH * bgStride];
