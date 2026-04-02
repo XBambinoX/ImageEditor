@@ -922,32 +922,7 @@ namespace ImageEditor.Views
 
             if (_textAnchorImagePoint == null) return;
 
-            var img = FindVisualChild<Image>(this, "MainImage");
-            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
-            if (img == null || border == null) return;
-
-            var bitmap = vm.SelectedTab?.Image;
-            if (bitmap == null || img.ActualWidth <= 0) return;
-
-            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
-
-            double borderWidthPx = border.ActualWidth * dpiScaleX;
-
-            double anchorX;
-            switch (vm.TextAlignment)
-            {
-                case System.Windows.TextAlignment.Center:
-                    anchorX = _textAnchorImagePoint.Value.X + borderWidthPx / 2;
-                    break;
-                case System.Windows.TextAlignment.Right:
-                    anchorX = _textAnchorImagePoint.Value.X + borderWidthPx;
-                    break;
-                default:
-                    anchorX = _textAnchorImagePoint.Value.X;
-                    break;
-            }
-
-            var adjustedPosition = new Point(anchorX, _textAnchorImagePoint.Value.Y);
+            var adjustedPosition = new Point(_textAnchorImagePoint.Value.X, _textAnchorImagePoint.Value.Y);
             vm.CommitText(box.Text, adjustedPosition);
             HideTextOverlay();
         }

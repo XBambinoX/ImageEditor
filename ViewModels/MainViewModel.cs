@@ -1354,25 +1354,13 @@ namespace ImageEditor.ViewModels
                     typeface,
                     TextFontSize,
                     new SolidColorBrush(ActiveColor),
-                    120);
+                    96);
 
                 int bmpW = SelectedTab.Image.PixelWidth;
                 int bmpH = SelectedTab.Image.PixelHeight;
                 const int pad = 8;
 
-                double drawX;
-                switch (TextAlignment)
-                {
-                    case TextAlignment.Center:
-                        drawX = imagePosition.X - formattedText.Width / 2;
-                        break;
-                    case TextAlignment.Right:
-                        drawX = imagePosition.X - formattedText.Width;
-                        break;
-                    default: // Left
-                        drawX = imagePosition.X;
-                        break;
-                }
+                double drawX = imagePosition.X + 5; // 5px is the distance from the border text
 
                 int rx = Math.Max(0, (int)drawX - pad);
                 int rx2 = Math.Min(bmpW, (int)(drawX + formattedText.Width) + pad);
@@ -1384,8 +1372,6 @@ namespace ImageEditor.ViewModels
 
                 var region = new Int32Rect(rx, ry, regionW, regionH);
                 var localPos = new Point(drawX - rx, imagePosition.Y - ry);
-
-                formattedText.TextAlignment = TextAlignment.Left;
 
                 SaveState(region);
 
