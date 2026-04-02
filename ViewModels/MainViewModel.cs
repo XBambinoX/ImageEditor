@@ -1356,25 +1356,37 @@ namespace ImageEditor.ViewModels
                     new SolidColorBrush(ActiveColor),
                     120);
 
-                formattedText.TextAlignment = TextAlignment;
-
                 int bmpW = SelectedTab.Image.PixelWidth;
                 int bmpH = SelectedTab.Image.PixelHeight;
+                const int pad = 8;
 
-                int rx = TextAlignment == TextAlignment.Right
-                    ? Math.Max(0, (int)(imagePosition.X - formattedText.Width) - 4)
-                    : TextAlignment == TextAlignment.Center
-                        ? Math.Max(0, (int)(imagePosition.X - formattedText.Width / 2) - 4)
-                        : Math.Max(0, (int)imagePosition.X - 4);
+                double drawX;
+                switch (TextAlignment)
+                {
+                    case TextAlignment.Center:
+                        drawX = imagePosition.X - formattedText.Width / 2;
+                        break;
+                    case TextAlignment.Right:
+                        drawX = imagePosition.X - formattedText.Width;
+                        break;
+                    default: // Left
+                        drawX = imagePosition.X;
+                        break;
+                }
 
-                int ry = Math.Max(0, (int)imagePosition.Y - 4);
-                int rx2 = Math.Min(bmpW, rx + (int)formattedText.Width + 8);
-                int ry2 = Math.Min(bmpH, (int)(imagePosition.Y + formattedText.Height) + 4);
+                int rx = Math.Max(0, (int)drawX - pad);
+                int rx2 = Math.Min(bmpW, (int)(drawX + formattedText.Width) + pad);
+                int ry = Math.Max(0, (int)imagePosition.Y - pad);
+                int ry2 = Math.Min(bmpH, (int)(imagePosition.Y + formattedText.Height) + pad);
 
                 int regionW = Math.Max(1, rx2 - rx);
                 int regionH = Math.Max(1, ry2 - ry);
 
                 var region = new Int32Rect(rx, ry, regionW, regionH);
+                var localPos = new Point(drawX - rx, imagePosition.Y - ry);
+
+                formattedText.TextAlignment = TextAlignment.Left;
+
                 SaveState(region);
 
                 var wb = SelectedTab.Image as WriteableBitmap
@@ -1387,15 +1399,14 @@ namespace ImageEditor.ViewModels
                 byte[] bgPbgra = new byte[regionW * regionH * 4];
                 for (int i = 0; i < regionW * regionH; i++)
                 {
-                    bgPbgra[i * 4 + 0] = bgPixels[i * 3 + 0];  // B
-                    bgPbgra[i * 4 + 1] = bgPixels[i * 3 + 1];  // G
-                    bgPbgra[i * 4 + 2] = bgPixels[i * 3 + 2];  // R
-                    bgPbgra[i * 4 + 3] = 255;                  // A
+                    bgPbgra[i * 4] = bgPixels[i * 3];
+                    bgPbgra[i * 4 + 1] = bgPixels[i * 3 + 1];
+                    bgPbgra[i * 4 + 2] = bgPixels[i * 3 + 2];
+                    bgPbgra[i * 4 + 3] = 255;
                 }
 
                 var bgTile = new WriteableBitmap(regionW, regionH, 96, 96, PixelFormats.Pbgra32, null);
                 bgTile.WritePixels(new Int32Rect(0, 0, regionW, regionH), bgPbgra, regionW * 4, 0);
-                var localPos = new Point(imagePosition.X - rx, imagePosition.Y - ry);
 
                 var visual = new DrawingVisual();
                 using (var ctx = visual.RenderOpen())
@@ -1403,6 +1414,7 @@ namespace ImageEditor.ViewModels
                     ctx.DrawImage(bgTile, new Rect(0, 0, regionW, regionH));
                     ctx.DrawText(formattedText, localPos);
                 }
+
                 var rtb = new RenderTargetBitmap(regionW, regionH, 96, 96, PixelFormats.Pbgra32);
                 rtb.Render(visual);
 

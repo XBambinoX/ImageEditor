@@ -865,6 +865,7 @@ namespace ImageEditor.Views
             preview.Visibility = Visibility.Visible;
         }
 
+        private Point? _textAnchorImagePoint;
         private void ShowTextOverlay(Point canvasPoint, Point imagePoint, MainViewModel vm)
         {
             var box = FindVisualChild<TextBox>(this, "TextOverlayBox");
@@ -889,8 +890,8 @@ namespace ImageEditor.Views
             Canvas.SetLeft(border, canvasPos.X);
             Canvas.SetTop(border, canvasPos.Y);
 
-            double handleHeightPx = 16 * dpiScaleY;
-            _textImagePosition = new Point(imagePoint.X, imagePoint.Y + handleHeightPx);
+            _textAnchorImagePoint = new Point(imagePoint.X, imagePoint.Y + 20 * dpiScaleY); // 20 is the height of drag handle area in canvas units
+            _textImagePosition = _textAnchorImagePoint;
             _textPosition = canvasPos;
 
             border.Visibility = Visibility.Visible;
@@ -899,12 +900,14 @@ namespace ImageEditor.Views
             DisableHotkeys();
         }
 
+
         private void HideTextOverlay()
         {
             var border = FindVisualChild<Border>(this, "TextOverlayBorder");
             if (border != null) border.Visibility = Visibility.Collapsed;
             _textPosition = null;
             _textImagePosition = null;
+            _textAnchorImagePoint = null;
             RestoreHotkeys();
         }
 
@@ -917,12 +920,35 @@ namespace ImageEditor.Views
                 return;
             }
 
-            if (_textImagePosition == null) return;
+            if (_textAnchorImagePoint == null) return;
 
-            vm.CommitText(
-                box.Text,
-                _textImagePosition.Value);
+            var img = FindVisualChild<Image>(this, "MainImage");
+            var border = FindVisualChild<Border>(this, "TextOverlayBorder");
+            if (img == null || border == null) return;
 
+            var bitmap = vm.SelectedTab?.Image;
+            if (bitmap == null || img.ActualWidth <= 0) return;
+
+            double dpiScaleX = bitmap.PixelWidth / img.ActualWidth;
+
+            double borderWidthPx = border.ActualWidth * dpiScaleX;
+
+            double anchorX;
+            switch (vm.TextAlignment)
+            {
+                case System.Windows.TextAlignment.Center:
+                    anchorX = _textAnchorImagePoint.Value.X + borderWidthPx / 2;
+                    break;
+                case System.Windows.TextAlignment.Right:
+                    anchorX = _textAnchorImagePoint.Value.X + borderWidthPx;
+                    break;
+                default:
+                    anchorX = _textAnchorImagePoint.Value.X;
+                    break;
+            }
+
+            var adjustedPosition = new Point(anchorX, _textAnchorImagePoint.Value.Y);
+            vm.CommitText(box.Text, adjustedPosition);
             HideTextOverlay();
         }
 
@@ -1008,11 +1034,9 @@ namespace ImageEditor.Views
             var transform = canvas.TransformToVisual(img);
             var imgPoint = transform.Transform(new Point(newLeft, newTop));
 
-
-            double handleHeightPx = 16 * dpiScaleY;
-            _textImagePosition = new Point(
+            _textAnchorImagePoint = new Point(
                 imgPoint.X * dpiScaleX,
-                imgPoint.Y * dpiScaleY + handleHeightPx);
+                imgPoint.Y * dpiScaleY + 20 * dpiScaleY); // 20 is the height of drag handle area in canvas units
 
             e.Handled = true;
         }
